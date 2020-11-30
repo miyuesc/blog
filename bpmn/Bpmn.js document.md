@@ -1,4 +1,9 @@
-# Bpmn.js
+---
+# 主题列表：juejin, github, smartblue, cyanosis, channing-cyan, fancy, hydrogen, condensed-night-purple, greenwillow, v-green, vue-pro
+# 贡献主题：https://github.com/xitu/juejin-markdown-themes
+theme: github
+highlight:
+---
 
 ## 一. 引入Bpmn.js并初始化建模器
 
@@ -46,7 +51,7 @@ Modeler
 				-> Object
 ```
 
-Bpmn.js提供的默认扩展包名称，可以在<code>this.bpmnModeler.__proto__._modules</code>内找到，一共开放了32个扩展包。扩展包名称可以在<code><code>this.bpmnModeler.injector._providers</code>内，包名即键名。
+Bpmn.js提供的默认扩展包名称，可以在<code>this.bpmnModeler.__proto__._modules</code>内找到，一共开放了32个扩展包。扩展包名称可以在<code>this.bpmnModeler.injector._providers</code>内，包名即键名。
 
 需要调用这些扩展包时，可以使用如下方式：
 
@@ -547,7 +552,7 @@ const ElementFactory = this.bpmnModeler.get("ElementFactory")
 /**
  * 根据传入参数创建新的元素
  * type："root" | "label" | "connection" | "shape"
- * attrs: object
+ * attrs?: object
  */
 ElementFactory.create(type, attrs);
 ```
@@ -557,11 +562,29 @@ ElementFactory.create(type, attrs);
 根据create方法传入的不同type，衍生了四种创建图形元素的方法。
 
 ```javascript
+// attrs 非必传参数
 ElementFactory.createRoot(attrs);
 ElementFactory.createLabel(attrs);
 ElementFactory.createConnection(attrs);
 ElementFactory.createShape(attrs);
 ```
+
+**Bpmn.js补充方法：**
+
+由于 `diagram.js` 默认只配置了 `Shape, Connection, Root, Label` 四种元素，不足以支撑整个流程编辑器需要的元素类型。所以Bpmn.js在原来的基础上增加了其他方法来定义别的流程元素节点。
+
+```javascript
+// 创建bpmn对应的模型元素
+// elementType: string
+// attrs?: 自定义属性
+ElementFactory.createBpmnElement(elementType, attrs)
+
+// 创建参与者
+// attrs?: object 自定义属性
+ElementFactory.createParticipantShape(attrs)
+```
+
+
 
 ### 2. ElementRegistry 图形注册表
 
@@ -603,14 +626,14 @@ ElementRegistry.find(fn(element, gfx))
 ElementRegistry.getAll()
 
 // 遍历所有已渲染元素模型，执行传入方法
-ElementRegistry.forEach(fn(element, gfx))
+ElementRegistry.forEach(fn(element, ?gfx))
 
 /**
  * 返回对应的SVGElement
  * @param filter：string | Model id或者元素模型
- * @param secondary: boolean =false 是否返回辅助连接的元素
+ * @param secondary?: boolean = false 是否返回辅助连接的元素
  */
-ElementRegistry.getGraphics()
+ElementRegistry.getGraphics(filter, secondary)
 ```
 
 ### 3. GraphicsFactory 图形元素工厂
@@ -631,19 +654,19 @@ const GraphicsFactory = this.bpmnModeler.get("GraphicsFactory")
 /**
  * 返回创建后的SVGElement
  * @param type："shape" | "connection" 元素类型
- * @param element: SVGElement
- * @param parentIndex: number 位置
+ * @param element?: SVGElement
+ * @param parentIndex?: number 位置
  */
 GraphicsFactory.create(type, element, parentIndex)
 
 // 绘制节点，触发"render.shape"
-GraphicsFactory.drawShape(visual,element)
+GraphicsFactory.drawShape(visual, element)
 
 // 获取元素的尺寸等，触发"render.getShapePath"
 GraphicsFactory.getShapePath(element)
 
 // 绘制连线，触发"render.connection"
-GraphicsFactory.drawConnection(visual,element)
+GraphicsFactory.drawConnection(visual, element)
 
 // 获取连线的尺寸等，触发"render.getConnectionPath"
 GraphicsFactory.getConnectionPath(waypoints)
@@ -686,7 +709,7 @@ Canvas._init(config)
 Canvas._destroy()
 
 /**
- * 按类型创建新的元素对象, 同时触发对应的"[shape | connection].add"和"[shape | connection].added"事件，返回创建的元素对象
+ * 按类型创建新的元素对象, 同时触发对应的"[shape | connection].add"和"[shape | connection].added"事件，返回创建的元素对象(衍生的addShape，addConnection方法)
  * @param type: "shape" | "connection" 元素类型
  * @param element: object | djs.model
  * @param parent?: object | djs.model 父元素，默认为根元素对象
@@ -695,7 +718,14 @@ Canvas._destroy()
  */
 Canvas._addElement(type, element, parent, parentIndex)
 
-// 移除元素，并触发对应类型的移除事件
+/**
+ * 移除对应的元素, 同时触发对应的"[shape | connection].remove"和"[shape | connection].removed"事件，返回被删除的元素对象(衍生的addShape，addConnection方法)
+ * @param type: "shape" | "connection" 元素类型
+ * @param element: object | djs.model
+ * @param parent?: object | djs.model 父元素，默认为根元素对象
+ * @param parentIndex?: number 
+ * @return element: object | djs.model
+ */
 Canvas._removeElement(element, type)
 ```
 
@@ -755,15 +785,219 @@ Canvas.getRootElement()
  */
 Canvas.setRootElement(element, override)
 
+/**
+ * 添加新的节点（形状）图形元素
+ * @param shape: object | djs.model 插入的元素model或者属性配置对象
+ * @param parent?: djs.model 父元素，默认根节点（画布下第一级SVG | Root）
+ * @param parentIndex?: number 
+ * @return Element: djs.model
+ */
 Canvas.addShape(shape, parent, parentIndex)
 
+/**
+ * 添加新的连线元素
+ * @param Connaction: object | djs.model 插入的元素model或者属性配置对象
+ * @param parent?: djs.model 父元素，默认根节点（画布下第一级SVG | Root）
+ * @param parentIndex?: number 
+ * @return Element: djs.model
+ */
 Canvas.addConnection(Connaction, parent, parentIndex)
 
+/**
+ * 移除节点元素, 返回被移除的节点
+ * @param shape： string | djs.model 节点id或者model
+ * @return element: djs.model
+ */
 Canvas.removeShape(shape)
 
+/**
+ * 移除连线元素, 返回被移除的对象
+ * @param shape： string | djs.model 节点id或者model
+ * @return element: djs.model
+ */
 Canvas.removeConnaction(connection)
 
+/**
+ * 查询图形元素的SVGElement，即 ElementRegistry.getGraphics()方法。
+ * @param shape： string | djs.model 节点id或者model
+ * @param secondary： boolean 
+ * @return element: SVGElement
+ */
 Canvas.getGraphics(element, secondary)
 
+/**
+ * 获取或者设置新的画布的视图框。该方法的getter可能会返回一个缓存中的viewbox（如果当前时刻视图正在发生改变）
+ * 如果要强制重新计算，请先执行Canvas.viewbox(false)
+ * @param box: Box 新的视图框配置
+ * @param box.x: number = 0 视图框可见的画布区域在x轴坐标（原点左上角）
+ * @param box.y: number = 0 视图框可见的画布区域在y轴坐标（原点左上角）
+ * @param box.width: number 视图框可见宽度
+ * @param box.height: number 视图框可见高度
+ * @return box 当前视图区域
+ */
+Canvas.viewbox(box)
+
+/**
+ * 具有滚动条时调整滚动位置
+ * @param delta：Delta 新的滚动位置
+ * @param delta.dx：number x轴方向的位移大小
+ * @param delta.dy：number y轴方向的位移大小
+ * @return
+ */
+Canvas.scroll(delta)
+
+/**
+ * 设置新的缩放比例或者中心位置，返回当前的缩放比例
+ * @param newScale?： number 新的缩放比例
+ * @param center?： Point | "auto" | null
+ * @param center.x: number
+ * @param center.y: number
+ * @return scale: number
+ */
+Canvas.zoom(newScale, center)
+
+// 主动触发"canvas.resized"事件
+Canvas.resized()
 ```
+
+### 5. EventBus 事件总线
+
+核心模块之一，通用事件总线， 该组件用于跨图实例进行通信。 图的其他部分可以使用它来侦听和广播事件。
+
+**使用方式：**
+
+```
+const EventBus = this.bpmnModeler.get("eventBus");
+```
+
+**核心方法：**
+
+```javascript
+/**
+ * 注册事件监听器
+ * @param events: string | string[] 事件名称（s）
+ * @param priority?: number 优先级，默认1000
+ * @param callback: Function 回调函数
+ * @param that?: object 上下文中的this，会将其传递给callback
+ */
+EventBus.on(events, priority, callback, that)
+ 
+/**
+ * 注册只执行一次的事件监听器
+ * @param events: string | string[] 事件名称（s）
+ * @param priority?: number 优先级，默认1000
+ * @param callback: Function 回调函数
+ * @param that?: object 上下文中的this，会将其传递给callback
+ */
+EventBus.once(events, priority, callback, that)
+ 
+/**
+ * 关闭、删除事件监听器
+ * @param events
+ * @param callback
+ */
+EventBus.off(events, callback)
+ 
+/**
+ * 创建一个可以让EventBus识别的事件，并返回这个事件
+ * @param data: object
+ * @return event: object
+ */
+EventBus.createEvent(data)
+
+/**
+ * 主动触发事件
+ * @param type: string | object 事件名称/嵌套事件名称的对象（{type： string}）
+ * @param data: any 传递给回调函数的参数 
+ * @return status: boolean | any 事件返回值（如果指定）；如果侦听器阻止了默认操作，则返回false
+ */
+EventBus.fire(type, data)
+```
+
+### 6. InternalEvent 事件
+
+指通过事件总线发出来的事件实例。
+
+```javascript
+/**
+ * A event that is emitted via the event bus.
+ */
+function InternalEvent() { }
+
+// 阻止事件传播给其他接收者
+InternalEvent.prototype.stopPropagation = function() {
+  this.cancelBubble = true;
+};
+
+// 阻止事件的默认结果
+InternalEvent.prototype.preventDefault = function() {
+  this.defaultPrevented = true;
+};
+
+InternalEvent.prototype.init = function(data) {
+  assign(this, data || {});
+};
+```
+
+事件可以结合事件总线对事件监听器做自定义处理。
+
+比如：
+
+```javascript
+EventBus.on("foo", function(event) {
+    console.log(event.type) // "foo"
+    event.stopPropagation(); // 停止事件继续传播
+    event.preventDefault(); // 阻止事件原来的返回值，返回false
+})
+
+// 传入自定义信息
+const payload = { fooPayload: "foo" }
+EventBus.on("foo", function(event, payload) {
+    console.log(payload) // { fooPayload: "foo" }
+})
+```
+
+### 7. Modeling 基本建模方法
+
+Diagram.js提供的基础建模工厂，注入了 `EventBus, ElementFactory, CommandStack` 模块。
+
+**使用方式：**
+
+```javascript
+const modeling = this.bpmnModeler.get("modeling");
+```
+
+`Modeling` 初始化时会向 `CommandStack` 命令堆栈中注册对应的处理程序，以确保操作可恢复和取消。
+
+```json
+{
+    'shape.append': AppendShapeHandler, // 形状可逆添加到源形状的处理程序
+    'shape.create': CreateShapeHandler, // 形状可逆创建、添加到流程中的处理程序
+    'shape.delete': DeleteShapeHandler, // 形状可逆移除的处理程序
+    'shape.move': MoveShapeHandler, // 形状可逆移动的处理程序
+    'shape.resize': ResizeShapeHandler, // 形状可逆变换大小的处理程序
+    'shape.replace': ReplaceShapeHandler, // 通过添加新形状并删除旧形状来替换形状。 如果可能，将保持传入和传出连接
+    'shape.toggleCollapse': ToggleShapeCollapseHandler, // 切换元素的折叠状态及其所有子元素的可见性
+    'spaceTool': SpaceToolHandler, // 通过移动和调整形状、大小、连线锚点(巡航点)来添加或者删除空间
+    'label.create': CreateLabelHandler, // 创建标签并附加到特定的模型元素上
+    'connection.create': CreateConnectionHandler, // 创建连线，并显示到画布上
+    'connection.delete': DeleteConnectionHandler, // 移除连线
+    'connection.move': MoveConnectionHandler, // 实现连接的可逆移动的处理程序。 该处理程序与布局连接处理程序的不同之处在于它保留了连接布局
+    'connection.layout': LayoutConnectionHandler, // 实现形状的可逆移动的处理程序
+    'connection.updateWaypoints': UpdateWaypointsHandler, // 更新锚点(巡航点)
+    'connection.reconnect': ReconnectConnectionHandler, // 重新建立连接关系
+    'elements.create': CreateElementsHandler, // 元素可逆创建的处理程序
+    'elements.move': MoveElementsHandler, // 元素可逆移动的处理程序
+    'elements.delete': DeleteElementsHandler, // 元素可逆移除的处理程序
+    'elements.distribute': DistributeElementsHandler, // 均匀分配元素布局的处理程序
+    'elements.align': AlignElementsHandler, // 以某种方式对齐元素
+    'element.updateAttachment': UpdateAttachmentHandler // 实现形状的可逆附着/分离的处理程序。
+}
+```
+
+
+
+
+> 由于目前工作上的事情较多，更新缓慢，请大家多多包涵。
+> 对于错误或者解释不当的地方，请大家评论指正，谢谢
 
