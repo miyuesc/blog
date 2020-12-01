@@ -256,11 +256,20 @@ interface InternalEvent {
     svg?: SVGElement;
     viewport?: SVGElement;
     viewbox?: Viewbox;
+    pad?: object; // 见 Element.pad
 }
 
 interface Element {
     element: Shape | Connection;
     gfx?: SVGElement;
+    pad?: {
+        id: string;
+        html: DOMElement;
+        position: { right: number; top: number };
+    	scale: { max: number; min: number };
+    	show: object | null;
+    	type: string; // 一般是"context-pad"
+    }
 }
 
 interface Elements {
@@ -336,34 +345,34 @@ interface Viewbox {
 | 44   | "commandStack.shape.attach.canExecute"                 |                                                              |                                          |
 | 45   | "commandStack.element.copy.canExecute"                 |                                                              |                                          |
 | 46   | "shape.move.start"                                     | 形状开始移动                                                 | event:InternalEvent, element: Element    |
-| 47   | "shape.move.move"                                      |                                                              |                                          |
-| 48   | "elements.delete"                                      | 元素被删除                                                   |                                          |
+| 47   | "shape.move.move"                                      | 形状移动过程中                                               | event:InternalEvent, element: Element    |
+| 48   | "elements.delete"                                      | 元素被删除，返回被删除的元素                                 | event:InternalEvent, element: Element    |
 | 49   | "tool-manager.update"                                  |                                                              |                                          |
 | 50   | "i18n.changed"                                         |                                                              |                                          |
-| 51   | "drag.move"                                            |                                                              |                                          |
-| 52   | "contextPad.create"                                    |                                                              |                                          |
+| 51   | "drag.move"                                            | 元素拖拽过程中                                               | event:InternalEvent, event:InternalEvent |
+| 52   | "contextPad.create"                                    | 当contextPad出现的时候触发                                   | event:InternalEvent, element: Element    |
 | 53   | "palette.create"                                       |                                                              |                                          |
-| 54   | "autoPlace.end"                                        |                                                              |                                          |
-| 55   | "autoPlace"                                            |                                                              |                                          |
-| 56   | "drag.start"                                           |                                                              |                                          |
-| 57   | "drag.init"                                            |                                                              |                                          |
-| 58   | "drag.cleanup"                                         |                                                              |                                          |
-| 59   | "commandStack.shape.create.postExecuted"               |                                                              |                                          |
-| 60   | "commandStack.elements.move.postExecuted"              |                                                              |                                          |
-| 61   | "commandStack.shape.toggleCollapse.postExecuted"       |                                                              |                                          |
-| 62   | "commandStack.shape.resize.postExecuted"               |                                                              |                                          |
-| 63   | "commandStack.element.autoResize.canExecute"           |                                                              |                                          |
-| 64   | "bendpoint.move.hover"                                 |                                                              |                                          |
-| 65   | "bendpoint.move.out"                                   |                                                              |                                          |
-| 66   | "bendpoint.move.cleanup"                               |                                                              |                                          |
-| 67   | "bendpoint.move.end"                                   |                                                              |                                          |
-| 68   | "connectionSegment.move.start"                         |                                                              |                                          |
-| 69   | "connectionSegment.move.move"                          |                                                              |                                          |
-| 70   | "connectionSegment.move.hover"                         |                                                              |                                          |
-| 71   | "connectionSegment.move.out"                           |                                                              |                                          |
-| 72   | "connectionSegment.move.cleanup"                       |                                                              |                                          |
-| 73   | "connectionSegment.move.cancel"                        |                                                              |                                          |
-| 74   | "connectionSegment.move.end"                           |                                                              |                                          |
+| 54   | "autoPlace.end"                                        | 自动对齐结束                                                 |                                          |
+| 55   | "autoPlace"                                            | 触发自动对齐方法时                                           |                                          |
+| 56   | "drag.start"                                           | 元素拖拽开始                                                 | event:InternalEvent, event:InternalEvent |
+| 57   | "drag.init"                                            | 点击了元素即将进行拖拽（包括点击palette和画布内的元素）      | event:InternalEvent, event:InternalEvent |
+| 58   | "drag.cleanup"                                         | 元素拖拽结束                                                 | event:InternalEvent, event:InternalEvent |
+| 59   | "commandStack.shape.create.postExecuted"               | 当创建形节点的时候触发                                       | event:InternalEvent, event:InternalEvent |
+| 60   | "commandStack.elements.move.postExecuted"              | 当元素移动的时候触发                                         | event:InternalEvent, event:InternalEvent |
+| 61   | "commandStack.shape.toggleCollapse.postExecuted"       | 当可折叠的节点展开/折叠的时候触发                            | event:InternalEvent, event:InternalEvent |
+| 62   | "commandStack.shape.resize.postExecuted"               | 当节点大小发生改变的时候触发                                 | event:InternalEvent, event:InternalEvent |
+| 63   | "commandStack.element.autoResize.canExecute"           | 当节点大小发生自动调整的时候触发                             | event:InternalEvent, event:InternalEvent |
+| 64   | "bendpoint.move.hover"                                 | 鼠标点击连线折点并进行移动时触发                             | event:InternalEvent, event:InternalEvent |
+| 65   | "bendpoint.move.out"                                   | 返回时间不定，可能在拖动时触发，也可能在拖动过程中           | event:InternalEvent, event:InternalEvent |
+| 66   | "bendpoint.move.cleanup"                               | 鼠标点击连线折点时或者移动折点完成                           | event:InternalEvent, event:InternalEvent |
+| 67   | "bendpoint.move.end"                                   | 鼠标点击连线折点并移动完成                                   | event:InternalEvent, event:InternalEvent |
+| 68   | "connectionSegment.move.start"                         | 鼠标选中连线进行拖动开始                                     | event:InternalEvent, event:InternalEvent |
+| 69   | "connectionSegment.move.move"                          | 鼠标选中连线进行拖动过程中                                   | event:InternalEvent, event:InternalEvent |
+| 70   | "connectionSegment.move.hover"                         | 鼠标选中连线进行拖动开始                                     | event:InternalEvent, event:InternalEvent |
+| 71   | "connectionSegment.move.out"                           | 鼠标选中连线，按下鼠标时                                     | event:InternalEvent, event:InternalEvent |
+| 72   | "connectionSegment.move.cleanup"                       | 鼠标选中连线后放开鼠标时                                     | event:InternalEvent, event:InternalEvent |
+| 73   | "connectionSegment.move.cancel"                        |                                                              | event:InternalEvent, event:InternalEvent |
+| 74   | "connectionSegment.move.end"                           | 选中连线并拖拽结束                                           | event:InternalEvent, event:InternalEvent |
 | 75   | "element.mousemove"                                    |                                                              |                                          |
 | 76   | "element.updateId"                                     |                                                              |                                          |
 | 77   | "bendpoint.move.move"                                  |                                                              |                                          |
@@ -569,7 +578,7 @@ ElementFactory.createConnection(attrs);
 ElementFactory.createShape(attrs);
 ```
 
-**Bpmn.js补充方法：**
+#### **Bpmn.js补充方法：**
 
 由于 `diagram.js` 默认只配置了 `Shape, Connection, Root, Label` 四种元素，不足以支撑整个流程编辑器需要的元素类型。所以Bpmn.js在原来的基础上增加了其他方法来定义别的流程元素节点。
 
@@ -959,18 +968,18 @@ EventBus.on("foo", function(event, payload) {
 
 ### 7. Modeling 基本建模方法
 
-Diagram.js提供的基础建模工厂，注入了 `EventBus, ElementFactory, CommandStack` 模块。
+Diagram.js提供的基础建模工厂，注入了 `EventBus, ElementFactory, CommandStack` 模块。**该模块在自定义节点属性等方面经常使用**
 
 **使用方式：**
 
 ```javascript
-const modeling = this.bpmnModeler.get("modeling");
+const Modeling = this.bpmnModeler.get("modeling");
 ```
 
 `Modeling` 初始化时会向 `CommandStack` 命令堆栈中注册对应的处理程序，以确保操作可恢复和取消。
 
-```json
-{
+```javascript
+handlers: {
     'shape.append': AppendShapeHandler, // 形状可逆添加到源形状的处理程序
     'shape.create': CreateShapeHandler, // 形状可逆创建、添加到流程中的处理程序
     'shape.delete': DeleteShapeHandler, // 形状可逆移除的处理程序
@@ -993,6 +1002,106 @@ const modeling = this.bpmnModeler.get("modeling");
     'elements.align': AlignElementsHandler, // 以某种方式对齐元素
     'element.updateAttachment': UpdateAttachmentHandler // 实现形状的可逆附着/分离的处理程序。
 }
+```
+
+**提供方法：**
+
+```javascript
+/**
+ *
+ * @param
+ * @param
+ * @return
+ */
+Modeling.addLine()
+
+/**
+ *
+ * @param
+ * @param
+ * @return
+ */
+Modeling.claimId()
+
+/**
+ *
+ * @param
+ * @param
+ * @return
+ */
+Modeling.connect()
+
+/**
+ *
+ * @param
+ * @param
+ * @return
+ */
+Modeling.makeCollaboration()
+
+/**
+ *
+ * @param
+ * @param
+ * @return
+ */
+Modeling.makeProcess()
+
+/**
+ *
+ * @param
+ * @param
+ * @return
+ */
+Modeling.resizeLane()
+
+/**
+ *
+ * @param
+ * @param
+ * @return
+ */
+Modeling.setColor()
+
+/**
+ *
+ * @param
+ * @param
+ * @return
+ */
+Modeling.splitLane()
+
+/**
+ *
+ * @param
+ * @param
+ * @return
+ */
+Modeling.unclaimId()
+
+/**
+ *
+ * @param
+ * @param
+ * @return
+ */
+Modeling.updateLabel()
+
+/**
+ *
+ * @param
+ * @param
+ * @return
+ */
+Modeling.updateLaneRefs()
+
+/**
+ *
+ * @param
+ * @param
+ * @return
+ */
+Modeling.updateProperties()
 ```
 
 
