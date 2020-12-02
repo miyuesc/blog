@@ -3,6 +3,7 @@
 # 贡献主题：https://github.com/xitu/juejin-markdown-themes
 theme: github
 highlight:
+
 ---
 
 ## 一. 引入Bpmn.js并初始化建模器
@@ -74,7 +75,7 @@ this.bpmnModeler.get(name, strict);
 this.bpmnModeler.createDiagram();
 
 // 将图形dom挂载到目标节点
-this.bpmnModeler.attachTo(parentNode: DomElement);
+this.bpmnModeler.attachTo(parentNode);
 
 // 清空
 this.bpmnModeler.clear()
@@ -152,11 +153,11 @@ export default {
     methods: {
         initModeler() {
             this.bpmnModeler = new BpmnModeler({
-                container: document.getElementById("bpmn-container")，
+                container: document.getElementById("bpmn-container"),
                 propertiesPanel: {
                   parent: "#attrs-panel"
-                },	
-                additionalModules：[ propertiesPanelModule, propertiesProviderModule ]
+                },
+                additionalModules: [ propertiesPanelModule, propertiesProviderModule ]
             })
         }
     },
@@ -170,7 +171,7 @@ export default {
 
 在汉化之前，可以在github或者码云上找到很多大佬的翻译文件，将翻译文件下载下载保存到本地。
 
-```javascript
+```typescript
 // 1. 创建翻译文件 zh.js（命名随意），导出英文关键字对应的中文翻译
 export default {
     "Append EndEvent": "追加结束事件",
@@ -207,13 +208,17 @@ export default function customTranslate(template, replacements) {
 // 3. 在实例化建模器时以自定义模块的方式传入参数
 import customTranslate from "./pugins/customTranslate";
 
-initModeler() {
-    this.bpmnModeler = new BpmnModeler({
-        container: document.getElementById("bpmn-container")，
-        additionalModules：[
-        	{ translate: ["value", customTranslate] }
-        ]
-    })
+export default {
+  methods: {
+    initModeler() {
+        this.bpmnModeler = new BpmnModeler({
+            container: document.getElementById("bpmn-container"),
+            additionalModules: [
+            	{ translate: ["value", customTranslate] }
+            ]
+        })
+    }
+  }
 }
 ```
 
@@ -225,10 +230,10 @@ initModeler() {
 
 ```javascript
 this.bpmnModeler = new BpmnModeler({
-    container: document.getElementById("bpmn-container")，
+    container: document.getElementById("bpmn-container"),
     keyboard: {
     	bindTo: document // 或者window，注意与外部表单的键盘监听事件是否冲突
-    },
+    }
 });
 ```
 
@@ -244,7 +249,7 @@ Bpmn.js 提供了EventBus事件总线模块来管理监听事件，并预设了2
 >
 > 以下事件均可使用<code>this.bpmnModeler.on(eventName, callback)</code>或者<code>eventBus.on(eventName, callback)</code>的形式注册。
 
-```javascript
+```typescript
 // 通过事件总线发出的事件
 interface InternalEvent {
     type: string; // 发生的事件名称，但是很快会被置为undefined
@@ -635,7 +640,7 @@ ElementRegistry.find(fn(element, gfx))
 ElementRegistry.getAll()
 
 // 遍历所有已渲染元素模型，执行传入方法
-ElementRegistry.forEach(fn(element, ?gfx))
+ElementRegistry.forEach(fn(element, gfx))
 
 /**
  * 返回对应的SVGElement
@@ -978,7 +983,7 @@ const Modeling = this.bpmnModeler.get("modeling");
 
 `Modeling` 初始化时会向 `CommandStack` 命令堆栈中注册对应的处理程序，以确保操作可恢复和取消。
 
-```javascript
+```text
 handlers: {
     'shape.append': AppendShapeHandler, // 形状可逆添加到源形状的处理程序
     'shape.create': CreateShapeHandler, // 形状可逆创建、添加到流程中的处理程序
@@ -1005,105 +1010,6 @@ handlers: {
 ```
 
 **提供方法：**
-
-```javascript
-/**
- *
- * @param
- * @param
- * @return
- */
-Modeling.addLine()
-
-/**
- *
- * @param
- * @param
- * @return
- */
-Modeling.claimId()
-
-/**
- *
- * @param
- * @param
- * @return
- */
-Modeling.connect()
-
-/**
- *
- * @param
- * @param
- * @return
- */
-Modeling.makeCollaboration()
-
-/**
- *
- * @param
- * @param
- * @return
- */
-Modeling.makeProcess()
-
-/**
- *
- * @param
- * @param
- * @return
- */
-Modeling.resizeLane()
-
-/**
- *
- * @param
- * @param
- * @return
- */
-Modeling.setColor()
-
-/**
- *
- * @param
- * @param
- * @return
- */
-Modeling.splitLane()
-
-/**
- *
- * @param
- * @param
- * @return
- */
-Modeling.unclaimId()
-
-/**
- *
- * @param
- * @param
- * @return
- */
-Modeling.updateLabel()
-
-/**
- *
- * @param
- * @param
- * @return
- */
-Modeling.updateLaneRefs()
-
-/**
- *
- * @param
- * @param
- * @return
- */
-Modeling.updateProperties()
-```
-
 
 
 
