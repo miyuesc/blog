@@ -172,4 +172,81 @@ modeling.updateProperties(shape, {
 
 
 
+## 自定义扩展属性
+
+`SelfDescriptor.json`
+
+```json
+{
+  "name": "self",
+  "uri": "https://self",
+  "prefix": "se",
+  "xml": {
+    "tagAlias": "lowerCase"
+  },
+  "types": [
+    {
+      "name": "AttrOne",
+      "superClass": [
+        "Element"
+      ],
+      "properties": [
+        {
+          "name": "name",
+          "type": "String",
+          "isAttr": "true"
+        },
+        {
+          "name": "value",
+          "type": "Number",
+          "isAttr": "true",
+          "default": 2
+        }
+      ]
+    }
+  ]
+}
+```
+
+`index.js`
+
+```javascript
+import BpmnModeler from 'bpmn-js/lib/Modeler';
+
+import propertiesPanelModule from 'bpmn-js-properties-panel';
+import propertiesProviderModule from 'bpmn-js-properties-panel/lib/provider/camunda';
+import camundaModdleDescriptor from 'camunda-bpmn-moddle/resources/camunda.json';
+import SelfDescriptor from './selfDescriptor.json';
+
+var bpmnModeler = new BpmnModeler({
+  container: "canvasEl",
+  propertiesPanel: {
+    parent: '#js-properties-panel'
+  },
+  additionalModules: [
+    propertiesPanelModule,
+    propertiesProviderModule
+  ],
+  moddleExtensions: {
+    camunda: camundaModdleDescriptor,
+    self: SelfDescriptor
+  }
+});
+
+bpmnModeler.on("element.click", function (event, eventObj) {
+    console.log(event.type);
+    console.log(eventObj.element);
+    var moddle = bpmnModeler.get("moddle");
+    var attrOne = moddle.create("se:AttrOne", { name: "test", value: 3 });
+    var prop = moddle.create("camunda:Properties", { values: [] });
+    var extensions = moddle.create("bpmn:ExtensionElements", { values: [] })
+    prop.values.push(attrOne);
+    extensions.values.push(prop);
+
+    bpmnModeler.get("modeling").updateProperties(eventObj.element, {
+        extensionElements: extensions
+    });
+})
+```
+
 
