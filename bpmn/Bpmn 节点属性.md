@@ -1,11 +1,5 @@
 # Bpmn 节点属性
 
-## 一个多种属性配置的用户任务节点
-
-![image-20201127092004869](C:\Users\cisdi\AppData\Roaming\Typora\typora-user-images\image-20201127092004869.png)
-
-![image-20201127091840889](C:\Users\cisdi\AppData\Roaming\Typora\typora-user-images\image-20201127091840889.png)
-
 ### 主要留意属性/内容
 
 ```
