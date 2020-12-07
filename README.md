@@ -1,4 +1,4 @@
-## MiyueSC's blog
+# MiyueSC's blog
 
 1. [Vue项目中使用高德地图AMap](https://github.com/miyuesc/blog/issues/3)
 
