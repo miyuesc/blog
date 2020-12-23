@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Css demo</title>
+    <style type="text/css">
+        html,body {
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+        }
+        .content-1, .content-3 {
+            width: 300px;
+            background: rgba(60, 133, 255, 0.8);
+        }
+        .content-2 {
+            background: rgba(82, 180, 21, 0.8);
+            margin: 0 300px;
+        }
+        .content-1 {
+            float: left;
+        }
+        .content-3 {
+            float: right;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="content-1">content 1</div>
+    <div class="content-2">content 2</div>
+    <div class="content-3">content 3</div>
+</div>
+</body>
+</html>
