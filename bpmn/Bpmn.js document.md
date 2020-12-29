@@ -237,8 +237,6 @@ this.bpmnModeler = new BpmnModeler({
 });
 ```
 
-> 持续更新。。。
-
 ## 三. 事件
 
 Bpmn.js 提供了EventBus事件总线模块来管理监听事件，并预设了244个事件。
