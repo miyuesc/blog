@@ -4,16 +4,30 @@
     <meta charset="UTF-8">
     <title>Title</title>
     <script src="./vue.js"></script>
+    <style type="text/css">
+        #app {
+            width: 600px;
+            margin: 100px auto;
+            border: 1px solid #eeeeee;
+            border-radius: 4px;
+            box-sizing: border-box;
+            padding: 8px;
+            box-shadow: 0 0 10px #cccccc;
+        }
+    </style>
 </head>
 <body>
     <div id="app">
-        <p>{{ message }}</p>
-        <p>result:{{ result }}</p>
+        <p>message: {{ message }}</p>
+        <p>result: {{ result }}</p>
         <p>
             <input v-model="num1" type="number">
             <span>+</span>
             <input v-model="num2" type="number">
         </p>
+        <div>修改次数：{{ changeCount }}</div>
+        <br />
+        <button @click="buttonClick">点我</button>
     </div>
 <script>
     const demoVm = new Vue({
@@ -21,11 +35,22 @@
         data: {
             message: "hello world",
             num1: 0,
-            num2: 0
+            num2: 0,
+            changeCount: 0
         },
         computed: {
             result() {
                 return Number(this.num1) + Number(this.num2);
+            }
+        },
+        watch: {
+            result: function () {
+                this.changeCount += 1;
+            }
+        },
+        methods: {
+            buttonClick() {
+                alert("buttonClick");
             }
         }
     })
