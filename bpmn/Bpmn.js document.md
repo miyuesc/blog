@@ -1,11 +1,3 @@
----
-# 主题列表：juejin, github, smartblue, cyanosis, channing-cyan, fancy, hydrogen, condensed-night-purple, greenwillow, v-green, vue-pro
-# 贡献主题：https://github.com/xitu/juejin-markdown-themes
-theme: github
-highlight:
-
----
-
 ## 一. 引入Bpmn.js并初始化建模器
 
 ```javascript
