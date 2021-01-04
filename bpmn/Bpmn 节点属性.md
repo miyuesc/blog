@@ -2,8 +2,8 @@
 
 ### 主要留意属性/内容
 
-```
-shape: {
+```javascript
+shape = {
 		id: "节点id",
         type: "节点类型",
     	x: "x轴坐标",
