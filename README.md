@@ -15,10 +15,12 @@
 1. [《JavaScript高级程序设计》读书笔记(一)](./javascript/docs/《JavaScript高级程序设计》读书笔记(一).md)
 2. [《JavaScript高级程序设计》读书笔记(二)](./javascript/docs/《JavaScript高级程序设计》读书笔记(二).md)
 
-
 ### Vue 2.x
 
+#### 1. Vue 基础与实现原理
 
+1. [MVVM与Vue](./vue/mvvm与vue.md)
+2. [Vue源码阅读(一)](./vue/vue源码阅读--1.md)
 
 
 

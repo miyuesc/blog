@@ -1,8 +1,3 @@
-[piexl: 20190823]:"http://ww1.sinaimg.cn/large/0067sbCSly1g7kv53pdupj30im09x0tb.jpg"
-summary_start
-日常学习记录。
-summary_end
-
 ## 1. MVVM（Model-View-View-Model）模式
 
 要编写可维护的前端代码绝非易事。我们已经用<font color="orange"><b>MVC（MVC全名是Model View Controller，是模型(model)－视图(view)－控制器(controller)的缩写）</b></font>模式通过<font color="red"><b>koa(Express的下一代基于Node.js的web框架)</b></font>实现了后端数据、模板页面和控制器的分离，但是，对于前端来说，还不够。
