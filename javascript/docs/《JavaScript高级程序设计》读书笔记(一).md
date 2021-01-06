@@ -110,7 +110,7 @@ ES中包含5种简单数据类型（基本数据类型）与一众复杂数据�
 >
 > ```javascript
 > function functionName(arg0, arg1,...,argN) {
->  statements
+>  	statements
 > } 
 > ```
 
@@ -661,7 +661,7 @@ alert(SubType.prototype.isPrototypeOf(instance));        //true
 
 为解决原型中包含引用类型值所带来的问题（又叫**伪造对象**或者**经典继承**）。
 
-基本思想：在子类型构造函数内部调用超类型构造函数，可以通过call()和apply()方法。
+基本思想：在子类型构造函数内部调用超类型构造函数，可以通过`call()`和`apply()`方法。
 
 ```javascript
 function SuperType(){ 
@@ -683,7 +683,7 @@ alert(instance2.colors);    //"red,blue,green"
 
 1. 传递参数
 
-借用沟槽函数可以在子类型构造函数中向超类型构造函数传递参数。
+借用构造函数可以在子类型构造函数中向超类型构造函数传递参数。
 
 ```javascript
 function SuperType(name){ 

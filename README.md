@@ -8,6 +8,7 @@
 
 1. [《JavaScript高级程序设计》读书笔记(一)](./javascript/docs/《JavaScript高级程序设计》读书笔记(一).md)
 2. [《JavaScript高级程序设计》读书笔记(二)](./javascript/docs/《JavaScript高级程序设计》读书笔记(二).md)
+3. [JavaScript高频面试题与基础问题](./javascript/docs/JavaScript基础知识点.md)
 
 ### Vue 2.x
 

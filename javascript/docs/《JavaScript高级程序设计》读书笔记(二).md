@@ -81,19 +81,19 @@ let colors = new Array("red", "blue", "green"); // ["red", "blue", "green"]
 
 // 2. 字面量表示法
 let colors = ["red", "blue", "green"]; // 创建一个包含 3 个元素的数组
-let names = []; // 创建一个空数组
+let names = [];                   // 创建一个空数组
 
 // 3. Array.form()
-console.log(Array.from("Matt")); // ["M", "a", "t", "t"]
+console.log(Array.from("Matt"));  // ["M", "a", "t", "t"]
 // Array.from()对现有数组执行浅复制
 const a1 = [1, 2, 3, 4];
 const a2 = Array.from(a1);
-console.log(a1); // [1, 2, 3, 4]
-console.log(a1 === a2); // false
+console.log(a1);                   // [1, 2, 3, 4]
+console.log(a1 === a2);            // false
 // Array.from()还接收第二个可选的映射函数参数。
 const a1 = [1, 2, 3, 4];
 const a2 = Array.from(a1, x => x**2);
-console.log(a2); // [1, 4, 9, 16]
+console.log(a2);                   // [1, 4, 9, 16]
 
 // 4. Array.of() 通常用来转换函数参数的arguments类数组
 console.log(Array.of(1, 2, 3, 4)); // [1, 2, 3, 4]
@@ -118,9 +118,9 @@ const a = ["foo", "bar", "baz", "qux"];
 const aKeys = Array.from(a.keys());
 const aValues = Array.from(a.values());
 const aEntries = Array.from(a.entries());
-console.log(aKeys); // [0, 1, 2, 3]
-console.log(aValues); // ["foo", "bar", "baz", "qux"]
-console.log(aEntries); // [[0, "foo"], [1, "bar"], [2, "baz"], [3, "qux"]]
+console.log(aKeys);     // [0, 1, 2, 3]
+console.log(aValues);   // ["foo", "bar", "baz", "qux"]
+console.log(aEntries);  // [[0, "foo"], [1, "bar"], [2, "baz"], [3, "qux"]]
 ```
 
 #### 2.2.4 复制和填充
@@ -151,6 +151,230 @@ console.log(aEntries); // [[0, "foo"], [1, "bar"], [2, "baz"], [3, "qux"]]
 7. 归并方法：
    - `reduce()`：从数组第一项开始遍历到最后一项。
    - `reduceRight()`：从最后一项开始遍历至第一项。
+
+> 栈方法、队列方法、排序方法、操作方法会修改原数组
+>
+> 迭代方法、归并方法不会修改原数组
+
+### 2.3 Map (ES6 新增)
+
+Map 的大多数特性都可以通过 Object 类型实现，但二者之间还是存在一些细微的差异。  
+
+#### 2.3.1 基本API
+
+```javascript
+// 1. 创建
+const m = new Map();
+const m1 = new Map([
+["key1", "val1"],
+["key2", "val2"],
+["key3", "val3"]
+]);
+
+// 2. set() 添加键值对（返回所映射的实例，因此可以链式使用）
+m.set("firstName", "Matt")
+ .set("lastName", "Frisbie");
+
+// 3. get() 查询键值对，返回值
+alert(m.get("firstName")); // Matt
+
+// 4. has() 添加键值对，返回是否存在的布尔值
+alert(m.has("firstName")); // true
+
+// 5. delete() 删除键值对
+m.delete("firstName");     // 只删除这一个键/值对
+alert(m.has("firstName")); // false
+
+// 6. clear() 清空所有
+m.clear();                 // 清除这个映射实例中的所有键/值对
+alert(m.has("firstName")); // false
+alert(m.has("lastName"));  // false
+alert(m.size);             // 0
+```
+
+> 与 Object 只能使用数值、字符串或符号作为键不同， Map 可以使用任何 JavaScript 数据类型作为键。 
+
+#### 2.3.2 顺序与迭代
+
+与 Object 类型的一个主要差异是， Map 实例会维护键值对的插入顺序，因此可以根据插入顺序执行迭代操作。
+
+映射实例可以提供一个迭代器（Iterator），能以插入顺序生成`[key, value]`形式的数组。可以通过 `entries()`方法（或者 `Symbol.iterator` 属性，它引用 `entries()`）取得这个迭代器：
+
+```javascript
+const m = new Map([
+    ["key1", "val1"],
+    ["key2", "val2"],
+    ["key3", "val3"]
+]);
+alert(m.entries === m[Symbol.iterator]); // true
+for (let pair of m.entries()) {
+    alert(pair);
+}
+// [key1,val1]
+// [key2,val2]
+// [key3,val3]
+for (let pair of m[Symbol.iterator]()) {
+    alert(pair);
+}
+// [key1,val1]
+// [key2,val2]
+// [key3,val3]
+
+// 因为 entries()是默认迭代器，所以可以直接对映射实例使用扩展操作，把映射转换为数组：
+const m = new Map([
+    ["key1", "val1"],
+    ["key2", "val2"],
+    ["key3", "val3"]
+]);
+console.log([...m]); // [[key1,val1],[key2,val2],[key3,val3]]
+```
+
+如果不使用迭代器，而是使用回调方式，则可以调用映射的 `forEach(callback, opt_thisArg)`方法并传入回调，依次迭代每个键/值对。  
+
+`keys()`和 `values()`分别返回以插入顺序生成键和值的迭代器。
+
+#### 2.3.3 Object or Map
+
+1. 内存占用：固定内存大小时，Map大约可以比Object多存储50%的键值对
+2. 插入性能：大致相等，Map稍快；大量插入Map性能更好
+3. 查找性能：差异极小；少量数据或者涉及大量查找，Object性能更好
+4. 删除性能：Map性能更优
+
+### 2.4 WeakMap (ES6 新增)
+
+WeakMap 是 Map 的“兄弟”类型，其 API 也是 Map 的子集。
+
+弱映射中的键只能是 Object 或者继承自 Object 的类型，尝试使用非对象设置键会抛出`TypeError`。值的类型没有限制。
+
+### 2.5 Set (ES6 新增)
+
+#### 2.5.1 基本API
+
+```javascript
+// 1. 创建
+// 使用 new 关键字和 Set 构造函数可以创建一个空集合
+const m = new Set();
+// 使用数组初始化集合
+const s1 = new Set(["val1", "val2", "val3"]);
+
+// 2. add() 增加
+s.add("Matt")
+ .add("Frisbie");
+
+// 3. has() 查询
+alert(s.has("Matt"));    // true
+alert(s.size);           // 2
+
+// 4. delete() 删除
+s.delete("Matt");
+alert(s.has("Matt"));    // false
+alert(s.size);           // 1
+
+// 5. clear() 清空
+s.clear(); // 销毁集合实例中的所有值
+alert(s.has("Matt"));    // false
+alert(s.has("Frisbie")); // false
+alert(s.size);           // 0
+
+```
+
+#### 2.5.2 
+
+Set 会维护值插入时的顺序，因此支持按顺序迭代。
+
+集合实例可以提供一个迭代器（Iterator），能以插入顺序生成集合内容。可以通过 `values()`方
+法及其别名方法 `keys()`（或者 `Symbol.iterator` 属性，它引用 `values()`）取得这个迭代器：
+
+```javascript
+const s = new Set(["val1", "val2", "val3"]);
+alert(s.values === s[Symbol.iterator]); // true
+alert(s.keys === s[Symbol.iterator]); // true
+for (let value of s.values()) {
+    alert(value);
+}
+// val1
+// val2
+// val3
+for (let value of s[Symbol.iterator]()) {
+    alert(value);
+}
+// val1
+// val2
+// val3
+
+// 因为 values()是默认迭代器，所以可以直接对集合实例使用扩展操作，把集合转换为数组：
+const s = new Set(["val1", "val2", "val3"]);
+console.log([...s]); // ["val1", "val2", "val3"]
+```
+
+### 2.6 WeakSet  (ES6 新增)
+
+WeakSet 是 Set 的“兄弟”类型，其 API 也是 Set 的子集。
+
+## 3. 迭代器与生成器
+
+迭代：按照顺序反复多次执行一段程序，通常有明确的终止条件。
+
+ES6 新增了两个高级特性：迭代器、生成器。
+
+### 3.1 理解迭代
+
+**循环**即是迭代的基础，因为可以指定迭代次数以及每次迭代的操作。
+
+迭代会在一个**有序集合**上进行。
+
+### 3.2 迭代器模式
+
+任何实现 `Iterable` 接口的数据结构都可以被实现 `Iterator` 接口的结构“消费”（`consume`）。 迭代器（`iterator`）是按需创建的一次性对象。每个迭代器都会关联一个可迭代对象，而迭代器会暴露迭代其关联可迭代对象的 API。  
+
+很多类型都实现了`Iterable` 接口：
+
+1. String
+2. Array
+3. 映射
+4. 集合
+5. arguments 对象
+6. NodeList 等 DOM 集合
+
+检测是否存在默认迭代器属性可以暴露这个工厂函数：
+
+```javascript
+let num = 1;
+let obj = {};
+// 这两种类型没有实现迭代器工厂函数
+console.log(num[Symbol.iterator]); // undefined
+console.log(obj[Symbol.iterator]); // undefined
+
+let str = 'abc';
+let arr = ['a', 'b', 'c'];
+let map = new Map().set('a', 1).set('b', 2).set('c', 3);
+let set = new Set().add('a').add('b').add('c');
+let els = document.querySelectorAll('div');
+
+// 这些类型都实现了迭代器工厂函数
+console.log(str[Symbol.iterator]); // f values() { [native code] }
+console.log(arr[Symbol.iterator]); // f values() { [native code] }
+console.log(map[Symbol.iterator]); // f values() { [native code] }
+console.log(set[Symbol.iterator]); // f values() { [native code] }
+console.log(els[Symbol.iterator]); // f values() { [native code] }
+
+// 调用这个工厂函数会生成一个迭代器
+console.log(str[Symbol.iterator]()); // StringIterator {}
+console.log(arr[Symbol.iterator]()); // ArrayIterator {}
+console.log(map[Symbol.iterator]()); // MapIterator {}
+console.log(set[Symbol.iterator]()); // SetIterator {}
+console.log(els[Symbol.iterator]()); // ArrayIterator {}
+```
+
+## 4. 对象
+
+
+
+
+
+
+
+
 
 
 
