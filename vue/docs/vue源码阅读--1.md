@@ -1,10 +1,10 @@
 # Vue 源码阅读
 
-## `new Vue()`
+## new Vue()
 
-### `const APP = new Vue（options）`
+`const APP = new Vue(options)`
 
-#### 1. `_init(options)`
+### 1. `_init(options)`
 
 1. 创建唯一标识 `this._uuid`
 
