@@ -1,10 +1,80 @@
 # Vue 源码阅读
 
-## new Vue()
+## 1. `Vue` 初始化原型属性和方法
+
+### 1.1 `initMixin(Vue)`
+
+为 `Vue.prototype` 原型上添加 `_init(options)` 的方法。
+
+
+
+### 1.2 `stateMixin(Vue)`
+
+重新定义原型下的 `$data` 与 `$props` 的 `get(), set(newValue)` 的方法。为 `Vue.prototype` 添加 `$set(target, key, val)` 、`$delete(target, key)` 与 `$watch(expOrFn, cb, options)` 方法。
+
+
+
+### 1.3 `eventsMixin(vue)`
+
+为 `Vue.prototype` 原型上添加 `$on(event, fn)` 、`$once(event, fn)` 、`$off(event, fn)` 与 `$emit(event, fn)` 方法。
+
+> `$on(), $off()` 传入参数 `event` 可以是数组，内部会遍历数组重新调用 `$on(), $off()`。
+
+
+
+### 1.4 `lifecycleMixin(Vue)` 
+
+为 `Vue.prototype` 原型上添加 `_update(vnode, hydrating)` 、`$forceUpdate()` 与 `$destroy()` 方法。
+
+
+
+### 1.5 `renderMixin(Vue)` 
+
+调用 `installRenderHelpers(Vue.prototype)` 为 `Vue.prototype` 原型上添加渲染相关方法：
+
+1. `Vue.prototype._o`: `markOnce` -- `v-once` 解析助手，会将当前节点标记为静态节点
+
+2. `Vue.prototype._n`: `toNumber` -- 将输入值转换为数字。如果转换失败，则返回原始字符串。
+
+3. `Vue.prototype._s`: `toString` -- 将值转换为实际显示的字符串
+
+4. `Vue.prototype._l`: `renderList` -- `v-for` 解析助手
+
+5. `Vue.prototype._t`: `renderSlot` -- `<slot>` 标签解析助手
+
+6. `Vue.prototype._q`: `looseEqual` -- 检测两个值是否相同
+
+7. `Vue.prototype._i`: `looseIndexOf` -- 返回数组中检查到的第一个与 val 相同的值的下标
+
+8. `Vue.prototype._m`: `renderStatic` -- 渲染静态 `dom` 树的辅助程序
+
+9. `Vue.prototype._f`: `resolveFilter` -- 过滤器解析程序
+
+10. `Vue.prototype._k`: `checkKeyCodes` -- `config.keyCode` 检测
+
+11. `Vue.prototype._b`: `bindObjectProps` -- `v-bind` 合并到 `VNode` 的辅助程序
+
+12. `Vue.prototype._v`: `createTextVNode` -- 创建普通的文本虚拟节点
+
+13. `Vue.prototype._e`: `createEmptyVNode` --  创建空虚拟节点
+
+14. `Vue.prototype._u`: `resolveScopedSlots` -- 反向代理 `slot` 插槽
+
+15. `Vue.prototype._g`: `bindObjectListeners` -- 处理 `v-on` 绑定的监听程序
+
+16. `Vue.prototype._d`: `bindDynamicKeys`
+
+17. `Vue.prototype._p`: `prependModifier` -- 事件修饰符标记动态添加到事件上
+
+
+
+
+
+## 2. `new Vue()` 创建 `Vue` 实例
 
 `const APP = new Vue(options)`
 
-### 1. `_init(options)`
+### 2.1 `_init(options)`
 
 1. 创建唯一标识 `this._uuid`
 
