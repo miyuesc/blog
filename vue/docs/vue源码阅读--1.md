@@ -33,40 +33,58 @@
 调用 `installRenderHelpers(Vue.prototype)` 为 `Vue.prototype` 原型上添加渲染相关方法：
 
 1. `Vue.prototype._o`: `markOnce` -- `v-once` 解析助手，会将当前节点标记为静态节点
-
 2. `Vue.prototype._n`: `toNumber` -- 将输入值转换为数字。如果转换失败，则返回原始字符串。
-
 3. `Vue.prototype._s`: `toString` -- 将值转换为实际显示的字符串
-
 4. `Vue.prototype._l`: `renderList` -- `v-for` 解析助手
-
 5. `Vue.prototype._t`: `renderSlot` -- `<slot>` 标签解析助手
-
 6. `Vue.prototype._q`: `looseEqual` -- 检测两个值是否相同
-
 7. `Vue.prototype._i`: `looseIndexOf` -- 返回数组中检查到的第一个与 val 相同的值的下标
-
 8. `Vue.prototype._m`: `renderStatic` -- 渲染静态 `dom` 树的辅助程序
-
 9. `Vue.prototype._f`: `resolveFilter` -- 过滤器解析程序
-
 10. `Vue.prototype._k`: `checkKeyCodes` -- `config.keyCode` 检测
-
 11. `Vue.prototype._b`: `bindObjectProps` -- `v-bind` 合并到 `VNode` 的辅助程序
-
 12. `Vue.prototype._v`: `createTextVNode` -- 创建普通的文本虚拟节点
-
 13. `Vue.prototype._e`: `createEmptyVNode` --  创建空虚拟节点
-
 14. `Vue.prototype._u`: `resolveScopedSlots` -- 反向代理 `slot` 插槽
-
 15. `Vue.prototype._g`: `bindObjectListeners` -- 处理 `v-on` 绑定的监听程序
-
 16. `Vue.prototype._d`: `bindDynamicKeys`
-
 17. `Vue.prototype._p`: `prependModifier` -- 事件修饰符标记动态添加到事件上
 
+为 `Vue.prototype` 添加 `$nextTick()` 、`_render()` 方法。
 
+
+
+### 1.6 初始化全局API
+
+#### 1.6.1 `initUse(Vue)`
+
+定义 `Vue.use(plugin)` 方法，用于安装插件。
+
+
+
+#### 1.6.2 `initMixin(Vue)`
+
+与 1.1 `initMixin(Vue)` 不同，这里主要定义 `Vue.mixin(mixin)` 混入方法。
+
+> 在打包后的 `vue.js` 中，代码位于 `function initMixin$1(Vue){}` 中，源码位于 `src/core/global-api/mixin.js`
+
+
+
+#### 1.6.3 `initExtend(Vue)`
+
+定义 `Vue.extend(extendOptions)` 方法，提供 使用 `Vue` 基础构造方法来创建一个组件。
+
+
+
+#### 1.6.4 `initAssetRegister(Vue)`
+
+主要定义 `Vue.component(id, definition)`、`Vue.directive(id, definition)`、`Vue.filter(id, definition)` 三个方法。
+
+> 源码中使用遍历 `ASSET_TYPES` 的方式来定义三个方法，分别用于创建全局组件实例、全局指令实例与全局过滤器指令。
+
+
+
+> `Vue` 在初始化构造函数时还定义了其他方法，这里不多做表述。
 
 
 

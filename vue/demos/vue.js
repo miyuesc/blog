@@ -5314,12 +5314,7 @@
     }
   }
 
-  function pruneCacheEntry (
-    cache,
-    key,
-    keys,
-    current
-  ) {
+  function pruneCacheEntry (cache, key, keys, current) {
     var cached$$1 = cache[key];
     if (cached$$1 && (!current || cached$$1.tag !== current.tag)) {
       cached$$1.componentInstance.$destroy();
