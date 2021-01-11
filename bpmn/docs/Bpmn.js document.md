@@ -294,10 +294,10 @@ interface Viewbox {
 | 序号 | 事件名                                                 | 说明                                                         | callback参数                             |
 | :--- | :----------------------------------------------------- | ------------------------------------------------------------ | ---------------------------------------- |
 | 0    | "diagram.destroy"                                      | 流程编辑器销毁                                               | event:InternalEvent                      |
-| 1    | "render.shape"                                         | -                                                            |                                          |
-| 2    | "render.connection"                                    | -                                                            |                                          |
-| 3    | "render.getShapePath"                                  | -                                                            |                                          |
-| 4    | "render.getConnectionPath"                             | -                                                            |                                          |
+| 1    | "render.shape"                                         | 调用GraphicsFactory.drawShape时触发，开始渲染形状            |                                          |
+| 2    | "render.connection"                                    | 调用GraphicsFactory.drawConnection时触发，开始渲染连线       |                                          |
+| 3    | "render.getShapePath"                                  | 调用GraphicsFactory.getShapePath时触发，开始获取形状路径     |                                          |
+| 4    | "render.getConnectionPath"                             | 调用GraphicsFactory.getConnectionPath时触发                  |                                          |
 | 5    | "diagram.init"                                         | 指示画布已准备好在其上进行绘制                               |                                          |
 | 6    | "shape.added"                                          | 已更新到xml内，触发渲染方法，返回值为插入的新元素            | event:InternalEvent, element: Element    |
 | 7    | "connection.added"                                     | 已更新到xml内，触发渲染方法，返回值为插入的新元素            | event:InternalEvent, element: Element    |
@@ -309,8 +309,8 @@ interface Viewbox {
 | 13   | "canvas.init"                                          | 画布初始化完成                                               |                                          |
 | 14   | "shape.changed"                                        | 形状属性更新，返回当前元素                                   | event:InternalEvent, element: Element    |
 | 15   | "connection.changed"                                   | 连线属性更新，返回当前元素                                   | event:InternalEvent, element: Element    |
-| 16   | "interactionEvents.createHit"                          |                                                              |                                          |
-| 17   | "interactionEvents.updateHit"                          |                                                              |                                          |
+| 16   | "interactionEvents.createHit"                          | shape.added,connection.added之后触发                         |                                          |
+| 17   | "interactionEvents.updateHit"                          | shape.changed,connection.changed之后触发                     |                                          |
 | 18   | "shape.remove"                                         | 形状被选中移除，返回被移除的元素对象                         | event:InternalEvent, element: Element    |
 | 19   | "connection.remove"                                    | 连线被选中移除                                               | event:InternalEvent, element: Element    |
 | 20   | "element.hover"                                        | 鼠标移动到元素上，返回鼠标位置处元素对象                     | event:InternalEvent, element: Element    |
@@ -323,22 +323,22 @@ interface Viewbox {
 | 27   | "canvas.viewbox.changing"                              | 视图缩放过程中                                               | event:InternalEvent                      |
 | 28   | "canvas.viewbox.changed"                               | 视图缩放完成                                                 | event:InternalEvent, viewbox: Viewbox    |
 | 29   | "element.changed"                                      | 元素发生改变时触发，返回发生改变的元素                       | event:InternalEvent, element: Element    |
-| 30   | "element.marker.update"                                |                                                              |                                          |
-| 31   | "attach"                                               |                                                              |                                          |
-| 32   | "detach"                                               |                                                              |                                          |
-| 33   | "editorActions.init"                                   |                                                              |                                          |
+| 30   | "element.marker.update"                                | 元素标识更新时触发                                           |                                          |
+| 31   | "attach"                                               | 画布或者根节点重新挂载时                                     |                                          |
+| 32   | "detach"                                               | 画布或者根节点移除挂载时                                     |                                          |
+| 33   | "editorActions.init"                                   | 流程编辑模块加载完成                                         |                                          |
 | 34   | "keyboard.keydown"                                     | 键盘按键按下                                                 |                                          |
 | 35   | "element.mousedown"                                    | 鼠标在元素上按下时触发                                       | event:InternalEvent, element: Element    |
-| 36   | "commandStack.connection.start.canExecute"             |                                                              |                                          |
-| 37   | "commandStack.connection.create.canExecute"            |                                                              |                                          |
-| 38   | "commandStack.connection.reconnect.canExecute"         |                                                              |                                          |
-| 39   | "commandStack.connection.updateWaypoints.canExecute"   |                                                              |                                          |
-| 40   | "commandStack.shape.resize.canExecute"                 |                                                              |                                          |
-| 41   | "commandStack.elements.create.canExecute"              |                                                              |                                          |
-| 42   | "commandStack.elements.move.canExecute"                |                                                              |                                          |
-| 43   | "commandStack.shape.create.canExecute"                 |                                                              |                                          |
-| 44   | "commandStack.shape.attach.canExecute"                 |                                                              |                                          |
-| 45   | "commandStack.element.copy.canExecute"                 |                                                              |                                          |
+| 36   | "commandStack.connection.start.canExecute"             | 连线开始时检测是否可以创建连线，点击创建连线的按钮时触发     |                                          |
+| 37   | "commandStack.connection.create.canExecute"            | 连线开始时检测是否可以创建连线，                             |                                          |
+| 38   | "commandStack.connection.reconnect.canExecute"         | 检测连线是否可以修改                                         |                                          |
+| 39   | "commandStack.connection.updateWaypoints.canExecute"   | 检测是否可以更新连线拐点                                     |                                          |
+| 40   | "commandStack.shape.resize.canExecute"                 | 检测形状是否可以更改大小                                     |                                          |
+| 41   | "commandStack.elements.create.canExecute"              | 检测是否可以创建元素                                         |                                          |
+| 42   | "commandStack.elements.move.canExecute"                | 检测是否可以移动元素                                         |                                          |
+| 43   | "commandStack.shape.create.canExecute"                 | 检测是否可以创建形状                                         |                                          |
+| 44   | "commandStack.shape.attach.canExecute"                 | 检测元素是否可以挂载到目标上                                 |                                          |
+| 45   | "commandStack.element.copy.canExecute"                 | 检测元素是否可以被复制                                       |                                          |
 | 46   | "shape.move.start"                                     | 形状开始移动                                                 | event:InternalEvent, element: Element    |
 | 47   | "shape.move.move"                                      | 形状移动过程中                                               | event:InternalEvent, element: Element    |
 | 48   | "elements.delete"                                      | 元素被删除，返回被删除的元素                                 | event:InternalEvent, element: Element    |
@@ -346,7 +346,7 @@ interface Viewbox {
 | 50   | "i18n.changed"                                         |                                                              |                                          |
 | 51   | "drag.move"                                            | 元素拖拽过程中                                               | event:InternalEvent, event:InternalEvent |
 | 52   | "contextPad.create"                                    | 当contextPad出现的时候触发                                   | event:InternalEvent, element: Element    |
-| 53   | "palette.create"                                       |                                                              |                                          |
+| 53   | "palette.create"                                       | 左侧palette开始创建                                          |                                          |
 | 54   | "autoPlace.end"                                        | 自动对齐结束                                                 |                                          |
 | 55   | "autoPlace"                                            | 触发自动对齐方法时                                           |                                          |
 | 56   | "drag.start"                                           | 元素拖拽开始                                                 | event:InternalEvent, event:InternalEvent |
@@ -366,14 +366,14 @@ interface Viewbox {
 | 70   | "connectionSegment.move.hover"                         | 鼠标选中连线进行拖动开始                                     | event:InternalEvent, event:InternalEvent |
 | 71   | "connectionSegment.move.out"                           | 鼠标选中连线，按下鼠标时                                     | event:InternalEvent, event:InternalEvent |
 | 72   | "connectionSegment.move.cleanup"                       | 鼠标选中连线后放开鼠标时                                     | event:InternalEvent, event:InternalEvent |
-| 73   | "connectionSegment.move.cancel"                        |                                                              | event:InternalEvent, event:InternalEvent |
+| 73   | "connectionSegment.move.cancel"                        | 选中连线之后取消连接                                         | event:InternalEvent, event:InternalEvent |
 | 74   | "connectionSegment.move.end"                           | 选中连线并拖拽结束                                           | event:InternalEvent, event:InternalEvent |
-| 75   | "element.mousemove"                                    |                                                              |                                          |
-| 76   | "element.updateId"                                     |                                                              |                                          |
-| 77   | "bendpoint.move.move"                                  |                                                              |                                          |
-| 78   | "bendpoint.move.start"                                 |                                                              |                                          |
-| 79   | "bendpoint.move.cancel"                                |                                                              |                                          |
-| 80   | "connect.move"                                         |                                                              |                                          |
+| 75   | "element.mousemove"                                    | 鼠标移除元素后                                               |                                          |
+| 76   | "element.updateId"                                     | 更新元素id时触发                                             |                                          |
+| 77   | "bendpoint.move.move"                                  | 连线上的拐点被拖拽移动时触发                                 |                                          |
+| 78   | "bendpoint.move.start"                                 | 连线上的拐点被拖拽移动开始时触发                             |                                          |
+| 79   | "bendpoint.move.cancel"                                | 连线上的拐点被点击并取消拖拽                                 |                                          |
+| 80   | "connect.move"                                         | 连线被移动时                                                 |                                          |
 | 81   | "connect.hover"                                        |                                                              |                                          |
 | 82   | "connect.out"                                          |                                                              |                                          |
 | 83   | "connect.cleanup"                                      |                                                              |                                          |
@@ -463,7 +463,7 @@ interface Viewbox {
 | 167  | "commandStack.shape.replace.preExecuted"               |                                                              |                                          |
 | 168  | "bpmnElement.added"                                    |                                                              |                                          |
 | 169  | "commandStack.element.updateProperties.postExecute"    |                                                              |                                          |
-| 170  | "commandStack.label.create.postExecute"                |                                                              |                                          |
+| 170  | "commandStack或者.label.create.postExecute"            |                                                              |                                          |
 | 171  | "commandStack.connection.layout.postExecute"           |                                                              |                                          |
 | 172  | "commandStack.connection.updateWaypoints.postExecute"  |                                                              |                                          |
 | 173  | "commandStack.shape.replace.postExecute"               |                                                              |                                          |
@@ -824,7 +824,7 @@ Canvas.removeConnaction(connection)
 /**
  * 查询图形元素的SVGElement，即 ElementRegistry.getGraphics()方法。
  * @param shape： string | djs.model 节点id或者model
- * @param secondary： boolean 
+ * @param secondary?： boolean 
  * @return element: SVGElement
  */
 Canvas.getGraphics(element, secondary)
@@ -862,6 +862,18 @@ Canvas.zoom(newScale, center)
 
 // 主动触发"canvas.resized"事件
 Canvas.resized()
+
+// 返回画布元素的大小
+Canvas.getSize()
+
+// 返回画布的绝对边界
+// @return BBox {
+// 		x: x;
+// 		y: y;
+// 		width: width;
+// 		height: height;
+// }
+Canvas.getAbsoluteBBox()
 ```
 
 ### 5. EventBus 事件总线
@@ -963,7 +975,9 @@ EventBus.on("foo", function(event, payload) {
 
 ### 7. Modeling 基本建模方法
 
-Diagram.js提供的基础建模工厂，注入了 `EventBus, ElementFactory, CommandStack` 模块。**该模块在自定义节点属性等方面经常使用**
+`Diagram.js` 提供的基础建模工厂 `BaseModeling`，注入了 `EventBus, ElementFactory, CommandStack` 模块。`Bpmn.js` 继承了 `BaseModeling` 并提供了新的方法。
+
+**该模块在自定义节点属性等方面经常使用**
 
 **使用方式：**
 
@@ -973,33 +987,271 @@ const Modeling = this.bpmnModeler.get("modeling");
 
 `Modeling` 初始化时会向 `CommandStack` 命令堆栈中注册对应的处理程序，以确保操作可恢复和取消。
 
-```text
-handlers: {
-    'shape.append': AppendShapeHandler, // 形状可逆添加到源形状的处理程序
-    'shape.create': CreateShapeHandler, // 形状可逆创建、添加到流程中的处理程序
-    'shape.delete': DeleteShapeHandler, // 形状可逆移除的处理程序
-    'shape.move': MoveShapeHandler, // 形状可逆移动的处理程序
-    'shape.resize': ResizeShapeHandler, // 形状可逆变换大小的处理程序
-    'shape.replace': ReplaceShapeHandler, // 通过添加新形状并删除旧形状来替换形状。 如果可能，将保持传入和传出连接
-    'shape.toggleCollapse': ToggleShapeCollapseHandler, // 切换元素的折叠状态及其所有子元素的可见性
-    'spaceTool': SpaceToolHandler, // 通过移动和调整形状、大小、连线锚点(巡航点)来添加或者删除空间
-    'label.create': CreateLabelHandler, // 创建标签并附加到特定的模型元素上
-    'connection.create': CreateConnectionHandler, // 创建连线，并显示到画布上
-    'connection.delete': DeleteConnectionHandler, // 移除连线
-    'connection.move': MoveConnectionHandler, // 实现连接的可逆移动的处理程序。 该处理程序与布局连接处理程序的不同之处在于它保留了连接布局
-    'connection.layout': LayoutConnectionHandler, // 实现形状的可逆移动的处理程序
-    'connection.updateWaypoints': UpdateWaypointsHandler, // 更新锚点(巡航点)
-    'connection.reconnect': ReconnectConnectionHandler, // 重新建立连接关系
-    'elements.create': CreateElementsHandler, // 元素可逆创建的处理程序
-    'elements.move': MoveElementsHandler, // 元素可逆移动的处理程序
-    'elements.delete': DeleteElementsHandler, // 元素可逆移除的处理程序
-    'elements.distribute': DistributeElementsHandler, // 均匀分配元素布局的处理程序
-    'elements.align': AlignElementsHandler, // 以某种方式对齐元素
-    'element.updateAttachment': UpdateAttachmentHandler // 实现形状的可逆附着/分离的处理程序。
+`Modeling` 提供的方法主要是根据 `handlers` 来定义的，每个方法会触发对应的事件
+
+```javascript
+// BaseModeling (diagram.js)
+BaseModeling.prototype.getHandlers = function () {
+    var BaseModelingHandlers = {
+        'shape.append': AppendShapeHandler, // 形状可逆添加到源形状的处理程序
+        'shape.create': CreateShapeHandler, // 形状可逆创建、添加到流程中的处理程序
+        'shape.delete': DeleteShapeHandler, // 形状可逆移除的处理程序
+        'shape.move': MoveShapeHandler, // 形状可逆移动的处理程序
+        'shape.resize': ResizeShapeHandler, // 形状可逆变换大小的处理程序
+        'shape.replace': ReplaceShapeHandler, // 通过添加新形状并删除旧形状来替换形状。 如果可能，将保持传入和传出连接
+        'shape.toggleCollapse': ToggleShapeCollapseHandler, // 切换元素的折叠状态及其所有子元素的可见性
+        'spaceTool': SpaceToolHandler, // 通过移动和调整形状、大小、连线锚点(巡航点)来添加或者删除空间
+        'label.create': CreateLabelHandler, // 创建标签并附加到特定的模型元素上
+        'connection.create': CreateConnectionHandler, // 创建连线，并显示到画布上
+        'connection.delete': DeleteConnectionHandler, // 移除连线
+        'connection.move': MoveConnectionHandler, // 实现连接的可逆移动的处理程序。 该处理程序与布局连接处理程序的不同之处在于它保留了连接布局
+        'connection.layout': LayoutConnectionHandler, // 实现形状的可逆移动的处理程序
+        'connection.updateWaypoints': UpdateWaypointsHandler, // 更新锚点(巡航点)
+        'connection.reconnect': ReconnectConnectionHandler, // 重新建立连接关系
+        'elements.create': CreateElementsHandler, // 元素可逆创建的处理程序
+        'elements.move': MoveElementsHandler, // 元素可逆移动的处理程序
+        'elements.delete': DeleteElementsHandler, // 元素可逆移除的处理程序
+        'elements.distribute': DistributeElementsHandler, // 均匀分配元素布局的处理程序
+        'elements.align': AlignElementsHandler, // 以某种方式对齐元素
+        'element.updateAttachment': UpdateAttachmentHandler // 实现形状的可逆附着/分离的处理程序。
+    }
+    return BaseModelingHandlers;
 }
+
+// Modeling (bpmn.js)
+var ModelingHandlers = BaseModeling.prototype.getHandlers.call(this);
+
+ModelingHandlers['element.updateModdleProperties'] = UpdateModdlePropertiesHandler; // 实现元素上的扩展属性的可逆修改
+ModelingHandlers['element.updateProperties'] = UpdatePropertiesHandler; // 实现元素上的属性的可逆修改
+ModelingHandlers['canvas.updateRoot'] = UpdateCanvasRootHandler; // 可逆更新画布挂载节点
+ModelingHandlers['lane.add'] = AddLaneHandler; // 可逆通道添加
+ModelingHandlers['lane.resize'] = ResizeLaneHandler; // 通道可逆resize
+ModelingHandlers['lane.split'] = SplitLaneHandler; // 通道可逆分隔
+ModelingHandlers['lane.updateRefs'] = UpdateFlowNodeRefsHandler; // 可逆更新通道引用
+ModelingHandlers['id.updateClaim'] = IdClaimHandler;
+ModelingHandlers['element.setColor'] = SetColorHandler; // 可逆更新元素颜色
+ModelingHandlers['element.updateLabel'] = UpdateLabelHandler; // 可逆更新元素label
 ```
 
 **提供方法：**
+
+```javascript
+const Modeling = this.bpmnModeler.get("modeling");
+
+
+// 获取当前拥有的处理程序
+Modeling.getHandlers()
+
+/**
+ * 更新元素的label标签，同时触发 element.updateLabel 事件
+ * @param element: ModdleElement
+ * @param newLabel: ModdleElement 新的标签元素
+ * @param newBounds: {x: number；y: number; width: number; height: number} 位置及大小
+ * @param hints?：{} 提示信息
+ */
+Modeling.updateLabel(element, newLabel, newBounds, hints);
+
+/**
+ * 创建新的连接线，触发 connection.create 事件
+ * 会在内部调用 createConnection() 方法（Modeling.prototype.createConnection -- in diagram.js）
+ * @param source：ModdleElement 源元素
+ * @param target：ModdleElement 目标元素
+ * @param attrs?: {} 属性，未传时会根据规则替换成对应的对象，主要包含连线类型 type
+ * @param hints?: {} 
+ * @return Connection 连线实例
+ */
+Modeling.connect(source, target, attrs, hints)
+
+/**
+ * 更新元素扩展属性，同时触发 element.updateModdleProperties
+ * @param element 目标元素
+ * @param moddleElement 元素扩展属性对应的实例
+ * @param properties 属性
+ */
+Modeling.updateModdleProperties(element, moddleElement, properties)
+
+/**
+ * 更新元素属性，同时触发 element.updateProperties
+ * @param element 目标元素
+ * @param properties 属性
+ */
+Modeling.connect(element, properties)
+
+/**
+ * 泳道(通道)事件，会触发对应的事件 lane.resize
+ */
+Modeling.resizeLane(laneShape, newBounds, balanced)
+
+/**
+ * 泳道(通道)事件，会触发对应的事件 lane.add
+ */
+Modeling.addLane(targetLaneShape, location)
+
+/**
+ * 泳道(通道)事件，会触发对应的事件 lane.split
+ */
+Modeling.splitLane(targetLane, count)
+
+/**
+ * 将当前图转换为协作图
+ * @return Root
+ */
+Modeling.makeCollaboration()
+
+/**
+ * 将当前图转换为一个过程
+ * @return Root
+ */
+Modeling.makeProcess()
+
+/**
+ * 修改目标元素color，同时触发 element.setColor 事件
+ * @param elements: ModdleElment || ModdleElement[] 目标元素
+ * @param colors：{[key: string]: string} svg对应的css颜色属性对象
+ */
+Modeling.setColor(elements, colors)
+```
+
+`BaseModeling` 提供方法：
+
+```javascript
+// 向命令堆栈注册处理程序
+Modeling.registerHandlers(commandStack)
+
+// 移动 Shape 元素到新元素下， 触发shape.move
+Modeling.moveShape(shape, delta, newParent, newParentIndex, hints)
+
+// 移动多个 Shape 元素到新元素下， 触发 elements.move
+Modeling.moveElements(shapes, delta, target, hints)
+
+// 移动 Connection 元素到新元素下， 触发 connection.move
+Modeling.moveConnection(connection, delta, newParent, newParentIndex, hints)
+
+// 移动 Connection 元素到新元素下， 触发 connection.move
+Modeling.layoutConnection(connection, hints)
+
+
+/**
+ * 创建新的连线实例，触发 connection.create
+ * @param source: ModdleElement
+ * @param target: ModdleElement
+ * @param parentIndex?: number
+ * @param connection: ModdleElement | Object 连线实例或者配置的属性对象
+ * @param parent：ModdleElement 所在的元素的父元素 通常为 Root
+ * @param hints: {}
+ * @return Connection 新的连线实例
+ */
+Modeling.createConnection(source, target, parentIndex, connection, parent, hints)
+
+/**
+ * 创建新的图形实例，触发 shape.create
+ * @param shape
+ * @param position
+ * @param target
+ * @param parentIndex
+ * @param hints
+ * @return Shape 新的图形实例
+ */
+Modeling.createShape(shape, position, target, parentIndex, hints)
+
+/**
+ * 创建多个元素实例，触发 elements.create
+ * @param
+ * @param
+ * @return Elements 实例数组
+ */
+Modeling.createElements(elements, position, parent, parentIndex, hints)
+
+/**
+ * 为元素创建 label 实例， 触发 label.create
+ * @param labelTarget: ModdleElement 目标元素
+ * @param position: { x: number; y: number }
+ * @param label：ModdleElement label 实例
+ * @param parent: ModdleElement
+ * @return Label
+ */
+Modeling.createLabel(labelTarget, position, label, parent)
+
+/**
+ * 将形状附加到给定的源，在源和新创建的形状之间绘制连接。触发 shape.append
+ * @param source: ModdleElement
+ * @param shape: ModdleElement | Object
+ * @param position: { x: number; y: number }
+ * @param target: ModdleElement
+ * @param hints
+ * @return Shape 形状实例
+ */
+Modeling.appendShape(source, shape, position, target, hints)
+
+/**
+ * 移除元素，触发 elements.delete
+ * @param elements: ModdleElement[]
+ */
+Modeling.removeElements(elements)
+
+/**
+ * 不太了解
+ */
+Modeling.distributeElements(groups, axis, dimension)
+
+/**
+ * 移除元素, 触发 shape.delete
+ * @param shape： ModdleElement
+ * @param hints?: object
+ */
+Modeling.removeShape(shape, hints)
+
+/**
+ * 移除连线, 触发 connection.delete
+ * @param connection： ModdleElement
+ * @param hints?: object
+ */
+Modeling.removeConnection(connection, hints)
+
+/**
+ * 更改元素类型(替换元素)，触发 shape.replace
+ * @param oldShape：ModdleElement
+ * @param newShape：ModdleElement
+ * @param hints?: object
+ * @return Shape 替换后的新元素实例
+ */
+Modeling.replaceShape(oldShape, newShape, hints)
+
+/**
+ * 对其选中元素，触发 shape.replace
+ * @param elements: ModdleElement[]
+ * @param alignment: Alignment
+ * @return
+ */
+Modeling.alignElements(elements, alignment)
+
+/**
+ * 调整形状元素大小，触发 shape.resize
+ * @param shape: ModdleElement
+ * @param newBounds
+ * @param minBounds
+ * @param hints?: object
+ */
+Modeling.resizeShape(shape, newBounds, minBounds, hints)
+
+/**
+ * 切换元素展开/收缩模式，触发 shape.toggleCollapse
+ * @param shape?: ModdleElement
+ * @param hints?: object=
+ */
+Modeling.toggleCollapse(shape, hints)
+
+// 连线调整的方法
+Modeling.reconnect(connection, source, target, dockingOrPoints, hints)
+
+Modeling.reconnectStart(connection, newSource, dockingOrPoints, hints)
+
+Modeling.reconnectEnd(connection, newTarget, dockingOrPoints, hints)
+
+Modeling.connect(source, target, attrs, hints)
+```
+
+
 
 
 
