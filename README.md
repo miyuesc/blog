@@ -8,7 +8,8 @@
 
 1. [《JavaScript高级程序设计》读书笔记(一)](./javascript/docs/《JavaScript高级程序设计》读书笔记(一).md)
 2. [《JavaScript高级程序设计》读书笔记(二)](./javascript/docs/《JavaScript高级程序设计》读书笔记(二).md)
-3. [JavaScript高频面试题与基础问题](./javascript/docs/JavaScript基础知识点.md)
+3. [Async/Await 处理异步](./javascript/docs/Async与Await处理异步.md)
+4. [JavaScript高频面试题与基础问题](./javascript/docs/JavaScript基础知识点.md)
 
 ### CSS
 
