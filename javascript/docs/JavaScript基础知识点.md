@@ -122,5 +122,66 @@ console.log(typeof name2); // object
 
 `ES6+`还可以使用 `let`、`const`来声明变量，也有助于垃圾回收过程。
 
+## 2. 原型与原型链
+
+### 2.1 原型
+
+每个Object对象都有 `__proto__`属性，每个函数都有自己的 <code>prototype</code> (原型)属性。
+
+
+
+每当创建一个**函数**时，都会为这个函数创建一个 `prototype` 属性（地址，指向这个函数的原型对象），每个原型对象自动获得一个 `constructor` 属性（地址，指向与这个函数关联的构造函数，普通函数也会指回原函数）。
+
+```javascript
+// 1. 构造函数
+function Person(name) {
+    this.name = name;
+	this.sayName = function() {
+        console.log(this.name);
+    }
+}
+
+Person.prototype.constructor === Person; // true
+
+// 2. 普通函数
+function normalFunc() { 
+    console.log("我是普通函数") 
+}
+
+normalFunc.prototype.constructor === normalFunc; // true
+```
+
+
+
+每当创建一个**对象**时，都会为这个对象创建一个 `__proto__` 的属性（地址，指向这个对象的构造函数的原型对象）。
+
+```javascript
+let mike = new Person("mike");
+
+mike.__proto__ === Person.prototype; // true
+mike.__proto__.constructor === Person; // true
+```
+
+
+
+使用同一构造函数创建的实例都会共用一个原型对象。
+
+```javascript
+let jack = new Person("jack");
+
+jack.__proto__ === mike.__proto__; // true
+jack.__proto__.constructor === Person; // true
+```
+
+
+
+每个函数或者对象的原型最终指向都是 `Object.prototype` ，也就是 `null` （一个空对象）。
+
+```javascript
+Person.prototype.__proto__ === Object.prototype; // true
+mike.__proto__.__proto__ === Object.prototype; // true
+jack.__proto__.constructor.prototype.__proto === Object.prototype; // true
+```
+
 
 

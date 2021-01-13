@@ -397,7 +397,7 @@ var person2 = new Person("Greg", 27, "Doctor");
 3. 执行构造函数中的代码（为这个对象添加新的属性）；
 4. 返回新的对象。
 
-> *任何函数，只要通过new操作符来调用，都可以作为构造函数*；<br/>
+> 任何函数，只要通过new操作符来调用，都可以作为构造函数；<br/>
 > <b>构造函数不使用new操作符调用，则会将结果添加到window中</b><br/>
 > <code>Person("Greg", 27, "Doctor"); // 添加到 window</code><br/>
 > <code>window.sayName(); //"Greg"</code>
@@ -428,7 +428,24 @@ var person2 = new Person("Greg", 27, "Doctor");
 
 ####  原型模式
 
-每个Object对象都有<code>__Proto__</code>属性，每个函数都有自己的<code>prototype</code>(原型)属性，这个属性是一个指针，指向函数对应的原型对象。使用原型对象的好处是可以让所有对象实例共享他的属性和方法。
+##### 原型
+
+每个Object对象都有 `__proto__`属性，每个函数都有自己的 <code>prototype</code> (原型)属性。
+
+每当创建一个函数时，都会为这个函数创建一个 `prototype` 属性（地址，指向这个函数的原型对象），每个原型对象自动获得一个 `constructor` 属性（地址，指向与这个函数关联的构造函数）。
+
+```javascript
+function Person(name) {
+    this.name = name;
+	this.sayName = function() {
+        console.log(this.name);
+    }
+}
+
+Person.prototype.constructor === Person // true
+```
+
+这个属性是一个指针，指向函数对应的原型对象。使用原型对象的好处是可以让所有对象实例共享他的属性和方法。
 
 ``````javascript
 function Person() {}
