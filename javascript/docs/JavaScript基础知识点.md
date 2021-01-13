@@ -175,13 +175,43 @@ jack.__proto__.constructor === Person; // true
 
 
 
-每个函数或者对象的原型最终指向都是 `Object.prototype` ，也就是 `null` （一个空对象）。
+> 构造函数、原型和实例的关系：每个构造函数都有一个原型对象，原型有一个属性指回构造函数，而实例有一个内部指针指向原型。
 
 ```javascript
-Person.prototype.__proto__ === Object.prototype; // true
-mike.__proto__.__proto__ === Object.prototype; // true
-jack.__proto__.constructor.prototype.__proto === Object.prototype; // true
+// 每个构造函数都有一个原型对象
+Person.prototype
+// 原型对象 有一个属性 指回 构造函数
+Person.prototype.constructor === Person
+// 实例 有一个内部指针 指向 原型
+mike.__proto__ === Person.prototype
 ```
 
 
+
+### 2.2 原型链
+
+一个构造函数的原型是另一个构造函数的实例。
+
+```javascript
+// 基础构造函数
+function SuperType() {
+	this.property = true;
+}
+SuperType.prototype.getSuperValue = function() {
+	return this.property;
+};
+// 衍生构造函数
+function SubType() {
+	this.subproperty = false;
+}
+// 继承 SuperType
+SubType.prototype = new SuperType();
+// 新增方法
+SubType.prototype.getSubValue = function () {
+	return this.subproperty;
+};
+// 创建实例
+let instance = new SubType();
+console.log(instance.getSuperValue()); // true
+```
 
