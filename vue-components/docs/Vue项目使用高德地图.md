@@ -158,9 +158,22 @@ export default {
 
 
 
+## 2. 使用
+
+> 在初始化之前需要确保 `amap.js` 已经加载完成。建议先判断 `window` 下是否已经有 `AMap` 属性。
 
 
 
+### 2.1 初始化地图实例
+
+```javascript
+// template
+<div class="amap" ref="map-container"></div>
+
+// script
+window.AMap && (const map = new window.AMap.Map(this.$ref["map-container"]));
+
+```
 
 
 
