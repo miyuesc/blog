@@ -156,7 +156,7 @@ export default {
 
 ```
 
-
+> 不论哪种方式，最终都会在 `window` 对象下添加一个对象属性 `AMap`
 
 ## 2. 使用
 
@@ -166,20 +166,167 @@ export default {
 
 ### 2.1 初始化地图实例
 
-```javascript
+```html
 // template
 <div class="amap" ref="map-container"></div>
 
 // script
+<script>
 window.AMap && (const map = new window.AMap.Map(this.$ref["map-container"]));
+</script>
 
 ```
 
+### 2.2 异步加载地图插件
 
+除了在初始化地图的时候直接预加载插件之外，也可以在需要调用插件的地方异步加载插件。
 
+#### a. 同步预加载插件
 
+可以在引用高德地图api的时候直接在地址后用参数的形式传入需要用到的插件名称。
 
+```html
+// 1. public.html
+<script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=您申请的key值&plugin=AMap.ToolBar,AMap.Driving"></script>
 
+// 2. AMapLoader
+<script>
+import AMapLoader from '@amap/amap-jsapi-loader';
 
+export default {
+    name: "AMap",
+    beforeCreate() {
+        AMapLoader.load({
+            "key": "",              // 申请好的Web端开发者Key，首次调用 load 时必填
+            "version": "1.4.15",    // 指定要加载的 JSAPI 的版本，缺省时默认为 1.4.15
+            "plugins": [],          // 需要使用的的插件列表，如比例尺'AMap.Scale'等
+            "AMapUI": {             // 是否加载 AMapUI，缺省不加载
+            	"version": '1.1',   // AMapUI 缺省 1.1
+            	"plugins":["AMap.ToolBar", "AMap.Driving"]        // 需要加载的 AMapUI ui插件
+            },
+            "Loca": {               // 是否加载 Loca， 缺省不加载
+            	"version": '1.3.2'  // Loca 版本，缺省 1.3.2
+            }
+        }).then( AMap => {
+            this.$nextTick(() => this.initMap(AMap));
+        }).catch(e => {
+        	console.error(e);
+        })
+    },
+    methods: {
+        initMap(AMap) {
+            this.map = new AMap.Map("container");
+            // 或者使用 $refs 获取节点
+            // this.map = new AMap.Map(this.$refs.container);
+        }
+    }
+}
+</script>
+```
 
+#### b. 异步加载插件
 
+高德地图的 `AMap` 的原型上提供了异步加载插件的方法 `AMap.plugin()`。
+
+`AMap.plugin` 接收两个参数，第一个参数为需要加载的插件名称或者插件名称组成数组，第二个参数为加载完成后执行的回调函数。
+
+```javascript
+var map = new AMap.Map('container',{
+    zoom:12,
+    center:[116.39,39.9]
+});
+
+// 单个插件
+AMap.plugin('AMap.ToolBar',function(){//异步加载插件
+    var toolbar = new AMap.ToolBar();
+    map.addControl(toolbar);
+});
+
+// 多个插件
+AMap.plugin(['AMap.ToolBar','AMap.Driving'],function(){//异步同时加载多个插件
+    var toolbar = new AMap.ToolBar();
+    map.addControl(toolbar);
+    var driving = new AMap.Driving();//驾车路线规划
+    driving.search(/*参数*/)
+});
+```
+
+#### c. 可用插件列表
+
+| 类名                      | 类功能说明                                                   |
+| :------------------------ | :----------------------------------------------------------- |
+| `AMap.ElasticMarker`      | 灵活点标记，可以随着地图级别改变样式和大小的 Marker          |
+| `AMap.ToolBar`            | 工具条，控制地图的缩放、平移等                               |
+| `AMap.Scale`              | 比例尺，显示当前地图中心的比例尺                             |
+| `AMap.HawkEye`            | 鹰眼，显示缩略图                                             |
+| `AMap.MapType`            | 图层切换，用于几个常用图层切换显示                           |
+| `AMap.Geolocation`        | 定位，提供了获取用户当前准确位置、所在城市的方法             |
+| `AMap.AdvancedInfoWindow` | 高级信息窗体，整合了周边搜索、路线规划功能                   |
+| `AMap.AutoComplete`       | 输入提示，提供了根据关键字获得提示信息的功能                 |
+| `AMap.PlaceSearch`        | 地点搜索服务，提供了关键字搜索、周边搜索、范围内搜索等功能   |
+| `AMap.DistrictSearch`     | 行政区查询服务，提供了根据名称关键字、`citycode`、`adcode` 来查询行政区信息的功能 |
+| `AMap.LineSearch`         | 公交路线服务，提供公交路线相关信息查询服务                   |
+| `AMap.StationSearch`      | 公交站点查询服务，提供途经公交线路、站点位置等信息           |
+| `AMap.Driving`            | 驾车路线规划服务，提供按照起、终点进行驾车路线的功能         |
+| `AMap.TruckDriving`       | 货车路线规划                                                 |
+| `AMap.Transfer`           | 公交路线规划服务，提供按照起、终点进行公交路线的功能         |
+| `AMap.Walking`            | 步行路线规划服务，提供按照起、终点进行步行路线的功能         |
+| `AMap.Riding`             | 骑行路线规划服务，提供按照起、终点进行骑行路线的功能         |
+| `AMap.DragRoute`          | 拖拽导航插件，可拖拽起终点、途经点重新进行路线规划           |
+| `AMap.ArrivalRange`       | 公交到达圈，根据起点坐标，时长计算公交出行是否可达及可达范围 |
+| `AMap.Geocoder`           | 地理编码与逆地理编码服务，提供地址与坐标间的相互转换         |
+| `AMap.CitySearch`         | 城市获取服务，获取用户所在城市信息或根据给定IP参数查询城市信息 |
+| `AMap.IndoorMap`          | 室内地图，用于在地图中显示室内地图                           |
+| `AMap.MouseTool`          | 鼠标工具插件                                                 |
+| `AMap.CircleEditor`       | 圆编辑插件                                                   |
+| `AMap.PolygonEditor`      | 多边形编辑插件                                               |
+| `AMap.PolylineEditor`     | 折线编辑器                                                   |
+| `AMap.MarkerCluster`      | 点聚合插件                                                   |
+| `AMap.RangingTool`        | 测距插件，可以用距离或面积测量                               |
+| `AMap.CloudDataSearch`    | 云图搜索服务，根据关键字搜索云图点信息                       |
+| `AMap.Weather`            | 天气预报插件，用于获取未来的天气信息                         |
+| `AMap.RoadInfoSearch`     | 道路信息查询，已停止数据更新，反馈信息仅供参考               |
+| `AMap.HeatMap`            | 热力图插件                                                   |
+
+### 2.3 地图生命周期
+
+1. 创建：`const map = new AMap.Map("container")`
+2. 创建完成，加载地图资源，会触发 `complete` 事件：`map.on("complete", () => {})`
+3. 销毁：`map.destroy()` ，执行后会销毁地图对象，释放内存
+
+## 3. Map
+
+地图对象类，封装了地图的属性设置、图层变更、事件交互等接口的类。
+
+> 参数和方法详情见[AMap.Map](https://lbs.amap.com/api/jsapi-v2/documentation#map)
+
+### 3.1 实例参数
+
+```javascript
+const map = new AMap.Map(div: (String | HTMLDivElement), opts?: MapOptions);
+```
+
+1. `div` ：当参数类型为 `String` 时，内部会查找对应 `id` 等于该参数值的 `dom` 节点。
+
+2. `opts` ：`MapOptions` 地图初始化参数。
+
+`opts:MapOptions` 主要参数如下：
+
+| Name                                                         | Description                                                  |
+| :----------------------------------------------------------- | :----------------------------------------------------------- |
+| `center: ([Number, Number] | LngLat)`                        | 初始中心经纬度                                               |
+| `zoom: Number`                                               | 地图显示的缩放级别，可以设置为浮点数；若center与level未赋值，地图初始化默认显示用户所在城市范围。 |
+| `rotation: Number = 0`                                       | 地图顺时针旋转角度，取值范围 [0-360] ，默认值：0             |
+| `pitch: Number = 0`                                          | 俯仰角度，默认 0，最大值根据地图当前 zoom 级别不断增大，2D地图下无效 。 |
+| `viewMode: String = '2D'`                                    | 地图视图模式, 默认为‘2D’，可选’3D’，选择‘3D’会显示 3D 地图效果。 |
+| `features: Array<String> = ['bg','point','road','building']` | 设置地图上显示的元素种类, 支持'bg'（地图背景）、'point'（POI点）、'road'（道路）、'building'（建筑物） |
+| `layers: Array<Layer>`                                       | 地图图层数组，数组可以是图层 中的一个或多个，默认为普通二维地图。 当叠加多个 [图层](https://lbs.amap.com/api/jsapi-v2/documentation#tilelayer) 时，普通二维地图需通过实例化一个`TileLayer`类实现。 如果你希望创建一个默认底图图层，使用 `AMap.createDefaultLayer()` |
+| `zooms: [Number, Number] = [2,20]`                           | 地图显示的缩放级别范围, 默认为 [2, 20] ，取值范围 [2 ~ 20]   |
+| `dragEnable: Boolean = true`                        | 地图是否可通过鼠标拖拽平移, 默认为 true。此属性可被 `setStatus/getStatus` 方法控制 |
+| `zoomEnable: Boolean = true`                        | 地图是否可缩放，默认值为 true。此属性可被 `setStatus/getStatus` 方法控制 |
+| `jogEnable: Boolean = true`                         | 地图是否使用缓动效果，默认值为true。此属性可被`setStatus/getStatus` 方法控制 |
+| `pitchEnable: Boolean = true`                       | 是否允许设置俯仰角度, 3D 视图下为 true, 2D 视图下无效。      |
+| `mapStyle: String`                                            | 设置地图的显示样式，目前支持两种地图样式： 第一种：自定义地图样式，如 "`amap://styles/d6bf8c1d69cea9f5c696185ad4ac4c86`" 可前往地图自定义平台定制自己的个性地图样式； 第二种：官方样式模版,如"`amap://styles/grey`"。 其他模版样式及自定义地图的使用说明见开发指南 |
+| `rotateEnable: Boolean = true`                      | 地图是否可旋转, 图默认为true                                 |
+| `showBuildingBlock: Boolean = true`                 | 是否展示地图 3D 楼块，默认 true                              |
+| `skyColor: String | Array<Number>`                          | 天空颜色，3D 模式下带有俯仰角时会显示                        |
