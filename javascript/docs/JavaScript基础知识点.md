@@ -215,3 +215,31 @@ let instance = new SubType();
 console.log(instance.getSuperValue()); // true
 ```
 
+
+
+### 3. this、call、apply、bind
+
+#### 3.1 this
+
+**this：一个内存地址指针，指向“最后”调用它的那个对象**，非严格模式下，当this为null或者undefined时，会指向全局对象。
+
+```javascript
+var name = "windowsName";
+
+function a() {
+	var name = "Cherry";
+	console.log(this.name);          // windowsName
+	console.log("inner:" + this);    // inner: Window
+}
+
+a();
+
+console.log("outer:" + this)         // outer: Window
+```
+
+> 严格模式下，`console.log(this.name)` 中的 `this` 为 `undefined`，执行会报错 `Uncaught TypeError: Cannot read property 'name' of undefined`
+
+#### 3.2 call
+
+> call, apply, bind 主要作用都是改变 this 的指向。
+

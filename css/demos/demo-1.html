@@ -30,7 +30,6 @@
         .content-2 {
             background: rgba(82, 180, 21, 0.8);
         }
-
     </style>
 </head>
 <body>
@@ -38,6 +37,20 @@
     <div class="content-1">content 1</div>
     <div class="content-2">content 2</div>
     <div class="content-3">content 3</div>
+    <script>
+        "use strict"
+        var name = "windowsName";
+
+        function a() {
+            var name = "Cherry";
+            console.log(this.name);          // windowsName
+            console.log("inner:" + this);    // inner: Window
+        }
+
+        a();
+
+        console.log("outer:" + this)         // outer: Window
+    </script>
 </div>
 </body>
 </html>
