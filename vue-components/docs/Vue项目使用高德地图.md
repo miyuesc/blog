@@ -300,7 +300,7 @@ AMap.plugin(['AMap.ToolBar','AMap.Driving'],function(){//异步同时加载多�
 
 > 参数和方法详情见[AMap.Map](https://lbs.amap.com/api/jsapi-v2/documentation#map)
 
-### 3.1 实例参数
+### 3.1 参数
 
 ```javascript
 const map = new AMap.Map(div: (String | HTMLDivElement), opts?: MapOptions);
@@ -330,3 +330,56 @@ const map = new AMap.Map(div: (String | HTMLDivElement), opts?: MapOptions);
 | `rotateEnable: Boolean = true`                      | 地图是否可旋转, 图默认为true                                 |
 | `showBuildingBlock: Boolean = true`                 | 是否展示地图 3D 楼块，默认 true                              |
 | `skyColor: String | Array<Number>`                          | 天空颜色，3D 模式下带有俯仰角时会显示                        |
+
+### 3.2 方法
+
+| Name                 | Description          | Parameters                                                   |
+| -------------------- | -------------------- | ------------------------------------------------------------ |
+| `resize()`           | 重新计算容器大小     | -                                                            |
+| `setCenter()`        | 重新设置中心点       | `center：number[] | LngLat; "中心点经纬度"`<br />` immediately: boolean = false; "是否立即定位到目标位置（无动画）"`<br />` duration?: number; "过渡动画时长，单位 ms"` |
+| `setZoom()`          | 重新设置缩放         | `zoom：number; "地图缩放层级"`<br />` immediately: boolean = false; "是否立即定位到目标位置（无动画）"`<br />` duration?: number; "过渡动画时长，单位 ms"` |
+| `setZoomAndCenter()` | 重新设置中心点和缩放 | `center：number[] | LngLat; "中心点经纬度"`<br />`zoom：number; "地图缩放层级"`<br />` immediately: boolean = false; "是否立即定位到目标位置（无动画）"`<br />` duration?: number; "过渡动画时长，单位 ms"` |
+| `getCenter()`        |                      |                                                              |
+| `getZoom()`          |                      |                                                              |
+| `getSize()`          |                      |                                                              |
+| `getContainer()`     |                      |                                                              |
+| `addLayer()`         |                      |                                                              |
+| `setLayers()`        |                      |                                                              |
+| `getLayers()`        |                      |                                                              |
+| `setZooms()`         |                      |                                                              |
+| `getZooms()`         |                      |                                                              |
+| `setMapStyle()`      |                      |                                                              |
+| `getMapStyle()`      |                      |                                                              |
+| `getAllOverlays()`   |                      |                                                              |
+| `setFitView()`       |                      |                                                              |
+| `clearMap()`         |                      |                                                              |
+| `destory()`          |                      |                                                              |
+
+### 3.3 事件
+
+| Name       | Description |
+| ---------- | ----------- |
+| `complete`   | 地图资源加载完成后触发事件 |
+| `resize`    | 地图容器尺寸改变事件 |
+| `click` | 鼠标左键单击事件 |
+| `dblclick` | 鼠标左键双击事件 |
+| `mapmove` | 地图平移时触发事件 |
+| `movestart` | 地图平移开始时触发 |
+| `moveend` | 地图移动结束后触发，包括平移，以及中心点变化的缩放。如地图有拖拽缓动效果，则在缓动结束后触发 |
+| `zoomchange` | 地图缩放级别更改后触发 |
+| `zoomstart` | 缩放开始时触发 |
+| `zoomend` | 缩放结束时触发 |
+| `rightclick` | 鼠标右键单击事件 |
+| `dragstart` | 开始拖拽地图时触发 |
+| `dragging` | 拖拽地图过程中触发 |
+| `dragend` | 停止拖拽地图时触发。如地图有拖拽缓动效果，则在拽停止，缓动开始前触发 |
+| `touchstart` | 触摸开始时触发事件，仅适用移动设备 |
+| `touchmove` | 拖拽地图过程中触发，仅适用移动设备 |
+| `touchend` | 触摸结束时触发事件，仅适用移动设备 |
+
+
+
+
+
+
+
