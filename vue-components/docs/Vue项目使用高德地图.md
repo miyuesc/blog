@@ -333,27 +333,27 @@ const map = new AMap.Map(div: (String | HTMLDivElement), opts?: MapOptions);
 
 ### 3.2 方法
 
-| Name                 | Description          | Parameters                                                   |
-| -------------------- | -------------------- | ------------------------------------------------------------ |
-| `resize()`           | 重新计算容器大小     | -                                                            |
-| `setCenter()`        | 重新设置中心点       | `center：number[] | LngLat; "中心点经纬度"`<br />` immediately: boolean = false; "是否立即定位到目标位置（无动画）"`<br />` duration?: number; "过渡动画时长，单位 ms"` |
-| `setZoom()`          | 重新设置缩放         | `zoom：number; "地图缩放层级"`<br />` immediately: boolean = false; "是否立即定位到目标位置（无动画）"`<br />` duration?: number; "过渡动画时长，单位 ms"` |
-| `setZoomAndCenter()` | 重新设置中心点和缩放 | `center：number[] | LngLat; "中心点经纬度"`<br />`zoom：number; "地图缩放层级"`<br />` immediately: boolean = false; "是否立即定位到目标位置（无动画）"`<br />` duration?: number; "过渡动画时长，单位 ms"` |
-| `getCenter()`        |                      |                                                              |
-| `getZoom()`          |                      |                                                              |
-| `getSize()`          |                      |                                                              |
-| `getContainer()`     |                      |                                                              |
-| `addLayer()`         |                      |                                                              |
-| `setLayers()`        |                      |                                                              |
-| `getLayers()`        |                      |                                                              |
-| `setZooms()`         |                      |                                                              |
-| `getZooms()`         |                      |                                                              |
-| `setMapStyle()`      |                      |                                                              |
-| `getMapStyle()`      |                      |                                                              |
-| `getAllOverlays()`   |                      |                                                              |
-| `setFitView()`       |                      |                                                              |
-| `clearMap()`         |                      |                                                              |
-| `destory()`          |                      |                                                              |
+| Name                 | Description                                                  | Parameters                                                   | Return                           |
+| -------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | -------------------------------- |
+| `resize()`           | 重新计算容器大小                                             | -                                                            | -                                |
+| `setCenter()`        | 重新设置中心点                                               | `center：number[] | LngLat; "中心点经纬度"`<br />` immediately: boolean = false; "是否立即定位到目标位置（无动画）"`<br />` duration?: number; "过渡动画时长，单位 ms"` | -                                |
+| `setZoom()`          | 重新设置缩放                                                 | `zoom：number; "地图缩放层级"`<br />` immediately: boolean = false; "是否立即定位到目标位置（无动画）"`<br />` duration?: number; "过渡动画时长，单位 ms"` | -                                |
+| `setZoomAndCenter()` | 重新设置中心点和缩放                                         | `center：number[] | LngLat; "中心点经纬度"`<br />`zoom：number; "地图缩放层级"`<br />` immediately: boolean = false; "是否立即定位到目标位置（无动画）"`<br />` duration?: number; "过渡动画时长，单位 ms"` | -                                |
+| `getCenter()`        | 获取当前中心点                                               | -                                                            | `LngLat`                         |
+| `getZoom()`          | 获取当前缩放层级                                             | `digits: Number; "zoom级别的小数位精度，缺省为2"`            | `number`                         |
+| `getSize()`          | 获取地图容器尺寸                                             | -                                                            | `{width: number;height: number}` |
+| `getContainer()`     | 获取地图容器dom                                              | -                                                            | `HTMLElement`                    |
+| `addLayer()`         | 添加地图图层                                                 | `layer: Layer`                                               | -                                |
+| `setLayers()`        | 替换地图当前图层                                             | `layers: Layers[]`                                           | -                                |
+| `getLayers()`        | 获取当前地图图层                                             | -                                                            | `Layer[]`                        |
+| `setZooms()`         | 获取地图缩放等级范围                                         | `zooms: [number, number]`                                    | -                                |
+| `getZooms()`         | 重设地图缩放等级范围                                         | -                                                            |                                  |
+| `setMapStyle()`      | 设置地图的显示样式                                           | `mapstyle: string`                                           | -                                |
+| `getMapStyle()`      | 获取地图的显示样式                                           | -                                                            |                                  |
+| `getAllOverlays()`   | 获取所有添加的覆盖物对象                                     | `type?: string` 包括 `marker、polygon` 等，缺省返回所有类型覆盖物 | `Overlays[]`                     |
+| `setFitView()`       | 根据地图上添加的覆盖物分布情况，自动缩放地图到合适的视野级别，参数均可缺省。 | overlays `(Array<Overlay>)` 覆盖物<br />immediately `(Boolean = false)` 是否立即过渡<br />avoid `(Array<Number> = [60,60,60,60])` 四周边距，上、下、左、右<br />maxZoom `(Number = CoreMap.defaultZooms[1])` 最大 zoom 级别 | `Bounds`                         |
+| `clearMap()`         | 删除地图上所有的覆盖物                                       | -                                                            | -                                |
+| `destory()`          | 销毁地图                                                     | -                                                            | -                                |
 
 ### 3.3 事件
 
