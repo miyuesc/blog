@@ -747,7 +747,7 @@ alert(instance.age);     //29
 class Person {}
 
 // 2. 表达式
-class Person = class {};
+const Person = class {};
 ```
 
 与函数类似，使用表达式方式声明的类在被求值前也不能被引用；而且函数声明可以提升，但是类声明不能提升。
