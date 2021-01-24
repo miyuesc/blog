@@ -1,6 +1,6 @@
 # CSS 基础
 
-**层叠样式表**（英语：**C**ascading **S**tyle **S**heets，缩写：**CSS**；又称**串样式列表**、**级联样式表**、**串接样式表**、**阶层式样式表**）是一种用来为结构化文档（如[HTML](https://zh.wikipedia.org/wiki/HTML)文档或[XML](https://zh.wikipedia.org/wiki/XML)应用）添加样式（字体、间距和颜色等）的[计算机语言](https://zh.wikipedia.org/wiki/计算机语言)，由[W3C](https://zh.wikipedia.org/wiki/W3C)定义和维护。
+**层叠样式表**（英语：Cascading Style Sheets，缩写：**CSS**；又称**串样式列表**、**级联样式表**、**串接样式表**、**阶层式样式表**）是一种用来为结构化文档（如[HTML](https://zh.wikipedia.org/wiki/HTML)文档或[XML](https://zh.wikipedia.org/wiki/XML)应用）添加样式（字体、间距和颜色等）的[计算机语言](https://zh.wikipedia.org/wiki/计算机语言)，由[W3C](https://zh.wikipedia.org/wiki/W3C)定义和维护。
 
 组成：由多个“规则”组成，每个规则包含“选择器”、“属性”和“值”组成。
 
