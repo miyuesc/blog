@@ -102,7 +102,18 @@ console.log({...c});
 
 > 使用扩展运算符可以实现一般对象的浅拷贝。
 
-### 1.7 类 `Class`
+### 1.7 聚合参数
+
+聚合参数可以在函数定义时，将多余参数合并到一个数组变量中保存。
+
+```javascript
+function f (x, y, ...a) {
+    return (x + y) * a.length
+}
+f(1, 2, "hello", true, 7) === 9
+```
+
+### 1.8 类 `Class`
 
 使 `JavaScript` 的面向对象编程变得更加简单、易于理解。
 
@@ -144,5 +155,32 @@ cat.toString(); // name:cat,color:white
 // 实例cat 是 Cat 和 Animal 的实例，和Es5完全一致。
 console.log(cat instanceof Cat); // true
 console.log(cat instanceof Animal); // true
+```
+
+### 1.9 增强对象属性
+
+在定义对象时支持属性、方法的简写，支持计算属性名，支持生成器形式属性。
+
+```javascript
+// 属性简写
+let x = 0, y = 0;
+let obj = { x, y }; // obj: {x: 0, y: 0}
+// 方法简写
+let obj = {
+    foo (a, b) {
+        //…
+    },
+    bar (x, y) {
+        //…
+    }，
+    *quux (x, y) {
+        …
+    }
+}
+// 计算属性名
+let obj = {
+    foo: "bar",
+    ['foo' + f()]: "func"
+}
 ```
 
