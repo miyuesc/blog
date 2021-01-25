@@ -243,3 +243,8 @@ console.log("outer:" + this)         // outer: Window
 
 > call, apply, bind 主要作用都是改变 this 的指向。
 
+MDN定义：使用一个指定的 `this` 值和单独给出的一个或多个参数来调用一个函数。
+
+语法： `function.call(thisArg, arg1, arg2, ...)`
+
+> `thisArg` 是可选参数，指代函数
