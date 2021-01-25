@@ -1,4 +1,4 @@
-# ES6+ 常用特性梳理
+# ES6 常用特性梳理
 
 ## 1. ES6（ECMAScript2015）
 
@@ -201,6 +201,11 @@ let { name, age: newAge } = { age: 26, name: "miyue" }
 
 console.log(name, newAge) // "miyue"  26
 
+// 可以定义缺省时（即解构获取值时获取不到）可以设置默认值
+let [a = 1] = []
+
+console.log(a) // 1
+
 // 可以配合 async/await 对请求结果进行解构赋值，简化代码
 async request() {
     // 最好加上try/catch 捕获请求异常
@@ -240,13 +245,13 @@ m1.set("key4", "value4")
 初始化完成之后，可以使用 add()增加值，使用 has()查询，通过 size 取得元素数量，以及使用 delete()和 clear()删除元素。
 
 ```javascript
-const s = new Set();
-alert(s.has("Matt")); // false
-alert(s.size); // 0
+const s = new Set()
+alert(s.has("Matt")) // false
+alert(s.size) // 0
 
-s.add("Matt").add("Frisbie");
-alert(s.has("Matt")); // true
-alert(s.size); 
+s.add("Matt").add("Frisbie")
+alert(s.has("Matt")) // true
+alert(s.size);
 ```
 
 > 另外 ES6 还新增了 `WeakMap` 与 `WeakSet` ，因为用的较少，这里暂时不做解释。
@@ -264,16 +269,16 @@ ES6新增的特性，对目标对象的创建一个代理对象，可以记录�
 ```javascript
 const target = {
     foo: 'bar'
-};
+}
 const handler = {
 	// 捕获器在处理程序对象中以方法名为键
     get() {
-    	return 'handler override';
+    	return 'handler override'
     }
-};
-const proxy = new Proxy(target, handler);
-console.log(target.foo); // bar
-console.log(proxy.foo); // handler override
+}
+const proxy = new Proxy(target, handler)
+console.log(target.foo) // bar
+console.log(proxy.foo) // handler override
 ```
 
 > 注：如果直接调用原对象的属性或者方法，则会绕过代理和代理定义的拦截器。
@@ -298,7 +303,57 @@ const handler = {
 }
 ```
 
+### 1.13 `Promise`
 
+ES6 提供的用来处理JavaScript异步编程的一个对象，在一个 `Promise` 对象被创建出来的时候不一定就是已经知道的值。它可以将异步操作的最终结果（成功的结果或者失败的原因）与对应的处理程序关联起来，使异步方法可以想同步方法一样返回值。
 
+> 异步方法 （`Promise`中定义的方法）并不会立即返回最终的值，而是返回一个 `promise` 对象。
 
+`Promise` 有三个状态：
 
+1. 运行中（等待中）：`pending`，初始状态，表示还没成功，也没有失败，还在运行中
+2. 成功：`fulfilled`，操作成功（也叫 `resolved`）
+3. 失败：`rejected`，操作失败
+
+一个 `Promise` 对象提供三个方法：`promise.then()`, `promise.catch()` 和 `promise.finally()` 。
+
+这三个方法返回的都是一个新的 `Promise` 对象实例，这表示他们可以用来做链式调用
+
+```javascript
+const promiseFunc = (new Promise())
+	.then(handleResolvedA)
+	.then(handleResolvedB)
+	.then(handleResolvedC)
+	.catch(handleRejectA)
+```
+
+### 1.14 其他
+
+ES6还新增像 "迭代器"，"生成器"等新特性，增加了内置对象的方法，扩展了 `Unicode` 字符集等。
+
+```javascript
+Number.EPSILON
+Number.isInteger(Infinity) // false
+Number.isNaN("NaN") // false
+
+Math.acosh(3) // 1.762747174039086
+Math.hypot(3, 4) // 5
+Math.imul(Math.pow(2, 32) - 1, Math.pow(2, 32) - 2) // 2
+
+"abcde".includes("cd") // true
+"abc".repeat(3) // "abcabcabc"
+
+Array.from(document.querySelectorAll('*')) // Returns a real Array
+Array.of(1, 2, 3) // Similar to new Array(...), but without special one-arg behavior
+[0, 0, 0].fill(7, 1) // [0,7,7]
+[1, 2, 3].find(x => x == 3) // 3
+[1, 2, 3].findIndex(x => x == 2) // 1
+[1, 2, 3, 4, 5].copyWithin(3, 0) // [1, 2, 3, 1, 2]
+["a", "b", "c"].entries() // iterator [0, "a"], [1,"b"], [2,"c"]
+["a", "b", "c"].keys() // iterator 0, 1, 2
+["a", "b", "c"].values() // iterator "a", "b", "c"
+
+Object.assign(Point, { origin: new Point(0,0) })
+```
+
+-- These codes come from [lukehoban - es6features](https://github.com/lukehoban/es6features#math--number--string--array--object-apis)

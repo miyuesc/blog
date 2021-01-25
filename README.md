@@ -11,8 +11,14 @@
 3. [Async/Await 处理异步](./javascript/docs/Async与Await处理异步.md)
 4. [JavaScript高频面试题与基础问题](./javascript/docs/JavaScript基础知识点.md)
 5. [33个JavaScript概念](./javascript/docs/33-js-concepts.md)
+6. [ECMAScript 6 常用特性](./javascript/docs/ES6常用特性.md)
+7. [ECMAScript 7 常用特性](./javascript/docs/ES7常用特性.md)
 
 
+
+### 设计模式
+
+1. [设计模式--七大原则](./javascript/docs/设计模式七大原则)
 
 ### CSS
 
