@@ -217,7 +217,7 @@ console.log(instance.getSuperValue()); // true
 
 
 
-### 3. this、call、apply、bind
+## 3. this、call、apply、bind
 
 #### 3.1 this
 
@@ -247,4 +247,82 @@ MDN定义：使用一个指定的 `this` 值和单独给出的一个或多个参
 
 语法： `function.call(thisArg, arg1, arg2, ...)`
 
-> `thisArg` 是可选参数，指代函数
+> `thisArg` 是可选参数，指代函数运行时 `this` 的指向。非严格模式下，不传或者传入 `null` 时，会默认指向全局对象。
+
+作用1：改变 `this` 指向
+
+```javascript
+function greet() {
+  var reply = [this.animal, 'typically sleep between', this.sleepDuration].join(' ')
+  console.log(reply)
+}
+
+var obj = {
+  animal: 'cats', sleepDuration: '12 and 16 hours'
+}
+
+greet.call(obj)  // cats typically sleep between 12 and 16 hours
+```
+
+作用2：实现继承
+
+```javascript
+function Product(name, price) {
+  this.name = name
+  this.price = price
+}
+
+function Food(name, price) {
+  Product.call(this, name, price)
+  this.category = 'food'
+}
+
+function Toy(name, price) {
+  Product.call(this, name, price)
+  this.category = 'toy'
+}
+
+var cheese = new Food('feta', 5)
+var fun = new Toy('robot', 40)
+```
+
+#### 3.3 apply
+
+MDN定义：调用一个具有给定`this`值的函数，以及以一个数组（或类数组对象）的形式提供的参数。
+
+语法： `func.apply(thisArg, [argsArray])`
+
+> `apply()` 中 `thisArg` 是必传参数
+
+> `apply` 与 `call` 的区别就在于传递参数方式的不同。
+
+#### 3.4 bind
+
+MDN定义：创建一个新的函数，在 `bind()` 被调用时，这个新函数的 `this` 被指定为 `bind()` 的第一个参数，而其余参数将作为新函数的参数，供调用时使用。
+
+语法： `function.bind(thisArg[, arg1[, arg2[, ...]]])`
+
+> `bind()` 返回的是一个新的函数引用，我们必须手动调用才能执行。
+
+```javascript
+const module = {
+  x: 42,
+  getX: function() {
+    return this.x;
+  }
+};
+
+const unboundGetX = module.getX;
+console.log(unboundGetX()); // The function gets invoked at the global scope
+// expected output: undefined
+
+const boundGetX = unboundGetX.bind(module);
+console.log(boundGetX());
+// expected output: 42
+```
+
+`bind()` 作用：
+
+作用1：创建一个函数，保证函数调用时 `this` 的值不变 
+
+作用2：使一个函数拥有预设的初始参数
