@@ -207,7 +207,7 @@ start new Promise...
 除了串行执行若干异步任务外，Promise还可以并行执行异步任务。
 试想一个页面聊天系统，我们需要从两个不同的URL分别获得用户的个人信息和好友列表，这两个任务是可以并行执行的，用"Promise.all()"实现如下：
 
-```
+```javascript
 var p1 = new Promise(function (resolve, reject) {
     setTimeout(resolve, 500, 'P1');
 });
@@ -222,7 +222,7 @@ Promise.all([p1, p2]).then(function (results) {
 
 有些时候，多个异步任务是为了容错。比如，同时向两个URL读取用户的个人信息，只需要获得先返回的结果即可。这种情况下，用"Promise.race()"实现：
 
-```
+```javascript
 var p1 = new Promise(function (resolve, reject) {
     setTimeout(resolve, 500, 'P1');
 });

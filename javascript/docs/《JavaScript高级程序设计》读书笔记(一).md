@@ -352,7 +352,7 @@ var pattern6 = /.at/g;
 
 ### 7.2 创建对象
 
-#### 工厂模式
+#### 7.2.1 工厂模式
 
 抽象出具体对象的过程。
 
@@ -372,7 +372,7 @@ var person1 = createPerson("Nicholas", 29, "Software Engineer");
 var person2 = createPerson("Greg", 27, "Doctor");
 ```
 
-#### 构造函数模式
+#### 7.2.2 构造函数模式
 
 ```javascript
 function Person(name, age, job){ 
@@ -426,7 +426,7 @@ var person2 = new Person("Greg", 27, "Doctor");
 
 这种方式带来的问题：1.全局作用域内定义的函数只能被某个对象调用；2.如果对象有多个方法，那么这个自定义的引用类型就没有封装意义。
 
-####  原型模式
+####  7.2.3 原型模式
 
 ##### 原型
 
@@ -532,7 +532,7 @@ Person.prototype = {
 };
 ```
 
-#### 组合模式
+#### 7.2.4 组合模式
 
 函数模式定义属性，原型模式定义方法与共享属性（目前在ES中使用最广泛，认同度最高的一宗自定义类型的方法）。
 
@@ -557,11 +557,11 @@ alert(person1.friends === person2.friends);    //false
 alert(person1.sayName === person2.sayName);    //true
 ```
 
-#### 动态原型模式
+#### 7.2.5 动态原型模式
 
 在构造函数中插入判断条件，只有在被检测方法不存在时，才会创建新的属性或者方法。
 
-#### 寄生构造函数模式
+#### 7.2.6 寄生构造函数模式
 
 通常是在前述几种情况都不适用的情况下，可以使用该模式。
 
@@ -601,7 +601,7 @@ var colors = new SpecialArray("red", "blue", "green");
 alert(colors.toPipedString()); //"red|blue|green"
 ```
 
-#### 稳妥构造函数模式
+#### 7.2.7 稳妥构造函数模式
 
 稳妥对象：没有公共属性，其方法也不能引用this的对象。
 
@@ -609,7 +609,7 @@ alert(colors.toPipedString()); //"red|blue|green"
 
 ### 7.3 继承
 
-#### 原型链
+#### 7.3.1 原型链
 
 ES中描述了原型链的概念，并将原型链作为实现继承的主要方法。
 
@@ -674,7 +674,21 @@ alert(SubType.prototype.isPrototypeOf(instance));        //true
 
 构造函数定义了一个引用类型值属性时，通过原型链继承的新类型创建的实例会共享这一个引用类型的值；在创建子类型的实例时，不能向超类型的构造函数中传递参数。
 
-#### 借用构造函数
+```javascript
+function SuperType() {
+    this.colors = ["red", "blue", "green"];
+}
+function SubType() {}
+// 继承 SuperType
+SubType.prototype = new SuperType();
+let instance1 = new SubType();
+instance1.colors.push("black");
+console.log(instance1.colors); // "red,blue,green,black"
+let instance2 = new SubType();
+console.log(instance2.colors); // "red,blue,green,black"
+```
+
+#### 7.3.2 借用构造函数
 
 为解决原型中包含引用类型值所带来的问题（又叫**伪造对象**或者**经典继承**）。
 
@@ -724,13 +738,13 @@ alert(instance.age);     //29
 
 方法都在构造函数中定义，无法实现函数复用，而且超类型的原型中定义的方法对子类型也不可见。
 
-#### 组合继承
+#### 7.3.3 组合继承
 
 也叫伪经典继承，将原型链和借用构造函数的技术组合到一起。
 
 > ES中最常用的继承模式。
 
-#### 其他继承
+#### 7.3.4 其他继承
 
 1. 原型式继承：在函数内部创建一个新的临时性构造函数，将传入参数作为内部构造函数的原型，最后返回这个临时函数的新类型。本质对传入对象执行了一次浅拷贝。
 2. 寄生式继承
@@ -775,9 +789,19 @@ const Person = class {};
 
 > 如果没有变量引用创建的对象，则这个对象会被销毁。
 
-类构造函数与普通构造函数的主要区别：调用类构造函数必须使用 `new` 关键字，而普通构造函数可以不使用这个关键字，创建的对象将会作为 `window` 下的一个对象属性。
+类构造函数与普通构造函数的主要区别：***调用类构造函数必须使用 `new` 关键字，而普通构造函数可以不使用这个关键字，创建的对象将会作为 `window` 下的一个对象属性***。
 
+#### 7.4.4 实例、原型和类成员
 
+实例：每次使用 `new` 调用类或者调用构造函数时，都会创建一个新的实例，并且实例构造函数执行完后仍然可以给这个实例增加属性，每个实例之间的成员属性不共享。
+
+原型方法：实例之间的共享方法，可以在原型上定义方法，或者在类块中定义。
+
+静态类方法：可以在类块中使用 `static` 关键字作为前缀，并且不需要有类对应的实例存在便可直接调用。
+
+#### 7.4.5 继承
+
+类支持使用 `extends` 实现单继承。
 
 
 
