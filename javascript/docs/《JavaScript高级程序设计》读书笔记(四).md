@@ -107,6 +107,55 @@ window.scrollTo({
 
 `clearInterval()` 清除指定/所有定时任务。
 
+`setTimeout()` 和 `setInterval()` 都接收两个参数：要执行的代码（函数）和等待 / 间隔时间（毫秒）。
+
+> 所有超时任务都会在全局作用域中的一个匿名函数中执行，因此函数中所有的 this 指向都是 `window`(严格模式下是 `undefined`) 。如果定义 `setTimeout` 的时候传入的是一个**箭头函数**，则会保留原来的 this 指向。
+
+`setTimeout` 可以不记录超时ID，因为它会在满足条件（执行定义时传入的函数时）自动停止，再次定义时会重新定义一个超时任务。
+
+```javascript
+let num = 0;
+let max = 10;
+let incrementNumber = function() {
+    num++;
+    // 如果还没有达到最大值，再设置一个超时任务
+    if (num < max) {
+    	setTimeout(incrementNumber, 500);
+    } else {
+    	alert("Done");
+    }
+}
+setTimeout(incrementNumber, 500);
+```
+
+`setInterval()` 会在被销毁之前一直按照定义的间隔时间一直执行，而不会在意定义时传入的函数的执行状态。
+
+> 如果 `setInterval()` 定义时传入的函数时一个异步请求 `Promise`，则异步请求后的回调函数执行顺序可能不会按照预想顺序执行。所以这种情况推荐使用超时任务 `setTimeout()` 而非 `setInterval()`。
+
+
+
+### 1.2 location 对象
+
+`location` 是最有用的 BOM 对象之一，提供了当前窗口中加载文档的信息，以及通常的导航功能。
+
+>  它既是 `window` 的属性，也是 `document` 的属性。即 `window.location` 和 `document.location` 指向同一个对象。
+
+解析 ：http://foouser:barpassword@www.wrox.com:80/WileyCDA/?q=javascript#contents
+
+| 属性            | 值   | 说明 |
+| --------------- | ---- | ---- |
+| `location.hash` | "#contents" |      |
+| `location.host` | "www.wrox.com:80" |      |
+| `location.hostname` | "www.wrox.com" |      |
+| `location.href` | "http://www.wrox.com:80/WileyCDA/?q=javascript#contents" |      |
+| `location.pathname` | "/WileyCDA/" |      |
+| `location.port` | "80" |      |
+| `location.protocol` | "http:" |      |
+| `location.search` | "?q=javascript" |      |
+| `location.username` | "foouser" |      |
+| `location.password` | "barpassword" |      |
+| `location.haoriginsh` | "http://www.wrox.com" |      |
+
 
 
 ## 2. DOM
