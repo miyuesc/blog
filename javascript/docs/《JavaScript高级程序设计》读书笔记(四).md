@@ -18,3 +18,13 @@ BOM主要包含五个基础对象：
 
 BOM 的核心对象，有两个身份：ES中的全局作用域和浏览器窗口的JavaScript接口。
 
+
+
+
+
+
+
+## 2. DOM
+
+文档对象模型（DOM，Document Object Model），是 HTML 和 XML 文档的编程接口。
+
