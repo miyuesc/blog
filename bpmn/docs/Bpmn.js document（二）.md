@@ -278,8 +278,101 @@ Modeling.reconnectEnd(connection, newTarget, dockingOrPoints, hints)
 Modeling.connect(source, target, attrs, hints)
 ```
 
+### 8. Draw 绘制模块
 
-### 8. AlignElements 元素对齐
+基础的元素绘制方法，由 `diagram.js` 提供基础模块，源码如下：
+
+```javascript
+// diagram.js/lib/draw/index.js
+import DefaultRenderer from './DefaultRenderer';
+import Styles from './Styles';
+
+export default {
+  __init__: [ 'defaultRenderer' ],
+  defaultRenderer: [ 'type', DefaultRenderer ],
+  styles: [ 'type', Styles ]
+};
+```
+
+其中 `DefaultRenderer` 为默认元素绘制方法，继承 `BaseRenderer` ，自身包含 `CONNECTION_STYLE --连线默认样式`, `FRAME_TYLE -- 框架默认样式` 和 `SHAPE_STYLE -- 元素默认样式` 三个样式属性。
+
+`Styles` 为样式管理组件，包含 `cls -- 根据属性、样式名等来定义样式`, `style -- 根据属性计算样式` 和 `computeStyle -- 样式计算方法` 三个方法。
+
+> `BaseRenderer` 是一个抽象类，只定义了方法和绘制时的触发事件，没有定义方法的具体实现。
+
+#### 8.1 Styles 样式管理
+
+根据源码的思路，这个模块只推荐重写，即修改默认的类名与样式配置。
+
+```javascript
+// diagram.js/lib/draw/Styles.js
+import { isArray, assign, reduce } from 'min-dash';
+
+
+/**
+ * A component that manages shape styles
+ */
+export default function Styles() {
+
+  var defaultTraits = {
+    'no-fill': {
+      fill: 'none'
+    },
+    'no-border': {
+      strokeOpacity: 0.0
+    },
+    'no-events': {
+      pointerEvents: 'none'
+    }
+  };
+  var self = this;
+
+  /**
+   * Builds a style definition from a className, a list of traits and an object of additional attributes.
+   *
+   * @param  {string} className
+   * @param  {Array<string>} traits
+   * @param  {Object} additionalAttrs
+   *
+   * @return {Object} the style defintion
+   */
+  this.cls = function(className, traits, additionalAttrs) {
+    var attrs = this.style(traits, additionalAttrs);
+    return assign(attrs, { 'class': className });
+  };
+
+  /**
+   * Builds a style definition from a list of traits and an object of additional attributes.
+   *
+   * @param  {Array<string>} traits
+   * @param  {Object} additionalAttrs
+   *
+   * @return {Object} the style defintion
+   */
+  this.style = function(traits, additionalAttrs) {
+    if (!isArray(traits) && !additionalAttrs) {
+      additionalAttrs = traits;
+      traits = [];
+    }
+    var attrs = reduce(traits, function(attrs, t) {
+      return assign(attrs, defaultTraits[t] || {});
+    }, {});
+    return additionalAttrs ? assign(attrs, additionalAttrs) : attrs;
+  };
+
+  this.computeStyle = function(custom, traits, defaultStyles) {
+    if (!isArray(traits)) {
+      defaultStyles = traits;
+      traits = [];
+    }
+    return self.style(traits || [], assign({}, defaultStyles, custom || {}));
+  };
+}
+```
+
+
+
+### 9. AlignElements 元素对齐
 
 `diagram.js` 模块，注入模块 `Modeling`。主要用作元素对齐。
 
@@ -325,7 +418,7 @@ AlignElements.prototype.trigger = function(elements, type) {
 
 
 
-### 9. AttachSupport 依附支持
+### 10. AttachSupport 依附支持
 
 `diagram.js` 模块，注入模块 `injector, eventBus, canvas, rules, modeling`，依赖规则模块 `rulesModule`。主要用作元素移动期间的绑定关系和预览。
 
@@ -333,7 +426,7 @@ AlignElements.prototype.trigger = function(elements, type) {
 
 
 
-### 10. AutoPlace 元素自动放置
+### 11. AutoPlace 元素自动放置
 
 将元素自动放置到合适位置（默认在后方，正后方存在元素时向右下偏移）并调整连接的方法。通常在点击 `contentPad` 创建新元素的时候触发。
 
@@ -361,7 +454,7 @@ AutoPlace.append(source, shape, hints);
 
 
 
-### 11. AutoResize 元素大小调整
+### 12. AutoResize 元素大小调整
 
 一个自动调整大小的组件模块，用于在创建或移动子元素接近父边缘的情况下扩展父元素。
 
@@ -397,7 +490,7 @@ AutoResize.$inject = [
 inherits(AutoResize, CommandInterceptor); // CommandInterceptor 向commandStack中插入命令的原型。
 ```
 
-### 12. AutoScroll 画布滚动
+### 13. AutoScroll 画布滚动
 
  画布自动扩展滚动的方法，如果当前光标点靠近边框，则开始画布滚动。 当当前光标点移回到滚动边框内时取消或手动取消。
 
