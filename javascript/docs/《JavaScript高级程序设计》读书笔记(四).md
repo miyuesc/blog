@@ -210,9 +210,7 @@ setTimeout(incrementNumber, 500);
 ```javascript
 // 跳转到最近的 xxx 页面
 history.go("xxx");
-
-// 后退一页
-history.back();
+ry.back();
 
 // 前进一页
 history.forward()
@@ -236,4 +234,8 @@ history.forward()
 ## 2. DOM
 
 文档对象模型（DOM，Document Object Model），是 HTML 和 XML 文档的编程接口。
+
+DOM 现在是真正跨平台、语言无关的表示和操作网页的方式。
+
+
 
