@@ -144,17 +144,92 @@ setTimeout(incrementNumber, 500);
 
 | 属性            | 值   | 说明 |
 | --------------- | ---- | ---- |
-| `location.hash` | "#contents" |      |
-| `location.host` | "www.wrox.com:80" |      |
-| `location.hostname` | "www.wrox.com" |      |
-| `location.href` | "http://www.wrox.com:80/WileyCDA/?q=javascript#contents" |      |
-| `location.pathname` | "/WileyCDA/" |      |
-| `location.port` | "80" |      |
-| `location.protocol` | "http:" |      |
-| `location.search` | "?q=javascript" |      |
-| `location.username` | "foouser" |      |
-| `location.password` | "barpassword" |      |
-| `location.haoriginsh` | "http://www.wrox.com" |      |
+| `location.hash` | "#contents" | URL 散列值（井号后跟零或多个字符）可为空 |
+| `location.host` | "www.wrox.com:80" | 服务器名及端口号 |
+| `location.hostname` | "www.wrox.com" | 服务器名 |
+| `location.href` | "http://www.wrox.com:80/WileyCDA/?q=javascript#contents" | 完整 URL 字符串 |
+| `location.pathname` | "/WileyCDA/" | URL 中的路径和（或）文件名 |
+| `location.port` | "80" | 请求端口号 |
+| `location.protocol` | "http:" | 页面使用的协议 |
+| `location.search` | "?q=javascript" | 查询字符串，以问号开头 |
+| `location.username` | "foouser" | 域名前指定的用户名 |
+| `location.password` | "barpassword" | 域名前指定的密码 |
+| `location.haoriginsh` | "http://www.wrox.com" | 源地址，只读 |
+
+#### 地址操作
+
+修改浏览器地址可以通过四种方式来修改：
+
+1. `location.assign()`
+2. `location.replace()`
+3. `location.href = newLocation`
+4. `window.location = newLocation`
+
+其中 `location.href` 和 `window.location` 都会在内部显式调用 `location.assign()` 方法，并且向浏览器历史记录中增加一条记录。点击浏览器 "后退" 按钮可以回到上页。
+
+而 `location.replace()` 可以直接修改地址重载页面，而不会向历史记录中插入数据，也无法返回上页。
+
+另外 `location` 还提供了一个 `reload()` 方法，用来重载当前页面
+
+
+
+### 1.3 navigator 对象
+
+客服端标识浏览器的标准，主要用来记录和检测浏览器与设备的主要信息，也可以让脚本注册和查询自己的一些活动（插件）。
+
+
+
+### 1.4 screen 对象
+
+单纯的保存客服端能力的对象。包含以下属性：
+
+| 属性          | 说明                                       |
+| ------------- | ------------------------------------------ |
+| `availHeight` | 屏幕像素高度减去系统组件高度，只读         |
+| `availLeft`   | 没有被系统组件占用的屏幕的最左侧像素，只读 |
+| availTop      | 没有被系统组件占用的屏幕的最顶端像素，只读 |
+| availWidth    | 屏幕像素宽度减去系统组件宽度，只读         |
+| colorDepth    | 表示屏幕颜色的位数，只读                   |
+| height        | 屏幕像素高度                               |
+| left          | 当前屏幕左边的像素距离                     |
+| pixelDepth    | 屏幕的位深，只读                           |
+| top           | 当前屏幕顶端的像素距离                     |
+| width         | 屏幕像素宽度                               |
+| orientation   | 返回 Screen Orientation API 中屏幕的朝向   |
+
+
+
+### 1.5 history 对象
+
+浏览器导航历史记录及相关操作的对象。
+
+#### 1.5.1 导航
+
+`history` 对象提供了三个方法和一个属性来查看和操作历史记录（当前窗口）。
+
+```javascript
+// 跳转到最近的 xxx 页面
+history.go("xxx");
+
+// 后退一页
+history.back();
+
+// 前进一页
+history.forward()
+```
+
+`go()` 方法会接收一个**字符串**或者**整数**参数，传入整数时，正整数表示前进多少页，负整数表示后退多少页；传入字符串时，会匹配含有该字符串的最近的一条历史记录对应的网址，如果没有找到则不会发生变化。
+
+`history` 提供一个 `length` 属性，可以用来查看当前窗口的历史记录数量。
+
+#### 1.5.2 历史状态管理
+
+1. `hashchange` 事件：页面 URL 的散列变化时被触发
+2. `history.pushState()` 方法：接收 3 个参数：一个 state 对象、一个新状态的标题和一个（可选的）相对 URL
+3. `popstate` 事件（在 `window` 对象上）：后退时触发
+4. `history.state` 属性：当前的历史记录状态
+5. `history.replaceState()` 方法：接收与 `pushState()` 一样的前两个参数来更新状态
+
 
 
 
