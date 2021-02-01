@@ -237,5 +237,56 @@ history.forward()
 
 DOM 现在是真正跨平台、语言无关的表示和操作网页的方式。
 
+> IE8 及更低版本的 IE 浏览器，是通过 COM 对象实现的，所以这些版本中的 DOM 对象会具有不同的行为和功能。
+>
+> 不过在21世纪，个人也建议抛弃对 IE 的适配，毕竟连微软都用上了新的 Edge 浏览器。
+
+### 1. 节点层级
+
+**任何 HTML 或 XML 文档都可以用 DOM 表示为一个由节点构成的层级结构。**
+
+example：
+
+```html
+<html>
+    <head>
+    	<title>Sample Page</title>
+    </head>
+    <body>
+    	<p>Hello World!</p>
+    </body>
+</html>
+```
+
+转换为层级结构如下图：
+
+![image-20210201145230332](screenshot/image-20210201145230332.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
