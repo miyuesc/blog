@@ -8,17 +8,20 @@
 
 1. [《JavaScript高级程序设计》读书笔记(一)](./javascript/docs/《JavaScript高级程序设计》读书笔记(一).md)
 2. [《JavaScript高级程序设计》读书笔记(二)](./javascript/docs/《JavaScript高级程序设计》读书笔记(二).md)
-3. [Async/Await 处理异步](./javascript/docs/Async与Await处理异步.md)
-4. [JavaScript高频面试题与基础问题](./javascript/docs/JavaScript基础知识点.md)
-5. [33个JavaScript概念](./javascript/docs/33-js-concepts.md)
-6. [ECMAScript 6 常用特性](./javascript/docs/ES6常用特性.md)
-7. [ECMAScript 7 常用特性](./javascript/docs/ES7常用特性.md)
+3. [《JavaScript高级程序设计》读书笔记(三)](./javascript/docs/《JavaScript高级程序设计》读书笔记(三).md)
+4. [《JavaScript高级程序设计》读书笔记(四)](./javascript/docs/《JavaScript高级程序设计》读书笔记(四).md)
+5. [Async/Await 处理异步](./javascript/docs/Async与Await处理异步.md)
+6. [JavaScript高频面试题与基础问题](./javascript/docs/JavaScript基础知识点.md)
+7. [33个JavaScript概念](./javascript/docs/33-js-concepts.md)
+8. [ECMAScript 6 常用特性](./javascript/docs/ES6常用特性.md)
+9. [ECMAScript 7 常用特性](./javascript/docs/ES7常用特性.md)
 
 
 
 ### 二、设计模式
 
-1. [设计模式--七大原则](./javascript/docs/设计模式七大原则)
+1. [设计模式（一）—— 七大原则](./javascript/docs/设计模式七大原则.md)
+2. [设计模式（二）—— 创建型模式](./javascript/docs/设计模式--创建型.md)
 
 
 
@@ -34,6 +37,8 @@
 
 1. [MVVM与Vue](./vue/docs/mvvm与vue.md)
 2. [Vue源码阅读(一)](./vue/docs/vue源码阅读--1.md)
+
+
 
 #### 2. Vue 应用
 
