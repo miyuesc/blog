@@ -1,18 +1,14 @@
-# Vue 源码阅读
+# Vue源码阅读
 
 ## 1. `Vue` 初始化原型属性和方法
 
 ### 1.1 `initMixin(Vue)`
 
-为 `Vue.prototype` 原型上添加 `_init(options)` 的方法。
-
-
+为 `Vue.prototype` 原型上添加 `_init(options)` 的方法，以供组件实例化的时候调用。
 
 ### 1.2 `stateMixin(Vue)`
 
 重新定义原型下的 `$data` 与 `$props` 的 `get(), set(newValue)` 的方法。为 `Vue.prototype` 添加 `$set(target, key, val)` 、`$delete(target, key)` 与 `$watch(expOrFn, cb, options)` 方法。
-
-
 
 ### 1.3 `eventsMixin(vue)`
 
@@ -20,13 +16,9 @@
 
 > `$on(), $off()` 传入参数 `event` 可以是数组，内部会遍历数组重新调用 `$on(), $off()`。
 
-
-
 ### 1.4 `lifecycleMixin(Vue)` 
 
 为 `Vue.prototype` 原型上添加 `_update(vnode, hydrating)` 、`$forceUpdate()` 与 `$destroy()` 方法。
-
-
 
 ### 1.5 `renderMixin(Vue)` 
 
@@ -52,29 +44,21 @@
 
 为 `Vue.prototype` 添加 `$nextTick()` 、`_render()` 方法。
 
-
-
 ### 1.6 初始化全局API
 
 #### 1.6.1 `initUse(Vue)`
 
 定义 `Vue.use(plugin)` 方法，用于安装插件。
 
-
-
-#### 1.6.2 `initMixin(Vue)`
+#### 1.62 `initMixin(Vue)`
 
 与 1.1 `initMixin(Vue)` 不同，这里主要定义 `Vue.mixin(mixin)` 混入方法。
 
 > 在打包后的 `vue.js` 中，代码位于 `function initMixin$1(Vue){}` 中，源码位于 `src/core/global-api/mixin.js`
 
-
-
 #### 1.6.3 `initExtend(Vue)`
 
 定义 `Vue.extend(extendOptions)` 方法，提供 使用 `Vue` 基础构造方法来创建一个组件。
-
-
 
 #### 1.6.4 `initAssetRegister(Vue)`
 
@@ -82,11 +66,7 @@
 
 > 源码中使用遍历 `ASSET_TYPES` 的方式来定义三个方法，分别用于创建全局组件实例、全局指令实例与全局过滤器指令。
 
-
-
 > `Vue` 在初始化构造函数时还定义了其他方法，这里不多做表述。
-
-
 
 ## 2. `new Vue()` 创建 `Vue` 实例
 
@@ -130,6 +110,6 @@
     - `initComputed` 判断是否有 `computed`，初始化 `computed`
     - `initWatch` 判断是否有 `watch`，初始化 `watch`
 12. `initProvide(this)` 初始化向下注入的依赖数据
-13. `callHook(this, "created")` 调用
+13. `callHook(this, "created")` 调用声明周期钩子函数
 14. `this.$mount(this.$options.el)`
 
