@@ -1,12 +1,20 @@
 # Vue源码阅读
 
-## 1. `Vue` 初始化原型属性和方法
+> 本文内容基于 Vue 2.6.12，主要解析需要编译的运行时部分。
+>
+> 最外层打包入口（主文件入口）位于 `vue-dev/src/platforms/web/entry-runtime-with-compiler.js`
 
-### 1.1 `initMixin(Vue)`
+## 1. `Vue` 构造函数初始化
+
+### 1.1 `function Vue(options)`
+
+定义构造函数，并检查是否使用 `new` 关键字调用。
+
+### 1.2 `initMixin(Vue)`
 
 为 `Vue.prototype` 原型上添加 `_init(options)` 的方法，以供组件实例化的时候调用。
 
-### 1.2 `stateMixin(Vue)`
+### 1.3 `stateMixin(Vue)`
 
 重新定义原型下的 `$data` 与 `$props` 的 `get(), set(newValue)` 的方法。为 `Vue.prototype` 添加 `$set(target, key, val)` 、`$delete(target, key)` 与 `$watch(expOrFn, cb, options)` 方法。
 
@@ -46,6 +54,12 @@
 
 ### 1.6 初始化全局API
 
+这个过程中，会首先为 `Vue` 构造函数添加 `util, set, delete, nextTick, observable` 这些全局方法，并注册一个全局组件 `keep-alive`。
+
+`Vue.util` 包含 `warn, extend, mergeOptions, defineReactive` 四个方法，但是不包含在文档中。
+
+在构造函数下还有一个 `options` 属性，包含 `component, directive, filter, _base` 几个属性，其中 `_base` 指向构造函数本身。
+
 #### 1.6.1 `initUse(Vue)`
 
 定义 `Vue.use(plugin)` 方法，用于安装插件。
@@ -58,7 +72,7 @@
 
 #### 1.6.3 `initExtend(Vue)`
 
-定义 `Vue.extend(extendOptions)` 方法，提供 使用 `Vue` 基础构造方法来创建一个组件。
+定义 `Vue.extend(extendOptions)` 方法，提供 “使用 `Vue.extend` 基础构造方法来创建一个组件" 的功能（`ElementUI` 的 `message` 组件就是采用的这种方式）。
 
 #### 1.6.4 `initAssetRegister(Vue)`
 
@@ -67,6 +81,10 @@
 > 源码中使用遍历 `ASSET_TYPES` 的方式来定义三个方法，分别用于创建全局组件实例、全局指令实例与全局过滤器指令。
 
 > `Vue` 在初始化构造函数时还定义了其他方法，这里不多做表述。
+
+### 1.7 `$mount`
+
+定义了公共的挂载方法。
 
 ## 2. `new Vue()` 创建 `Vue` 实例
 
