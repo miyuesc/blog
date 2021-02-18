@@ -92,14 +92,14 @@
 
 ### 2.1 `_init(options)`
 
-1. 创建唯一标识 `this._uuid`
-2. 创建阻止this被 `Observer` 实例化 `this._isVue = true`
+1. 创建唯一标识 `vm._uuid`
+2. 创建阻止this被 `Observer` 实例化 `vm._isVue = true`
 3. 根据合并策略合并传入的组件属性，最终集合到 `vm.$options` 上
    - `Vue`内部组件（`options._isComponent === true`）, 使用 `initInternalComponent(vm, options)`
    - `mergeOptions(resolveConstructorOptions(vm.constructor),options || {},vm)`
-4. `initProxy(this)` 判断当前环境是否有 `Proxy`，` this._renderProxy = new Proxy(this, hanlders) || this`
-5. `this._self = this` 暴露当前实例
-6. `initLifecycle(this)` 初始化生命周期，添加`$parent`、`$root`、`$children` 等属性
+4. `initProxy(vm)` 判断当前环境是否有 `Proxy`，` this._renderProxy = new Proxy(this, hanlders) || vm`
+5. `this._self = vm` 暴露当前实例
+6. `initLifecycle(vm)` 初始化生命周期，添加`$parent`、`$root`、`$children` 等属性
    1. 定位第一个非抽象类父组件或者祖先组件，作为父组件：`vm.$parent = parent`
    2. 判断父组件是否是 `root` 组件，初始化 `$root` ：`vm.$root = parent? parent.$root : vm`
    3. 添加 `$children` 属性，并初始化一个空数组
@@ -110,24 +110,23 @@
    8. `vm._isMounted = null` 标志是否已经触发过 `Mounted` 钩子函数
    9. `vm._isDestroyed = null` 标志组件是否已经被销毁
    10. `vm._isBeingDestroyed = null` 标志位，为 `true` 则不会继续触发 `beforeDestroy` 和 `destroyed` 钩子函数
-7. `initEvents(this)` 初始化事件监听
+7. `initEvents(vm)` 初始化事件监听
    1. 添加 `vm._events` 属性，并初始化为空 `vm._events = Object.create(null)`
    2. 添加 `vm._hasHookEvent` 属性，初始化为 `false`
    3. 根据父组件是否存在监听器来更新组件的事件 `if (vm.$options._parentListeners) updateComponentListeners(vm, vm.$options._parentListeners) `
    4. 
-8. `initRender(this)` 添加虚拟 `dom` 节点，`slot` 等属性
-9. `callHook(this, "beforeCreate")` 调用 `beforeCreate` 生命周期钩子
+8. `initRender(vm)` 添加虚拟 `dom` 节点，`slot` 等属性
+9. `callHook(vm, "beforeCreate")` 调用 `beforeCreate` 生命周期钩子
 10. `initInjections(this)` 初始化祖先组件的注入依赖
-11. `initState(this)` 
-
-    - `this._watcher = []` 创建新数组保存该实例中的所有 `Watcher` 实例
-
-    - `initProps` 判断是否有 `props`，初始化 `props` 部分的数据，并对其添加观察者
+11. `initState(vm)` 
+- `this._watcher = []` 创建新数组保存该实例中的所有 `Watcher` 实例
+    
+- `initProps` 判断是否有 `props`，初始化 `props` 部分的数据，并对其添加观察者
     - `initMethods` 判断是否有 `methods`，初始化 `methods`
     - `initData` 判断是否有 `data` ，有就调用 `initData`初始化 `data` 数据，没有则将 `data` 作为空对象并转为响应式
     - `initComputed` 判断是否有 `computed`，初始化 `computed`
     - `initWatch` 判断是否有 `watch`，初始化 `watch`
-12. `initProvide(this)` 初始化向下注入的依赖数据
-13. `callHook(this, "created")` 调用声明周期钩子函数
-14. `this.$mount(this.$options.el)`
+12. `initProvide(vm)` 初始化向下注入的依赖数据
+13. `callHook(vm, "created")` 调用声明周期钩子函数
+14. `vm.$mount(this.$options.el)` 将组件挂载到对应的Dom节点下，在这一步之前会判断传入的 `options` 是否有 `el` 属性，
 
