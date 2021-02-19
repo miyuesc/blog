@@ -18,17 +18,17 @@
 
 重新定义原型下的 `$data` 与 `$props` 的 `get(), set(newValue)` 的方法。为 `Vue.prototype` 添加 `$set(target, key, val)` 、`$delete(target, key)` 与 `$watch(expOrFn, cb, options)` 方法。
 
-### 1.3 `eventsMixin(vue)`
+### 1.4 `eventsMixin(vue)`
 
 为 `Vue.prototype` 原型上添加 `$on(event, fn)` 、`$once(event, fn)` 、`$off(event, fn)` 与 `$emit(event, fn)` 方法。
 
 > `$on(), $off()` 传入参数 `event` 可以是数组，内部会遍历数组重新调用 `$on(), $off()`。
 
-### 1.4 `lifecycleMixin(Vue)` 
+### 1.5 `lifecycleMixin(Vue)` 
 
 为 `Vue.prototype` 原型上添加 `_update(vnode, hydrating)` 、`$forceUpdate()` 与 `$destroy()` 方法。
 
-### 1.5 `renderMixin(Vue)` 
+### 1.6 `renderMixin(Vue)` 
 
 调用 `installRenderHelpers(Vue.prototype)` 为 `Vue.prototype` 原型上添加渲染相关方法：
 
@@ -52,7 +52,7 @@
 
 为 `Vue.prototype` 添加 `$nextTick()` 、`_render()` 方法。
 
-### 1.6 初始化全局API
+### 1.7 初始化全局API
 
 这个过程中，会首先为 `Vue` 构造函数添加 `util, set, delete, nextTick, observable` 这些全局方法，并注册一个全局组件 `keep-alive`。
 
@@ -60,21 +60,21 @@
 
 在构造函数下还有一个 `options` 属性，包含 `component, directive, filter, _base` 几个属性，其中 `_base` 指向构造函数本身。
 
-#### 1.6.1 `initUse(Vue)`
+#### 1.7.1 `initUse(Vue)`
 
 定义 `Vue.use(plugin)` 方法，用于安装插件。
 
-#### 1.62 `initMixin(Vue)`
+#### 1.72 `initMixin(Vue)`
 
 与 1.1 `initMixin(Vue)` 不同，这里主要定义 `Vue.mixin(mixin)` 混入方法。
 
 > 在打包后的 `vue.js` 中，代码位于 `function initMixin$1(Vue){}` 中，源码位于 `src/core/global-api/mixin.js`
 
-#### 1.6.3 `initExtend(Vue)`
+#### 1.7.3 `initExtend(Vue)`
 
 定义 `Vue.extend(extendOptions)` 方法，提供 “使用 `Vue.extend` 基础构造方法来创建一个组件" 的功能（`ElementUI` 的 `message` 组件就是采用的这种方式）。
 
-#### 1.6.4 `initAssetRegister(Vue)`
+#### 1.7.4 `initAssetRegister(Vue)`
 
 主要定义 `Vue.component(id, definition)`、`Vue.directive(id, definition)`、`Vue.filter(id, definition)` 三个方法。
 
@@ -82,7 +82,7 @@
 
 > `Vue` 在初始化构造函数时还定义了其他方法，这里不多做表述。
 
-### 1.7 `$mount`
+### 1.8 `$mount`
 
 定义了公共的挂载方法。
 
@@ -96,8 +96,8 @@
 2. 创建阻止this被 `Observer` 实例化 `vm._isVue = true`
 3. 根据合并策略合并传入的组件属性，最终集合到 `vm.$options` 上
    - `Vue`内部组件（`options._isComponent === true`）, 使用 `initInternalComponent(vm, options)`
-   - `mergeOptions(resolveConstructorOptions(vm.constructor),options || {},vm)`
-4. `initProxy(vm)` 判断当前环境是否有 `Proxy`，` this._renderProxy = new Proxy(this, hanlders) || vm`
+   - `mergeOptions(resolveConstructorOptions(vm.constructor),options || {},vm)`，利用合并策略合并传入参数，并修改为指定格式
+4. `initProxy(vm)` 判断当前环境是否是生产环境，是否有 `Proxy`，来配置对应的渲染函数的代理。` this._renderProxy = new Proxy(vm, hanlders) || vm`
 5. `this._self = vm` 暴露当前实例
 6. `initLifecycle(vm)` 初始化生命周期，添加`$parent`、`$root`、`$children` 等属性
    1. 定位第一个非抽象类父组件或者祖先组件，作为父组件：`vm.$parent = parent`
