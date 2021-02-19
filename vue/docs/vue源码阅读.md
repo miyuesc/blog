@@ -22,11 +22,23 @@
 
 为 `Vue.prototype` 原型上添加 `$on(event, fn)` 、`$once(event, fn)` 、`$off(event, fn)` 与 `$emit(event, fn)` 方法。
 
-> `$on(), $off()` 传入参数 `event` 可以是数组，内部会遍历数组重新调用 `$on(), $off()`。
+在使用 `$on` 注册事件的时候，会将 `.vue` 文件中对应的生命周期的方法 `push` 到当前组件 `vm._events[event]` 中（`event` 是对应的事件的名称标识），如果 `.vue` 中确实定义了某个生命周期对应的处理函数，则还会在当前组件下定义一个标识符 `vm._hasHookEvent = true`
+
+`$off` 在传入参数为空时，会将 `vm.events` 置为 `null`，清除当前组件的所有定义的事件。
+
+`$emit` 在注册事件的时候，会判断非生产环境下提示将*非小写事件名*转换成*小写事件名与短横线连接（`kebab-case`）*的格式，因为 `html` 对大小写不敏感。
+
+> `$on(), $off()` 传入参数 `event` 可以是数组，内部会遍历数组重新调用 `$on(), $off()`，走非数组（即只有一个事件定义）处理过程。
 
 ### 1.5 `lifecycleMixin(Vue)` 
 
 为 `Vue.prototype` 原型上添加 `_update(vnode, hydrating)` 、`$forceUpdate()` 与 `$destroy()` 方法。
+
+`_update` 方法会获取组件的挂载元素，以及组件原来的虚拟节点 `vm._vnode` （根据组件是否存在 `_vnode` 来判断是否首次渲染），调用 `__patch__` 方法将对比虚拟节点的修改，然后后更新为对应的真实 `dom` 节点，并更新到组件的 `$el` 属性上；之后将新产生的虚拟节点更新到组件上；如果组件的父组件是一个高阶组件，则还会继续更新父元素的 `$el` 属性，将值设置为当前组件的 `$el`。
+
+`$forceUpdate` 则是判断组件下是否存在观察者 `watcher`，调用 `watcher` 的 `update()` 方法来触发更新。
+
+`$destory` 首先会判断组件的销毁状态对应的标志位 `_isBeingDestroyed`，为真时直接返回不再继续执行后续代码；为假时则继续执行，触发 `beforeDestroy` 生命周期钩子函数，并将标志位置为 `true`，表示已经执行过销毁方法。之后在父组件的 `children` 中移除该组件（父组件未被销毁且不是抽象组件时执行），接着移除所有观察者 `watchers` 与相关的依赖；然后设置组件销毁结束状态 `vm._isDestroyed = true`，执行 `vm.__patch__(vm._vnode, null)` 来销毁对应的真实节点，触发 `destroyed` 生命周期钩子函数；最后移除所有事件，修改组件的相关属性为 `null`。
 
 ### 1.6 `renderMixin(Vue)` 
 
@@ -66,7 +78,7 @@
 
 #### 1.72 `initMixin(Vue)`
 
-与 1.1 `initMixin(Vue)` 不同，这里主要定义 `Vue.mixin(mixin)` 混入方法。
+与 1.2 `initMixin(Vue)` 不同，这里主要定义 `Vue.mixin(mixin)` 混入方法。
 
 > 在打包后的 `vue.js` 中，代码位于 `function initMixin$1(Vue){}` 中，源码位于 `src/core/global-api/mixin.js`
 
@@ -82,7 +94,11 @@
 
 > `Vue` 在初始化构造函数时还定义了其他方法，这里不多做表述。
 
-### 1.8 `$mount`
+### 1.8 `__patch__`
+
+基于Snabbdom的虚拟DOM修补算法。
+
+### 1.9 `$mount`
 
 定义了公共的挂载方法。
 
@@ -100,7 +116,7 @@
 4. `initProxy(vm)` 判断当前环境是否是生产环境，是否有 `Proxy`，来配置对应的渲染函数的代理。` this._renderProxy = new Proxy(vm, hanlders) || vm`
 5. `this._self = vm` 暴露当前实例
 6. `initLifecycle(vm)` 初始化生命周期，添加`$parent`、`$root`、`$children` 等属性
-   1. 定位第一个非抽象类父组件或者祖先组件，作为父组件：`vm.$parent = parent`
+   1. 定位第一个非抽象类父组件或者祖先组件，作为父组件：`vm.$parent = parent`，并将当前组件 `push` 到父组件的 `children` 数组中
    2. 判断父组件是否是 `root` 组件，初始化 `$root` ：`vm.$root = parent? parent.$root : vm`
    3. 添加 `$children` 属性，并初始化一个空数组
    4. 添加 `$refs` 属性，并初始化一个空对象
