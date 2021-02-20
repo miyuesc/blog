@@ -549,7 +549,7 @@ interface Viewbox {
 **使用方式：**
 
 ```javascript
-const ElementFactory = this.bpmnModeler.get("ElementFactory")
+const ElementFactory = this.bpmnModeler.get("elementFactory")
 ```
 
 **方法与返回值：**
@@ -599,7 +599,7 @@ ElementFactory.createParticipantShape(attrs)
 **使用方式：**
 
 ```javascript
-const ElementRegistry = this.bpmnModeler.get("ElementRegistry")
+const ElementRegistry = this.bpmnModeler.get("elementRegistry")
 ```
 
 **方法与返回值：**
@@ -650,8 +650,8 @@ ElementRegistry.getGraphics(filter, secondary)
 
 **使用方式：**
 
-```
-const GraphicsFactory = this.bpmnModeler.get("GraphicsFactory")
+```javascript
+const GraphicsFactory = this.bpmnModeler.get("graphicsFactory")
 ```
 
 **方法与返回值：**
@@ -692,7 +692,7 @@ GraphicsFactory.remove(element)
 **使用方式：**
 
 ```
-const Canvas = this.bpmnModeler.get("Canvas")
+const Canvas = this.bpmnModeler.get("canvas")
 ```
 
 **内部方法：**
