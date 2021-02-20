@@ -5032,7 +5032,6 @@
       {
         initProxy(vm);
       }
-      console.log("_init, initProxy:", vm);
       // expose real self
       vm._self = vm;
       initLifecycle(vm);
@@ -9099,11 +9098,11 @@
       if (config.productionTip !== false &&
         typeof console !== 'undefined'
       ) {
-        console[console.info ? 'info' : 'log'](
-          "You are running Vue in development mode.\n" +
-          "Make sure to turn on production mode when deploying for production.\n" +
-          "See more tips at https://vuejs.org/guide/deployment.html"
-        );
+        // console[console.info ? 'info' : 'log'](
+        //   "You are running Vue in development mode.\n" +
+        //   "Make sure to turn on production mode when deploying for production.\n" +
+        //   "See more tips at https://vuejs.org/guide/deployment.html"
+        // );
       }
     }, 0);
   }

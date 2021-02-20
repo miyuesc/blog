@@ -28,9 +28,76 @@
         <div>修改次数：{{ changeCount }}</div>
         <br />
         <button @click="buttonClick">点我</button>
+        <br />
+        <br />
+        <hr />
+        <demo-vm-two v-bind:result="result" @click="demoTwoClick" @change-watch="demoTwoChange">
+            <div class="slot-1" slot="slot1"></div>
+            <div class="slot-default"></div>
+        </demo-vm-two>
+        <hr />
     </div>
 <script>
-    const demoVm = new Vue({
+
+    const DemoVmThree = Vue.component("demo-vm-three", {
+        template: "<div class='demo-vm-3'>" +
+            "<h2>Demo VM 3</h2>" +
+            "</div>",
+        name: "DemoVmThree",
+        created() {
+            console.log("demoThree:", "demo vm 3 created");
+        }
+    })
+
+    const DemoVmTwo = Vue.component("demo-vm-two", {
+        template: "<div class='demo-vm-2'>" +
+            "<h2>Demo VM 2</h2>" +
+            "<p>demo2 data is: {{ data2 }}</p>" +
+            "<p>demo2 props data is: {{ result }}</p>" +
+            "<span>test span</span>" +
+            "<button @click='demoClick2'>button2</button>" +
+            "<br />" +
+            "<input :value='changeMessage' />" +
+            "<slot name='slot1'></slot>" +
+            "<slot></slot>" +
+            "<demo-vm-three></demo-vm-three>" +
+            "</div>",
+        name: "DemoVmTwo",
+        components: { "demo-vm-three": DemoVmThree },
+        props: {
+            result: [String, Number]
+        },
+        data() {
+            return{
+                data2: "我是 demo2 的数据",
+                clickEventNum: 0
+            }
+        },
+        created() {
+            console.log("demoTwo:", "demo vm 2 created", this.result);
+        },
+        methods: {
+            demoClick2() {
+                this.data2 = "我是 demo2 修改后的数据";
+                this.clickEventNum ++;
+                this.$emit("click", this.clickEventNum);
+            }
+        },
+        computed: {
+            changeMessage() {
+                return `已经点击了 ${this.clickEventNum} 次，最后一次点击时间是：${ new Date().toLocaleString()}`;
+            }
+        },
+        watch: {
+            clickEventNum() {
+                console.log("demoTwo:", "click:", this.clickEventNum, "time", new Date().toLocaleString());
+                this.$emit("change-watch");
+            }
+        }
+    })
+
+
+    const DemoVmOne = new Vue({
         el: "#app",
         data: {
             message: "hello world",
@@ -38,6 +105,7 @@
             num2: 0,
             changeCount: 0
         },
+        components: { "demo-vm-two": DemoVmTwo },
         computed: {
             result() {
                 return Number(this.num1) + Number(this.num2);
@@ -51,9 +119,23 @@
         methods: {
             buttonClick() {
                 alert("buttonClick");
+            },
+            demoTwoClick(num) {
+                console.log("demoOne:", num);
+            },
+            demoTwoChange() {
+                console.log("demoOne: demoTwoChanged");
             }
         }
     })
+
+    console.log("main: DemoVmOne:", DemoVmOne);
+    console.log("main: DemoVmTwo:", DemoVmTwo);
+    console.log("main: DemoVmThree:", DemoVmThree);
+    console.log("main: Vue.options:", Vue.options);
+
+
+    // console.log("test:", DemoVmTwo === DemoVmThree);
 </script>
 </body>
 </html>

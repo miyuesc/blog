@@ -88,7 +88,15 @@
 
 #### 1.7.4 `initAssetRegister(Vue)`
 
-主要定义 `Vue.component(id, definition)`、`Vue.directive(id, definition)`、`Vue.filter(id, definition)` 三个方法。
+主要定义 `Vue.component(id, definition)`、`Vue.directive(id, definition)`、`Vue.filter(id, definition)` 三个方法，主要用于定义全局的组件、指令、过滤器。
+
+在任意一个地方使用这三个方法时，都需要传入 `id` 与 `definition（组件定义部分）` ，如果定义部分未传，则会直接返回 Vue 内部与传入 `id` 一致的内置组件，否则返回 `undefined`。
+
+`Vue.component(id, definition)`：首先对 `id` 和定义部分进行合法性检查，之后调用 `Vue.extend()` （源码是调用的 `this.options._base.extend(definition)`）来完善这个组件。
+
+`Vue.directive(id, definition)`：首先判断传入定义是否为函数，是函数则修改定义的格式为规定格式（对象 `{ bind: definition, update: definition` }）
+
+最后生成的这些产物都会作为 `Vue` 构造函数的一个子属性，挂载在 `Vue.options[ASSET_TYPE + 's'][id] = definition`， 注意这里的 `definition` 是验证修改后的合法格式的定义。
 
 > 源码中使用遍历 `ASSET_TYPES` 的方式来定义三个方法，分别用于创建全局组件实例、全局指令实例与全局过滤器指令。
 
@@ -109,7 +117,7 @@
 ### 2.1 `_init(options)`
 
 1. 创建唯一标识 `vm._uuid`
-2. 创建阻止this被 `Observer` 实例化 `vm._isVue = true`
+2. 设置阻止当前组件被 `Observer` 观察者实例化的标志位 `vm._isVue = true`
 3. 根据合并策略合并传入的组件属性，最终集合到 `vm.$options` 上
    - `Vue`内部组件（`options._isComponent === true`）, 使用 `initInternalComponent(vm, options)`
    - `mergeOptions(resolveConstructorOptions(vm.constructor),options || {},vm)`，利用合并策略合并传入参数，并修改为指定格式
@@ -127,17 +135,17 @@
    9. `vm._isDestroyed = null` 标志组件是否已经被销毁
    10. `vm._isBeingDestroyed = null` 标志位，为 `true` 则不会继续触发 `beforeDestroy` 和 `destroyed` 钩子函数
 7. `initEvents(vm)` 初始化事件监听
-   1. 添加 `vm._events` 属性，并初始化为空 `vm._events = Object.create(null)`
-   2. 添加 `vm._hasHookEvent` 属性，初始化为 `false`
-   3. 根据父组件是否存在监听器来更新组件的事件 `if (vm.$options._parentListeners) updateComponentListeners(vm, vm.$options._parentListeners) `
-   4. 
+   1. 给组件实例添加 `vm._events` 属性，并初始化为空 `vm._events = Object.create(null)`
+   2. 添加 `vm._hasHookEvent` 属性，标识是否存在生命周期钩子的相关事件，初始化为 `false` （使用布尔值可以直接判断，减少性能开销）
+   3. 根据父组件是否存在监听器来更新组件的事件 `if (vm.$options._parentListeners) updateComponentListeners(vm, vm.$options._parentListeners)`
 8. `initRender(vm)` 添加虚拟 `dom` 节点，`slot` 等属性
+   1. 为组件实例设置属性 `_vnode` 子节点树的虚拟根节点和 `_staticTrees` 单次渲染的缓存树的初始值为 `null`
+   2. 
 9. `callHook(vm, "beforeCreate")` 调用 `beforeCreate` 生命周期钩子
 10. `initInjections(this)` 初始化祖先组件的注入依赖
 11. `initState(vm)` 
-- `this._watcher = []` 创建新数组保存该实例中的所有 `Watcher` 实例
-    
-- `initProps` 判断是否有 `props`，初始化 `props` 部分的数据，并对其添加观察者
+    - `this._watcher = []` 创建新数组保存该实例中的所有 `Watcher` 实例
+    - `initProps` 判断是否有 `props`，初始化 `props` 部分的数据，并对其添加观察者
     - `initMethods` 判断是否有 `methods`，初始化 `methods`
     - `initData` 判断是否有 `data` ，有就调用 `initData`初始化 `data` 数据，没有则将 `data` 作为空对象并转为响应式
     - `initComputed` 判断是否有 `computed`，初始化 `computed`
