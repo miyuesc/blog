@@ -14,6 +14,12 @@
 
 
 
+[Vue 3 中文文档](https://v3.cn.vuejs.org/guide/introduction.html#vue-js-%E6%98%AF%E4%BB%80%E4%B9%88)
+
+[Vite 中文文档](https://cn.vitejs.dev/guide/)
+
+
+
 
 
 ## emoji
