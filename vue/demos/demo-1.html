@@ -188,21 +188,14 @@
                 alert("buttonClick");
             },
             demoTwoClick(num) {
-                console.log("demoOne:", num);
+                console.log("demoOne: demoTwoClick emits, ", num);
             },
             demoTwoChange() {
-                console.log("demoOne: demoTwoChanged");
+                console.log("demoOne: demoTwoWatch emits");
             }
         }
     })
 
-    console.log("main: DemoVmOne:", DemoVmOne);
-    console.log("main: DemoVmTwo:", DemoVmTwo);
-    console.log("main: DemoVmThree:", DemoVmThree);
-    console.log("main: Vue.options:", Vue.options);
-
-
-    // console.log("test:", DemoVmTwo === DemoVmThree);
 </script>
 </body>
 </html>

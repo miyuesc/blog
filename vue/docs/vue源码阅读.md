@@ -114,6 +114,8 @@
 
 `const APP = new Vue(options)`
 
+> 在存在组件时，也是由根节点 `APP` 开始解析的
+
 ### 2.1 `_init(options)`
 
 1. 创建唯一标识 `vm._uuid`
