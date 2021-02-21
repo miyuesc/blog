@@ -8,16 +8,32 @@
         #app {
             width: 600px;
             margin: 100px auto;
-            border: 1px solid #eeeeee;
-            border-radius: 4px;
+        }
+        .demo-vm-1, .demo-vm-2, .demo-vm-3, .demo-vm-4 {
+            display: block;
             box-sizing: border-box;
+            margin: 8px;
             padding: 8px;
-            box-shadow: 0 0 10px #cccccc;
+        }
+        .demo-vm-1 {
+            box-shadow: 0 0 2px #444444;
+        }
+        .demo-vm-2 {
+            box-shadow: 0 0 2px #888888;
+            color: #888888;
+        }
+        .demo-vm-3 {
+            box-shadow: 0 0 2px #bbbbbb;
+            color: #bbbbbb;
+        }
+        .demo-vm-4 {
+            box-shadow: 0 0 2px darkgreen;
+            color: darkgreen;
         }
     </style>
 </head>
 <body>
-    <div id="app">
+    <div id="app" class="demo-vm-1">
         <p>message: {{ message }}</p>
         <p>result: {{ result }}</p>
         <p>
@@ -30,14 +46,34 @@
         <button @click="buttonClick">点我</button>
         <br />
         <br />
-        <hr />
+        <demo-vm-four></demo-vm-four>
+        <br />
+        <br />
         <demo-vm-two v-bind:result="result" @click="demoTwoClick" @change-watch="demoTwoChange">
             <div class="slot-1" slot="slot1"></div>
             <div class="slot-default"></div>
         </demo-vm-two>
-        <hr />
     </div>
 <script>
+
+    const DemoVmFour = {
+        template: "<div class='demo-vm-4'>" +
+            "<h2>Demo VM 4</h2>" +
+            "</div>",
+        name: "DemoVmThree",
+        created() {
+            console.log("demoFour:", "demoFour created");
+        },
+        mounted() {
+            console.log("demoFour:  demoFour mounted");
+        },
+        beforeDestroy() {
+            console.log("demoFour:  demoFour beforeDestroy");
+        },
+        destroyed() {
+            console.log("demoFour:  demoFour destroyed");
+        }
+    }
 
     const DemoVmThree = Vue.component("demo-vm-three", {
         template: "<div class='demo-vm-3'>" +
@@ -45,8 +81,17 @@
             "</div>",
         name: "DemoVmThree",
         created() {
-            console.log("demoThree:", "demo vm 3 created");
-        }
+            console.log("demoThree:", "demoThree created");
+        },
+        mounted() {
+            console.log("demoThree:  demoThree mounted");
+        },
+        beforeDestroy() {
+            console.log("demoThree:  demoThree beforeDestroy");
+        },
+        destroyed() {
+            console.log("demoThree:  demoThree destroyed");
+        },
     })
 
     const DemoVmTwo = Vue.component("demo-vm-two", {
@@ -61,9 +106,10 @@
             "<slot name='slot1'></slot>" +
             "<slot></slot>" +
             "<demo-vm-three></demo-vm-three>" +
+            "<demo-vm-four></demo-vm-four>" +
             "</div>",
         name: "DemoVmTwo",
-        components: { "demo-vm-three": DemoVmThree },
+        components: { "demo-vm-three": DemoVmThree, "demo-vm-four": DemoVmFour },
         props: {
             result: [String, Number]
         },
@@ -74,7 +120,16 @@
             }
         },
         created() {
-            console.log("demoTwo:", "demo vm 2 created", this.result);
+            console.log("demoTwo:", "demoTwo created", this.result);
+        },
+        mounted() {
+            console.log("demoTwo:  demoTwo mounted");
+        },
+        beforeDestroy() {
+            console.log("demoTwo:  demoTwo beforeDestroy");
+        },
+        destroyed() {
+            console.log("demoTwo:  demoTwo destroyed");
         },
         methods: {
             demoClick2() {
@@ -105,7 +160,7 @@
             num2: 0,
             changeCount: 0
         },
-        components: { "demo-vm-two": DemoVmTwo },
+        components: { "demo-vm-two": DemoVmTwo, "demo-vm-four": DemoVmFour },
         computed: {
             result() {
                 return Number(this.num1) + Number(this.num2);
@@ -115,6 +170,18 @@
             result: function () {
                 this.changeCount += 1;
             }
+        },
+        created() {
+            console.log("demoOne:  demoOne created");
+        },
+        mounted() {
+            console.log("demoOne:  demoOne mounted");
+        },
+        beforeDestroy() {
+            console.log("demoOne:  demoOne beforeDestroy");
+        },
+        destroyed() {
+            console.log("demoOne:  demoOne destroyed");
         },
         methods: {
             buttonClick() {
