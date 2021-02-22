@@ -4,6 +4,8 @@
 
 [TypeScript 入门教程](https://ts.xcatliu.com/basics/primitive-data-types.html)
 
+[TypeScript 官方中文文档](https://www.tslang.cn/docs/handbook/basic-types.html)
+
 [React 小书](http://huziketang.mangojuice.top/books/react/lesson1)
 
 
