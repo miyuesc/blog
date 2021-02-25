@@ -62,5 +62,5 @@
 
 订阅号名称：前端小白MiyueFE
 
-![公众号二维码](screenshot/%E5%85%AC%E4%BC%97%E5%8F%B7%E4%BA%8C%E7%BB%B4%E7%A0%81.jpg)
+![公众号二维码](https://images.weserv.nl/?url=https://i0.hdslb.com/bfs/article/fdef0d8f1731ed03b4123d22b7d82acacb6ca10c.jpg)
 
