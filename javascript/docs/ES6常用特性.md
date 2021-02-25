@@ -1,5 +1,7 @@
 # ES6 常用特性梳理
 
+ECMAScript 2015 （即 ES 6），在原 ES 的基础上增加了跟多新特性，并且这些特性极大简化了当前 JavaScript 编程中的代码量与可读性。
+
 ## 1. ES6（ECMAScript2015）
 
 ### 1.1 let / const
