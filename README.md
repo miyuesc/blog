@@ -16,6 +16,7 @@
 8. [33个JavaScript概念](./javascript/docs/33-js-concepts.md)
 9. [ECMAScript 6 常用特性](./javascript/docs/ES6常用特性.md)
 10. [ECMAScript 7 常用特性](./javascript/docs/ES7常用特性.md)
+11. [ECMAScript 8 常用特性](./javascript/docs/ES6常用特性.md)
 
 
 
