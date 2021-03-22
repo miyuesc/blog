@@ -6,8 +6,6 @@
 
 [TypeScript 官方中文文档](https://www.tslang.cn/docs/handbook/basic-types.html)
 
-[React 小书](http://huziketang.mangojuice.top/books/react/lesson1)
-
 
 
 [refactoringguru: 设计模式，重构](https://refactoringguru.cn/)
@@ -21,6 +19,18 @@
 [Vue 3 中文文档](https://v3.cn.vuejs.org/guide/introduction.html#vue-js-%E6%98%AF%E4%BB%80%E4%B9%88)
 
 [Vite 中文文档](https://cn.vitejs.dev/guide/)
+
+
+
+[Vue 2 技术揭秘](https://ustbhuangyi.github.io/vue-analysis/v2/prepare/)
+
+
+
+
+
+[React 小书](http://huziketang.mangojuice.top/books/react/lesson1)
+
+[React 技术揭秘](https://react.iamkasong.com/)
 
 
 
