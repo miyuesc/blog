@@ -24,7 +24,7 @@
 
 [Vue 2 技术揭秘](https://ustbhuangyi.github.io/vue-analysis/v2/prepare/)
 
-
+[Vue 2 design](http://hcysun.me/vue-design/zh/essence-of-comp.html)
 
 
 
