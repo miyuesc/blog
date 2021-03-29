@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>手写Promise</title>
+	</head>
+	<body>
+		<p>手写Promise</p>
+		<script>
+			// 定义状态常量
+			const PENDING = 'pending'
+			const RESOLVED = 'fulfilled'
+			const REJECTED = 'rejected'
+
+			class MyPromise {
+				// executor 同步流程中的执行函数，并且需要立即执行
+				constructor(executor) {
+					this.status = PENDING // 当前状态
+					this.value = undefined // 正常执行时的返回值
+					this.reason = undefined // 异常时抛出的错误原因
+
+					this.resolvedCallbackList = [] // 成功时的回调
+					this.rejectedCallbackList = [] // 异常时的回调
+
+					// 成功时的调用方法
+					let resovle = value => {
+						// 如果状态是 pengding 等待中才能更改状态并执行
+						if (this.status === PENDING) {
+							this.status = RESOLVED // 修改状态
+							this.value = value // 保存成功时的返回值
+							// 执行正常的回调函数
+							this.resolvedCallbackList.forEach(fn => fn())
+						}
+					}
+
+					// 异常时的调用方法
+					let reject = reason => {
+						// 如果状态是 pengding 等待中才能更改状态并执行
+						if (this.status === REJECTED) {
+							this.status = REJECTED // 修改状态
+							this.reason = reason // 保存异常时的错误原因
+							// 执行错误的回调函数
+							this.rejectedCallbackList.forEach(fn => fn())
+						}
+					}
+
+					// 立即执行传入的 executor 函数, 并用 try/catch 来捕获错误
+					try {
+						// 将 resovle 和 reject 方法传递给该函数调用
+						// 原生promise： new Promise((resolve, reject) => {})
+						executor(resovle, reject)
+					} catch (err) {
+						// 错误时抛出异常
+						reject(err)
+					}
+				}
+
+				// 原型上定义then方法，实现链式调用
+				then(onFulfilled, onRejected) {
+					// 已经结束时，判断是否正常，分别执行对应的传入函数
+					if (this.status === RESOLVED) {
+						onFulfilled(this.value)
+					}
+
+					if (this.status === REJECTED) {
+						onRejected(this.reason)
+					}
+
+					// 还没有执行结束，或者还没有拿到结果
+					if (this.status === PENDING) {
+						// 将传入的回调函数保存起来，等拿到结果时调用
+						this.resolvedCallbackList.push(() => onFulfilled(this.value))
+
+						this.rejectedCallbackList.push(() => onRejected(this.reason))
+					}
+				}
+				catch(callback) {
+					return this.then(null, callHook)
+				}
+			}
+
+
+			const promise = new MyPromise((resolve, reject) => {
+				console.time();
+				setTimeout(() => {
+					resolve('成功');
+				}, 1000);
+			}).then(
+				(data) => {
+					console.timeEnd();
+					console.log('success', data)
+				},
+				(err) => {
+					console.log('faild', err)
+				}
+			)
+		</script>
+	</body>
+</html>
