@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>基础实现call，apply，bind</title>
+	</head>
+	<body>
+		<script>
+			const testObject = {
+				name: 'test',
+				url: 'baidu.com',
+				log() {
+					console.log('my name is ', this.name);
+				}
+			}
+			
+			window.name = 'window'
+			window.url = 'window.com'
+			
+			function testFn() {
+				console.log(`name is ${this.name}, url is ${this.url}`)
+			}
+			
+			testObject.log();
+			testFn();
+			
+			// call
+			Function.prototype.myCall = function(context) {
+				if( typeof this !== 'function') {
+					throw new Error('this is not a function')
+				}
+				const symbolFn = Symbol()
+				const self = this
+				const args = [...arguments].slice(1)
+				context.symbolFn = self
+				return context.symbolFn(args)
+			}
+			
+			testFn.myCall(testObject);
+			
+		</script>
+	</body>
+</html>
