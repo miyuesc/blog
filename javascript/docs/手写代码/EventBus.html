@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<script>
+    function EventBus() {
+        this.events = Object.create(null)
+        this.on = (name, listener) => {
+            if (this.events[name]) {
+                this.events[name].push(listener)
+            } else {
+                this.events[name] = [listener]
+            }
+        }
+        this.emit = (name, ...args) => {
+            this.events[name].forEach(func => {
+                func.call(this, ...args)
+            })
+        }
+        this.off = (name, listener) => {
+            if (!listener) {
+                delete this.events[name]
+            }
+            // let index = this.events[name].findIndex(listener)
+            // index !== -1 && this.events[name].splice(index, 1)
+            this.events[name] = this.events[name].filter(li => li !== listener)
+        }
+        this.once = (name, listener) => {
+            function once() {
+                listener.apply(this, arguments) 
+                this.off(name, listener);
+            }
+            this.on(name, once);
+        }
+    }
+
+    // 测试
+    const baseEvent = new EventBus()
+    function onceCb(value){
+        console.log("hello once," + value)
+    }
+    function normalCb(value){
+        console.log("hello normal," + value)
+    }
+    baseEvent.on("click", normalCb)
+    //
+    baseEvent.once("click", onceCb)
+    // baseEvent.off("click")
+    baseEvent.emit("click", "2021", "123")
+    // hello 2021
+    console.log(baseEvent.events)
+</script>
+</body>
+</html>

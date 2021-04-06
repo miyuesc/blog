@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<script>
+    const array = [3, 44, 38, 5, 47, 15, 36, 26, 27, 2, 46, 4, 19, 50, 48];
+
+    function checkArray(arr) {
+        let valid = Array.isArray(arr);
+        if (!valid) throw new Error("not array")
+    }
+
+    // 冒泡
+    function bubbleSort(arr) {
+        checkArray(arr);
+        let length = arr.length;
+        let flag = true;
+        for (let i = 0; i < length; i++) {
+            flag = true;
+            for (let j = 0; j < length - i - 1; j++) {
+                if (arr[j] > arr[j + 1]) {
+                    let temp = arr[j];
+                    arr[j] = arr[j + 1];
+                    arr[j + 1] = temp;
+                    flag = false
+                }
+            }
+            if (flag) break;
+        }
+        return arr;
+    }
+    console.log(bubbleSort(array));
+
+    // 选择
+    function selectionSort(arr) {
+        checkArray(arr);
+    }
+</script>
+</body>
+</html>
