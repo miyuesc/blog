@@ -102,11 +102,11 @@ function create() {
 
 // 使用es6 的参数收集
 function create(constructor, ...args) {
-  let context  = Object.create(constructor.prototype);
+  let obj  = Object.create(constructor.prototype);
   
   let result = constructor.apply(context, args);
   
-  return (typeof result === 'object' && result != null) ? result : context;
+  return (typeof result === 'object' && result != null) ? result : obj;
 }
 ```
 

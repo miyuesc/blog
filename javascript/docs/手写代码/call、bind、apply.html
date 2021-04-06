@@ -8,36 +8,55 @@
 		<script>
 			const testObject = {
 				name: 'test',
-				url: 'baidu.com',
-				log() {
-					console.log('my name is ', this.name);
-				}
+				url: 'baidu.com'
 			}
-			
+
 			window.name = 'window'
 			window.url = 'window.com'
-			
+
 			function testFn() {
-				console.log(`name is ${this.name}, url is ${this.url}`)
+				console.log(`name is ${this.name}, url is ${this.url}`);
+				console.log("args is", ...arguments)
 			}
-			
-			testObject.log();
-			testFn();
-			
+
 			// call
 			Function.prototype.myCall = function(context) {
 				if( typeof this !== 'function') {
 					throw new Error('this is not a function')
 				}
 				const symbolFn = Symbol()
-				const self = this
+				context = context || window
 				const args = [...arguments].slice(1)
-				context.symbolFn = self
-				return context.symbolFn(args)
+
+				context[symbolFn] = this
+				const result =  context[symbolFn](...args)
+				delete context[symbolFn]
+
+				return result
 			}
-			
-			testFn.myCall(testObject);
-			
+			testFn.myCall(testObject, 1, 2, 3, 4, 5);
+
+			// apply
+			Function.prototype.myApply = function (context, args) {
+				if( typeof this !== 'function') {
+					throw new Error('this is not a function')
+				}
+				const symbolFn = Symbol()
+				context = context || window
+				context[symbolFn] = this
+
+				const result = context[symbolFn](args)
+
+				delete context[symbolFn]
+				return result;
+			}
+			testFn.myApply(testObject, [ 1, 2, 3, 4, 5, 6, 7])
+
+			// bind
+			Function.prototype.myBind = function (context, args) {
+
+			}
+
 		</script>
 	</body>
 </html>
