@@ -30,7 +30,7 @@
         }
         this.once = (name, listener) => {
             function once() {
-                listener.apply(this, arguments) 
+                listener.apply(this, arguments)
                 this.off(name, listener);
             }
             this.on(name, once);
