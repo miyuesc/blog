@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div></div>
+
+<script>
+    const Compare = {
+        LESS_THAN: -1,
+        BIGGER_THAN: 1,
+        EQUALS: 0
+    };
+    function defaultCompare(a, b) {
+        if (a === b) {
+            return Compare.EQUALS;
+        }
+        return a < b ? Compare.LESS_THAN : Compare.BIGGER_THAN;
+    }
+    function swap(array, a, b) {
+        /*  const temp = array[a];
+            array[a] = array[b];
+            array[b] = temp;
+        */
+      console.log('swap: ', a, array[a], b, array[b], JSON.stringify(array));
+        [array[a], array[b]] = [array[b], array[a]];
+    }
+
+    function heapify(array, index, heapSize, compareFn) {
+        console.log('heapify:', index, JSON.stringify(array));
+        let largest = index;
+        const left = (2 * index) + 1;
+        const right = (2 * index) + 2;
+      console.log('info', largest, left, right, heapSize);
+        if (left < heapSize && compareFn(array[left], array[index]) > 0) {
+            largest = left;
+        }
+        if (right < heapSize && compareFn(array[right], array[largest]) > 0) {
+            largest = right;
+        }
+        if (largest !== index) {
+            swap(array, index, largest);
+            heapify(array, largest, heapSize, compareFn);
+        }
+    }
+
+    function buildMaxHeap(array, compareFn) {
+        for (let i = Math.floor(array.length / 2); i >= 0; i -= 1) {
+            console.log('buildMaxHeap step: index -', i, JSON.stringify(array));
+            heapify(array, i, array.length, compareFn);
+        }
+        return array;
+    }
+
+    function heapSort(array, compareFn = defaultCompare) {
+        let heapSize = array.length;
+        buildMaxHeap(array, compareFn);
+        while (heapSize > 1) {
+          console.log('heapSize:', heapSize)
+            swap(array, 0, --heapSize);
+            heapify(array, 0, heapSize, compareFn);
+        }
+      console.log('result:', JSON.stringify(array))
+        return array;
+    }
+
+    const array = [7, 16, 31, 5, 4, 1, 2, 9, 11, 43, 23, 24];
+
+    console.log('original array:', JSON.stringify(array), 'length:', array.length);
+    heapSort(array);
+</script>
+</body>
+</html>
