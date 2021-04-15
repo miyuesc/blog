@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: block;
+            box-sizing: border-box;
+        }
+        .container {
+            width: 100vw;
+            height: 400px;
+            box-sizing: border-box;
+            padding: 40px;
+        }
+        .content-box,
+        .right-content {
+            background-image: url("./assets/玫瑰.jpg");
+            height: 100%;
+            background-repeat: no-repeat;
+            background-position: center center;
+        }
+        .content-box {
+            display: flex;
+            background-color: rgba(0, 0, 0, 0);
+            justify-content: space-between;
+            background-size: cover;
+            backdrop-filter: blur(1px);
+        }
+        .left-content {
+            flex: 1;
+        }
+        .right-content {
+            width: 400px;
+            background-size: 100% 100%;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+  <div class="content-box">
+    <div class="left-content"></div>
+    <div class="right-content"></div>
+  </div>
+</div>
+</body>
+</html>
