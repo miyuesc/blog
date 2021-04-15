@@ -20,9 +20,13 @@
 
 [Vite 中文文档](https://cn.vitejs.dev/guide/)
 
+[Vue 3源码解析与最佳实践](https://vue3.w2deep.com/source-code/runtime/renderer.html)
+
 
 
 [Vue 2 技术揭秘](https://ustbhuangyi.github.io/vue-analysis/v2/prepare/)
+
+[Vue 2源码剖析](https://book.penblog.cn/src/%E5%AE%8C%E6%95%B4%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B.html)
 
 [Vue 2 design](http://hcysun.me/vue-design/zh/essence-of-comp.html)
 
