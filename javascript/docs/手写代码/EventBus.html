@@ -24,14 +24,13 @@
             if (!listener) {
                 delete this.events[name]
             }
-            // let index = this.events[name].findIndex(listener)
-            // index !== -1 && this.events[name].splice(index, 1)
             this.events[name] = this.events[name].filter(li => li !== listener)
         }
         this.once = (name, listener) => {
+          const context = this;
             function once() {
                 listener.apply(this, arguments)
-                this.off(name, listener);
+                context.off(name, once);
             }
             this.on(name, once);
         }
@@ -39,17 +38,20 @@
 
     // 测试
     const baseEvent = new EventBus()
-    function onceCb(value){
-        console.log("hello once," + value)
+
+    function onceCb(value1, value2){
+        console.log("hello once," + value1, value2)
     }
-    function normalCb(value){
-        console.log("hello normal," + value)
+    function normalCb(value1, value2){
+        console.log("hello normal," + value1, value2)
     }
     baseEvent.on("click", normalCb)
     //
     baseEvent.once("click", onceCb)
     // baseEvent.off("click")
     baseEvent.emit("click", "2021", "123")
+
+    baseEvent.emit("click", "2")
     // hello 2021
     console.log(baseEvent.events)
 </script>
