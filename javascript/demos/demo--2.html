@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+    <script id="configJson" type="application/json" src="./test.json"></script>
 </head>
 <body>
 <script type="application/javascript">
+    console.log(document.getElementById("configJson").textContent)
+
   Promise.resolve().then(() => {
     console.log(0);
     return Promise.resolve(15);
@@ -25,6 +28,21 @@
   }).then(() =>{
     console.log(6);
   })
+
+
+    async fetch() {
+        try {
+            let {data: { data, code, message }} = await initCode();
+            if (code === '200') return data;
+            else return undefined;
+        } catch (e) {
+            // return undefined;
+        }
+    }
+    async initMain() {
+        const initCode = await this.fetch();
+        // ...
+    }
 </script>
 </body>
 </html>
