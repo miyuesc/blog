@@ -189,11 +189,9 @@ export default function customTranslate(template, replacements) {
     let str = replacements[key];
     if (
       translations[replacements[key]] !== null &&
-      translations[replacements[key]] !== "undefined"
+      translations[replacements[key]] !== undefined
     ) {
-      // eslint-disable-next-line no-mixed-spaces-and-tabs
       str = translations[replacements[key]];
-      // eslint-disable-next-line no-mixed-spaces-and-tabs
     }
     return str || "{" + key + "}";
   });
@@ -233,7 +231,7 @@ this.bpmnModeler = new BpmnModeler({
 
 ## 三. 事件
 
-Bpmn.js 提供了EventBus事件总线模块来管理监听事件，并预设了244个事件。
+Bpmn.js 提供了EventBus事件总线模块来管理监听事件，并预设了244个事件（引入其他插件时，也会抛出其他事件）。
 
 > 下面的元素对象指包含element元素的对象，其他属性不定（部分事件返回的对象也不包含element）。
 >
@@ -974,5 +972,4 @@ EventBus.on("foo", function(event, payload) {
     console.log(payload) // { fooPayload: "foo" }
 })
 ```
-
 
