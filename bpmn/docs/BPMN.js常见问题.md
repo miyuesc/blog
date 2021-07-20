@@ -162,11 +162,22 @@ const modeler = new Modeler({
 
 **原因：**
 
-初步猜测是因为我在项目中配置的 bpmn.js 的 cdn 地址，所以在打包过程中会忽略 bpmn.js 的相关引用。但是在 customPaletteProvider 中需要依赖原有的 paletteProvider，所以导致自定义侧边栏编译之后代码逻辑异常，不能正确引用。
+在自定义palette的构造函数的时候，继承了原生的 paletteProvider，但是没有注入依赖实例，导致实例化时无法找到依赖的其他实例对象。
 
 
 
 **解决：**
 
-建议不对 bpmn.js 采用 cdn 的优化方式，而是在打包时进行代码分割，将 bpmn.js 整体打包进对应的文件中，减少打包后的文件大小
+在自定义 paletteProvider 中添加依赖注入
+
+```javascript
+import PaletteProvider from "bpmn-js/lib/features/palette/PaletteProvider";
+
+export default function CustomPalette(palette, create, elementFactory, spaceTool, lassoTool, handTool, globalConnect, translate) {
+  PaletteProvider.call(this, palette, create, elementFactory, spaceTool, lassoTool, handTool, globalConnect, translate, 2000);
+}
+
+// 注入依赖
+CustomPalette.$inject = ["palette", "create", "elementFactory", "spaceTool", "lassoTool", "handTool", "globalConnect", "translate"];
+```
 
