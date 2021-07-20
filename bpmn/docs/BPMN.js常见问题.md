@@ -146,3 +146,27 @@ const modeler = new Modeler({
 });
 ```
 
+### 6. 使用 cdn 引入 bpmn.js 时无法渲染
+
+> 这个问题主要出现在我的个人开源项目 [bpmn-process-designer](https://github.com/miyuesc/bpmn-process-designer) 中，现已禁用原有功能。
+
+**主要问题：**
+
+在页面加载时出现无法正常初始化组件的情况，流程编辑器BpmnModeler实例无法正常实例化。
+
+主要问题也能在错误信息中发现，在自定义palette时发生错误，无法正常找到自定义侧边栏 customPalette。
+
+![image-20210720160511276](https://gitee.com/MiyueSC/image-bed/raw/master/image-20210720160511276.png)
+
+
+
+**原因：**
+
+初步猜测是因为我在项目中配置的 bpmn.js 的 cdn 地址，所以在打包过程中会忽略 bpmn.js 的相关引用。但是在 customPaletteProvider 中需要依赖原有的 paletteProvider，所以导致自定义侧边栏编译之后代码逻辑异常，不能正确引用。
+
+
+
+**解决：**
+
+建议不对 bpmn.js 采用 cdn 的优化方式，而是在打包时进行代码分割，将 bpmn.js 整体打包进对应的文件中，减少打包后的文件大小
+
