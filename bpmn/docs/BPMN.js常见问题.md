@@ -348,3 +348,14 @@ CustomPalette.$inject = ["palette", "create", "elementFactory", "spaceTool", "la
 ```
 
 > 🚩 特别注意：构造函数使用的参数顺序必须与注入的依赖数组顺序一致。
+
+## 13. 直接获取 Process 元素
+
+```javascript
+const canvas = modeler.get("canvas");
+
+const rootElement = canvas.getRootElement();
+
+console.log("Process Id:", rootElement.id);
+```
+
