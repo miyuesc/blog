@@ -23,7 +23,7 @@ export default {
 
 进入到源文件Modeler.js，可以找到创建Modeler建模器的时候需的参数。
 
-```
+```typescript
 this.bpmnModeler = new BpmnModeler(options: Options）;
 
 interface Options {

@@ -8,7 +8,7 @@
 
 原因：
 
-常见于 Vue 项目。由于更新时 Bpmn 接收的参数类型应该为 `ModdleElement` 类型，但是在编写组件时将对应的数据保存进了 `data() { return { } }` 的某个数据中，所以被 vue 进行了响应式处理，更改了原型与属性，导致无法解析。
+常见于 Vue 2.x 项目。由于更新时 Bpmn 接收的参数类型应该为 `ModdleElement` 类型，但是在编写组件时将对应的数据保存进了 `data() { return { } }` 的某个数据中，所以被 vue 进行了响应式处理，更改了原型与属性，导致无法解析。
 
 解决：
 
@@ -195,14 +195,18 @@ new BpmnModeler({
     {
       // 禁用左侧默认工具栏
       paletteProvider: ['value', '']// 去不干净，还是默认生成空白 dom
-      // // 禁用滚轮滚动
+      // 禁用滚轮(画布)滚动缩放
       zoomScroll: ['value', ''],
-      // // 禁止拖动线
+      // 禁止拖动线
       bendpoints: ['value', ''],
-      // // 禁止点击节点出现contextPad
+      // 禁止点击节点出现contextPad
       contextPadProvider: ['value', ''],
-      // // 禁止双击节点出现label编辑框
-      labelEditingProvider: ['value', '']
+      // 禁止双击节点出现label编辑框
+      labelEditingProvider: ['value', ''],
+  		// 禁止画布移动
+  		moveCanvas: ['value', ''],
+  		// 禁止单个元素移动
+  		move: ['value', ''],
     }
   ]
 })
@@ -358,4 +362,39 @@ const rootElement = canvas.getRootElement();
 
 console.log("Process Id:", rootElement.id);
 ```
+
+## 14. 节点resize改变大小
+
+> 已有仓库实现基础节点的resize功能 [bpmn-js-task-resize](https://github.com/ElCondor1969/bpmn-js-task-resize)
+
+使用：
+
+```javascript
+import BpmnModeler from 'bpmn-js/lib/Modeler';
+
+import resizeTask from 'bpmn-js-task-resize/lib';
+
+var bpmnJS = new BpmnModeler({
+  additionalModules: [
+    resizeTask
+  ],
+  taskResizingEnabled: true, // 允许任务类节点resize
+  eventResizingEnabled: true // 允许开始结束等事件类节点resize
+});
+```
+
+## 15. 子流程节点的手动展开/收起
+
+```javascript
+const modeling = modeler.get("modeling");
+
+// bpmnElement 为选中的子流程元素
+modeling.toggleCollapse(this.bpmnElement);
+```
+
+
+
+
+
+
 

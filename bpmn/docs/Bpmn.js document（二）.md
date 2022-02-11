@@ -2,7 +2,7 @@
 
 ### 7. Modeling 基本建模方法
 
-`Diagram.js` 提供的基础建模工厂 `BaseModeling`，注入了 `EventBus, ElementFactory, CommandStack` 模块。`Bpmn.js` 继承了 `BaseModeling` 并提供了新的方法。
+`Diagram.js` 提供的基础建模工厂 `BaseModeling`，注入了 `EventBus, ElementFactory, CommandStack` 模块实例。`Bpmn.js` 继承了 `BaseModeling` 并提供了新的方法。
 
 **该模块在自定义节点属性等方面经常使用**
 
@@ -277,6 +277,7 @@ Modeling.reconnectStart(connection, newSource, dockingOrPoints, hints)
 
 Modeling.reconnectEnd(connection, newTarget, dockingOrPoints, hints)
 
+// 手动连线
 Modeling.connect(source, target, attrs, hints)
 ```
 
