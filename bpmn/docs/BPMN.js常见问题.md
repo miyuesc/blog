@@ -392,9 +392,69 @@ const modeling = modeler.get("modeling");
 modeling.toggleCollapse(this.bpmnElement);
 ```
 
+## 16. 无法拖入元素
+
+![错误图片](https://gitee.com/MiyueSC/image-bed/raw/master/image-20220211164505735.png)
 
 
 
+这个错误通常出现在初始化时没有导入空白流程元素，插入节点元素时需要已存在一个空白 Process，可以在初始化 Modeler 完成后传入一个xml字符串。
+
+```javascript
+// defaultEmpty.js
+export default (key, name, type) => {
+  if (!type) type = "camunda";
+  const TYPE_TARGET = {
+    activiti: "http://activiti.org/bpmn",
+    camunda: "http://bpmn.io/schema/bpmn",
+    flowable: "http://flowable.org/bpmn"
+  };
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<bpmn2:definitions 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL"
+  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+  id="diagram_${key}"
+  targetNamespace="${TYPE_TARGET[type]}">
+  <bpmn2:process id="${key}" name="${name}" isExecutable="true">
+  </bpmn2:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="${key}">
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn2:definitions>`;
+};
 
 
+// app.vue
+import BpmnModeler from "bpmn-js/lib/Modeler";
+import DefaultEmptyXML from "./plugins/defaultEmpty";
+
+export default {
+  // ...
+  mounted() {
+    this.bpmnModeler = new BpmnModeler({
+        container: this.$refs["bpmn-canvas"]
+      });
+    this.createNewDiagram();
+  },
+  methods: {
+    async createNewDiagram(xml) {
+      // 将字符串转换成图显示出来
+      let newId = this.processId || `Process_${new Date().getTime()}`;
+      let newName = this.processName || `业务流程_${new Date().getTime()}`;
+      let xmlString = xml || DefaultEmptyXML(newId, newName, this.prefix);
+      try {
+        let { warnings } = await this.bpmnModeler.importXML(xmlString);
+        if (warnings && warnings.length) {
+          warnings.forEach(warn => console.warn(warn));
+        }
+      } catch (e) {
+        console.error(`[Process Designer Warn]: ${e?.message || e}`);
+      }
+  }
+}
+```
 
