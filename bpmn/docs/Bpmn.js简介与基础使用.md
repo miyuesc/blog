@@ -13,7 +13,7 @@
 
 Bpmn.js 内部依赖 [diagram.js](https://github.com/bpmn-io/diagram-js) 和 [bpmn-moddle](https://github.com/bpmn-io/bpmn-moddle) 。
 
-<img src="https://bpmn.io/assets/img/toolkit/bpmn-js/walkthrough/overview.svg" alt="bpmn-js 架构：部分和职责" style="zoom:67%;" />
+<img src="https://gitee.com/MiyueSC/image-bed/raw/master/image-20220217162633617.png" alt="image-20220217162633617" style="zoom:67%;" />
 
 其中 diagram.js 是一个用于在web应用程序中显示和修改图表的工具库，为 bpmn.js 提供了基础的图形元素交互方法，以及覆盖物、工具栏、ContentPad等基础工具和撤销恢复的操作命令栈。
 
@@ -180,7 +180,21 @@ Bpmn.js 提供了三种不同的模式供我们使用，我们可以根据不同
 
 ## 4. 基础使用
 
-### 4.1 引入 Bpmn.js
+### 4.1 可见组成部分
+
+在未引入其他插件的情况下，使用 `Modeler` 模式，生产的画布可见功能主要包含以下部分：
+
+1. `Palette`：左侧元素工具栏，可以通过点击或者拖拽触发添加新元素
+2. `Shape`s：所有 Bpmn.js 可见节点，Moddle 描述文件内可发现均继承自 `Element`
+3. `Connection`s：所有节点之间的连线，Bpmn.js 中连线的类型均为 `SequenceFlow`
+4. `ContentPad`：用鼠标选中一个元素时会出现，主要是操作该元素的上下文以及节点自身的类型等
+5. `PopupMenu`：默认在鼠标点击 `ContentPad` 中的扳手图表时出现，主要用于控制选中元素类型的调整等
+
+![image-20220217144955968](https://gitee.com/MiyueSC/image-bed/raw/master/image-20220217144955968.png)
+
+> 悄悄抄了一下呆呆的图，原图见：https://juejin.cn/post/6844904017584193544#heading-1
+
+### 4.2 引入 Bpmn.js
 
 在node环境下，可以使用 npm 进行安装。
 
@@ -198,7 +212,7 @@ npm install bpmn-js
 
 
 
-### 4.2 实例化建模器
+### 4.3 实例化建模器
 
 首先，需要创建一个 Dom 节点来挂载画布元素。
 
@@ -210,9 +224,9 @@ npm install bpmn-js
 
 ```javascript
 import BpmnModeler from "bpmn-js/lib/Modeler"
-import 'bpmn-js/dist/assets/diagram-js.css' // 左边工具栏以及编辑节点的样式
-import 'bpmn-js/dist/assets/bpmn-font/css/bpmn.css'
-import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-codes.css'
+import 'bpmn-js/dist/assets/diagram-js.css' // 基础样式
+import 'bpmn-js/dist/assets/bpmn-font/css/bpmn.css' // 节点基础图标
+import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-codes.css' // 节点完整图标
 
 this.bpmnModeler = new BpmnModeler({
   container: "#bpmn-canvas",
@@ -222,7 +236,7 @@ this.bpmnModeler = new BpmnModeler({
 
 
 
-### 4.3 导入流程图
+### 4.4 导入流程图
 
 最后，导入一个预设的 xml 字符串（**该 xml 必须包含一个 process 节点，否则无法创建新元素**）
 
@@ -244,6 +258,136 @@ async createNewDiagram(xml) {
   
 // DefaultEmptyXML 方法见 https://github.com/miyuesc/bpmn-process-designer/blob/main/package/designer/plugins/defaultEmpty.js
 ```
+
+### 4.5 引入侧边栏
+
+`Camunda` 团队内部实现了属性侧边栏 [bpmn-js-properties-panel](https://github.com/bpmn-io/bpmn-js-properties-panel)，同时包含了最基础的 Bpmn 属性版本，以及适配 `Camunda` 流程引擎的完整属性版本。
+
+
+
+使用方式如下：
+
+**1. 添加一个空div放置侧边栏**
+
+```html
+<div class="modeler">
+  <div id="canvas"></div> <!-- 画布区域 -->
+  <div id="properties"></div> <!-- 侧边栏区域 -->
+</div>
+```
+
+**2. 引入侧边栏**
+
+```javascript
+import BpmnModeler from 'bpmn-js/lib/Modeler';
+import {
+  BpmnPropertiesPanelModule, // 基础侧边栏渲染入口
+  BpmnPropertiesProviderModule, // 侧边栏属性编辑表单构造器
+} from 'bpmn-js-properties-panel';
+import 'bpmn-js-properties-panel/assets/element-templates.css' // 侧边栏样式
+
+const modeler = new BpmnModeler({
+  container: '#canvas',
+  propertiesPanel: {
+    parent: '#properties' // 侧边栏挂载的 Dom Id
+  },
+  // 添加到扩展模块内
+  additionalModules: [
+    BpmnPropertiesPanelModule,
+    BpmnPropertiesProviderModule
+  ]
+});
+```
+
+**3. 使用效果**
+
+![image-20220217152604153](https://gitee.com/MiyueSC/image-bed/raw/master/image-20220217152604153.png)
+
+> 🚀 更新后的版本，UI 更加好看？！
+
+### 4.6 导出流程图文件
+
+Bpmn.js 内部已实现了导出为 SVG 格式图片或者 XML 文本的方法。
+
+> `.bpmn` 与 `.xml` 文件内部都是一样的数据，只是导出文件格式稍有区别
+
+```javascript
+/** 下载流程图到本地
+ * @param {string} type 下载的文件格式，包含 xml, bpmn, svg
+ * @param {string} name 下载的文件名字
+ */
+async downloadProcess(type, name) {
+  try {
+    const _this = this;
+    // 按需要类型创建文件并下载
+    if (type === "xml" || type === "bpmn") {
+      const { err, xml } = await this.bpmnModeler.saveXML();
+      // 读取异常时抛出异常
+      if (err) {
+        console.error(`[Process Designer Warn ]: ${err.message || err}`);
+      }
+      let { href, filename } = _this.setEncoded(type.toUpperCase(), name, xml);
+      downloadFunc(href, filename);
+    } else {
+      const { err, svg } = await this.bpmnModeler.saveSVG();
+      // 读取异常时抛出异常
+      if (err) {
+        return console.error(err);
+      }
+      let { href, filename } = _this.setEncoded("SVG", name, svg);
+      downloadFunc(href, filename);
+    }
+  } catch (e) {
+    console.error(`[Process Designer Warn ]: ${e.message || e}`);
+  }
+  // 文件下载方法
+  function downloadFunc(href, filename) {
+    if (href && filename) {
+      let a = document.createElement("a");
+      a.download = filename; //指定下载的文件名
+      a.href = href; //  URL对象
+      a.click(); // 模拟点击
+      URL.revokeObjectURL(a.href); // 释放URL 对象
+    }
+  }
+},
+```
+
+## 5. 进阶使用
+
+### 5.1 切换为 `Flowable` 或者 `Activiti`
+
+首先，在切换了适配的流程引擎后，第4节中提到的 `Camunda` 团队开发的侧边栏就不能用了，需要重写侧边栏。
+
+然后，需要编写流程引擎对应的 `Moddle` 描述文件，然后在实例化 `Modeler` 的时候引入，基础引入方式如下：
+
+```javascript
+// 引入描述文件
+import activitiModdleExtension from "./plugins/extension-moddle/activiti.json";
+import flowableModdleExtension from "./plugins/extension-moddle/flowable.json";
+
+import BpmnModeler from "bpmn-js/lib/Modeler";
+
+// ...
+// 实例化
+this.bpmnModeler = new BpmnModeler({
+  container: this.$refs["bpmn-canvas"],
+  keyboard: { bindTo: document },
+  // 在这里引入对应的描述文件
+  moddleExtensions: {
+    activiti: activitiModdleExtension, // 使用的哪个引擎就引入哪个，不需要两个都引入
+    flowable: flowableModdleExtension
+  }
+});
+```
+
+相关文件可以参考 [https://github.com/miyuesc/bpmn-process-designer/tree/main/package/designer/plugins/descriptor](https://github.com/miyuesc/bpmn-process-designer/tree/main/package/designer/plugins/descriptor) ，但是需要与后端确认属性版本。
+
+也可以根据文件规则进行简化或者重写，具体规则见：[Bpmn.js描述文件说明](https://juejin.cn/post/6912331982701592590)
+
+
+
+
 
 ## 后语
 
