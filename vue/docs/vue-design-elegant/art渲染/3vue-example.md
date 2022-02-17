@@ -29,11 +29,7 @@ var vm = new Vue({
 <div id="app">1</div>
 ```
 
-::: v-pre
-其中
-`{{ test }}`
-被替换成了 `1`，并且当我们尝试修改 `data.test` 的值的时候
-:::
+其中`{{ test }}`被替换成了 `1`，并且当我们尝试修改 `data.test` 的值的时候
 
 ```js
 vm.$data.test = 2
@@ -116,7 +112,7 @@ if (process.env.NODE_ENV !== 'production' && config.performance && mark)
 
 意思是：在非生产环境下，并且 `config.performance` 和 `mark` 都为真，那么才执行里面的代码，其中 `config.performance` 来自于 `core/config.js` 文件，我们知道，`Vue.config` 同样引用了这个对象，在 `Vue` 的官方文档中可以看到如下内容：
 
-![](http://ovjvjtt4l.bkt.clouddn.com/2017-09-28-114949.jpg)
+![image-20220216160622730](https://gitee.com/MiyueSC/image-bed/raw/master/image-20220216160622730.png)
 
 `Vue` 提供了全局配置 `Vue.config.performance`，我们通过将其设置为 `true`，即可开启性能追踪，你可以追踪四个场景的性能：
 

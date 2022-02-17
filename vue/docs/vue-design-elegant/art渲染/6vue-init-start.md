@@ -139,7 +139,7 @@ if (process.env.NODE_ENV !== 'production') {
       const options = vm.$options
       const handlers = options.render && options.render._withStripped
         ? getHandler
-        : hasHandler
+        : hasHandler 
       vm._renderProxy = new Proxy(vm, handlers)
     } else {
       vm._renderProxy = vm
@@ -346,7 +346,7 @@ const getHandler = {
     }
 }
 ```
- 
+
 其最终实现的效果无非就是检测到访问的属性不存在就给你一个警告。但我们也提到了，只有当 `render` 函数的 `_withStripped` 为真的时候，才会给出警告，但是 `render._withStripped` 又只有写测试的时候出现过，也就是说需要我们手动设置其为 `true` 才会得到提示，否则是得不到的，比如：
 
 ```js

@@ -22,7 +22,7 @@
 ├── src ----------------------------------- 这个是我们最应该关注的目录，包含了源码
 │   ├── compiler -------------------------- 编译器代码的存放目录，将 template 编译为 render 函数
 │   ├── core ------------------------------ 存放通用的，与平台无关的代码
-│   │   ├── observer ---------------------- 响应系统，包含数据观测的核心代码
+│   │   ├── observer ---------------------- 响应系统，包含数据观测的核心代 码
 │   │   ├── vdom -------------------------- 包含虚拟DOM创建(creation)和打补丁(patching)的代码
 │   │   ├── instance ---------------------- 包含Vue构造函数设计相关的代码
 │   │   ├── global-api -------------------- 包含给Vue构造函数挂载全局方法(静态方法)或属性的代码
@@ -50,19 +50,94 @@
 
 关于上面对目录和文件的描述也许你一眼看上去一头雾水，还是不理解他在干什么，没关系，这是正常的，在你没有深入到源码之前，仅仅凭借几句话就理解这个文件的作用是不可能的，所以不要灰心，只需要有个大概印象混个眼熟就可以了。
 
+
+
+核心文件
+
+```
+├── src --------------------------------------------------------- 这个是我们最应该关注的目录，包含了源码
+│   ├── compiler --------------------------------------------- 编译器代码的存放目录，将 template 编译为 render 函数
+│   ├── core -------------------------------------------------- 存放通用的，与平台无关的代码
+│          ├── observer ----------------------------------------- 响应系统，包含数据观测的核心代 码
+│          ├── vdom -------------------------------------------- 包含虚拟DOM创建(creation)和打补丁(patching)的代码
+│          ├── instance ----------------------------------------- 包含Vue构造函数设计相关的代码
+│          ├── global-api --------------------------------------- 包含给Vue构造函数挂载全局方法(静态方法)或属性的代码
+│          ├── components ------------------------------------- 包含抽象出来的通用组件
+│   ├── server ------------------------------------------------- 包含服务端渲染(server-side rendering)的相关代码
+│   ├── platforms --------------------------------------------- 包含平台特有的相关代码，不同平台的不同构建的入口文件也在这里
+│          ├── web ---------------------------------------------- web平台
+│                ├── entry-runtime.js ---------------------------- 运行时构建的入口，不包含模板(template)到render函数的编译器，所以不支持 `template` 选项，默认版本入口
+│                ├── entry-runtime-with-compiler.js ------------ 独立构建版本的入口，它在 entry-runtime 的基础上添加了模板(template)到render函数的编译器
+│                ├── entry-compiler.js --------------------------- vue-template-compiler 包的入口文件
+│                ├── entry-server-renderer.js -------------------- vue-server-renderer 包的入口文件
+│                ├── entry-server-basic-renderer.js ------------- 输出 packages/vue-server-renderer/basic.js 文件
+│          ├── weex --------------------------------------------- 混合应用
+│   ├── sfc ----------------------------------------------------- 包含单文件组件(.vue文件)的解析逻辑，用于vue-template-compiler包
+│   ├── shared ------------------------------------------------- 包含整个代码库通用的代码
+```
+
+
+
 ## Vue 的不同构建输出
 
 ### 从 Vue 的构建配置了解其不同的构建输出
 
-如果按照输出的模块形式分类，那么 Vue 有三种不同的构建输出，分别是：`UMD`、`CommonJS` 以及 `ES Module`，我们可以在 Vue 的 Rollup 构建配置中得知，打开 `scripts/config.js` 文件，如下图：
+如果按照输出的模块形式分类，那么 Vue 有三种不同的构建输出，分别是：`UMD`、`CommonJS` 以及 `ES Module`，我们可以在 Vue 的 Rollup 构建配置中得知，打开 `scripts/config.js` 文件，如下：
 
-![](http://ovjvjtt4l.bkt.clouddn.com/2017-08-31-vue-build-config1.png)
+```javascript
+const builds = {	
+  // Runtime only (CommonJS). Used by bundlers e.g. Webpack & Browserify
+  'web-runtime-cjs-dev': {
+    entry: resolve('web/entry-runtime.js'),
+    dest: resolve('dist/vue.runtime.common.dev.js'),
+    format: 'cjs',
+    env: 'development',
+    banner
+  },
+  'web-runtime-cjs-prod': {
+    entry: resolve('web/entry-runtime.js'),
+    dest: resolve('dist/vue.runtime.common.prod.js'),
+    format: 'cjs',
+    env: 'production',
+    banner
+  },
+  // Runtime only ES modules build (for bundlers)
+  'web-runtime-esm': {
+    entry: resolve('web/entry-runtime.js'),
+    dest: resolve('dist/vue.runtime.esm.js'),
+    format: 'es',
+    banner
+  },
+  // Runtime+compiler ES modules build (for bundlers)
+  'web-full-esm': {
+    entry: resolve('web/entry-runtime-with-compiler.js'),
+    dest: resolve('dist/vue.esm.js'),
+    format: 'es',
+    alias: { he: './entity-decoder' },
+    banner
+  },
+  // runtime-only build (Browser)
+  'web-runtime-dev': {
+    entry: resolve('web/entry-runtime.js'),
+    dest: resolve('dist/vue.runtime.js'),
+    format: 'umd',
+    env: 'development',
+    banner
+  },
+  // runtime-only production build (Browser)
+  'web-runtime-prod': {
+    entry: resolve('web/entry-runtime.js'),
+    dest: resolve('dist/vue.runtime.min.js'),
+    format: 'umd',
+    env: 'production',
+    banner
+  },
+}
+```
 
 上图中的三个构建配置的入口是相同的，即 `web/entry-runtime.js` 文件，但是输出的格式(`format`)是不同的，分别是 `cjs`、`es` 以及 `umd`。
 
-每种模块形式又分别输出了 `运行时版` 以及 `完整版`，如下图：
-
-![](http://ovjvjtt4l.bkt.clouddn.com/2017-08-31-130242.jpg)
+每种模块形式又分别输出了 `运行时版` 以及 `完整版`。
 
 上图中，`cjs` 模块分别输出了 `运行时版` 以及 `完整版` 两个版本，`es` 模块也做了同样的事情，我们观察运行时版本与完整版本的区别：
 
@@ -72,15 +147,17 @@
 
 通过名字，我们就可以猜到，完整版比运行时版本多了一个传说中的 `compiler`，而 `compiler` 在我们介绍目录结构的时候说过，它的作用是：*编译器代码的存放目录，将 template 编译为 render 函数*。
 
-上图中只介绍了 `cjs` 与 `es` 版本的输出，对于 `umd` 模块格式的输出，同样也分为 `运行时版` 与 `完整版`，并且还分为 `生产环境` 与 `开发环境`，如下图：
-
-![](http://ovjvjtt4l.bkt.clouddn.com/2017-08-31-131849.jpg)
+上图中只介绍了 `cjs` 与 `es` 版本的输出，对于 `umd` 模块格式的输出，同样也分为 `运行时版` 与 `完整版`，并且还分为 `生产环境` 与 `开发环境` 。
 
 ### 不同构建输出的区别与作用
 
 相比于知道 Vue 的不同构建输出，我们更关心的是：不同的构建输出有什么区别，为什么要输出这么多不同的版本，有什么作用？
 
-为什么要分 `运行时版` 与 `完整版`？首先你要知道一个公式：`运行时版 + Compiler = 完整版`。也就是说完整版比运行时版多了一个 `Compiler`，一个将字符串模板编译为 `render` 函数的家伙，大家想一想：将字符串模板编译为 `render` 函数的这个过程，是不是一定要在代码运行的时候再去做？当然不是，实际上这个过程在构建的时候就可以完成，这样真正运行的代码就免去了这样一个步骤，提升了性能。同时，将 `Compiler` 抽离为单独的包，还减小了库的体积。
+为什么要分 `运行时版` 与 `完整版`？
+
+首先你要知道一个公式：`运行时版 + Compiler = 完整版`。
+
+也就是说完整版比运行时版多了一个 `Compiler`，一个将字符串模板编译为 `render` 函数的家伙，大家想一想：将字符串模板编译为 `render` 函数的这个过程，是不是一定要在代码运行的时候再去做？当然不是，实际上这个过程在构建的时候就可以完成，这样真正运行的代码就免去了这样一个步骤，提升了性能。同时，将 `Compiler` 抽离为单独的包，还减小了库的体积。
 
 那么为什么需要完整版呢？说白了就是允许你在代码运行的时候去现场编译模板，在不配合构建工具的情况下可以直接使用，但是更多的时候推荐你配合构建工具使用运行时版本。
 

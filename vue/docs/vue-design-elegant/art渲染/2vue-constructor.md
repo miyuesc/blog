@@ -180,13 +180,13 @@ propsDef.get = function () { return this._props }
     cb: any,
     options?: Object
   ): Function {
-  	// ...
+      // ...
   }
 ```
 
-这三个方法分别是：`$set`、`$delete` 以及 `$watch`，实际上这些东西你都见过，在这里：
+这三个方法分别是：`$set`、`$delete` 以及 `$watch`，实际上这些东西你都见过。
 
-![](http://ovjvjtt4l.bkt.clouddn.com/2017-09-04-093014.jpg)
+
 
 然后是 `eventsMixin` 方法，这个方法在 `./events.js` 文件中，打开这个文件找到 `eventsMixin` 方法，这个方法在 `Vue.prototype` 上添加了四个方法，分别是：
 
@@ -252,6 +252,7 @@ Vue.prototype._g = bindObjectListeners
 Vue.prototype.$nextTick = function (fn: Function) {}
 Vue.prototype._render = function (): VNode {}
 ```
+
 至此，`instance/index.js` 文件中的代码就运行完毕了（注意：所谓的运行，是指执行 `npm run dev` 命令时构建的运行）。我们大概了解了每个 `*Mixin` 方法的作用其实就是包装 `Vue.prototype`，在其上挂载一些属性和方法，下面我们要做一件很重要的事情，就是将上面的内容集中合并起来，放到一个单独的地方，便于以后查看，我将它们整理到了这里：[附录/Vue 构造函数整理-原型](../appendix/vue-prototype.md)，这样当我们在后面详细讲解的时候，提到某个方法你就可以迅速定位它的位置，以便于保持我们思路的清晰。
 
 ## Vue 构造函数的静态属性和方法（全局API）
@@ -352,10 +353,10 @@ import config from '../config'
 // NOTE: these are not considered part of the public API - avoid relying on
 // them unless you are aware of the risk.
 Vue.util = {
-	warn,
-	extend,
-	mergeOptions,
-	defineReactive
+    warn,
+    extend,
+    mergeOptions,
+    defineReactive
 }
 ```
 
@@ -379,7 +380,7 @@ Vue.options = Object.create(null)
 
 ```js
 ASSET_TYPES.forEach(type => {
-	Vue.options[type + 's'] = Object.create(null)
+    Vue.options[type + 's'] = Object.create(null)
 })
 
 // this is used to identify the "base" constructor to extend all plain-object
@@ -403,7 +404,7 @@ export const ASSET_TYPES = [
 
 ```js
 ASSET_TYPES.forEach(type => {
-	Vue.options[type + 's'] = Object.create(null)
+    Vue.options[type + 's'] = Object.create(null)
 })
 
 // this is used to identify the "base" constructor to extend all plain-object
@@ -415,10 +416,10 @@ Vue.options._base = Vue
 
 ```js
 Vue.options = {
-	components: Object.create(null),
-	directives: Object.create(null),
-	filters: Object.create(null),
-	_base: Vue
+    components: Object.create(null),
+    directives: Object.create(null),
+    filters: Object.create(null),
+    _base: Vue
 }
 ```
 
@@ -442,7 +443,7 @@ export default {
 
 ```js
 Vue.options.components = {
-	KeepAlive
+    KeepAlive
 }
 ```
 
@@ -450,12 +451,12 @@ Vue.options.components = {
 
 ```js
 Vue.options = {
-	components: {
-		KeepAlive
-	},
-	directives: Object.create(null),
-	filters: Object.create(null),
-	_base: Vue
+    components: {
+        KeepAlive
+    },
+    directives: Object.create(null),
+    filters: Object.create(null),
+    _base: Vue
 }
 ```
 
@@ -637,12 +638,12 @@ extend(Vue.options.components, platformComponents)
 
 ```js
 Vue.options = {
-	components: {
-		KeepAlive
-	},
-	directives: Object.create(null),
-	filters: Object.create(null),
-	_base: Vue
+    components: {
+        KeepAlive
+    },
+    directives: Object.create(null),
+    filters: Object.create(null),
+    _base: Vue
 }
 ```
 
@@ -686,15 +687,15 @@ extend(Vue.options.directives, platformDirectives)
 
 ```js
 Vue.options = {
-	components: {
-		KeepAlive
-	},
-	directives: {
-		model,
-		show
-	},
-	filters: Object.create(null),
-	_base: Vue
+    components: {
+        KeepAlive
+    },
+    directives: {
+        model,
+        show
+    },
+    filters: Object.create(null),
+    _base: Vue
 }
 ```
 
@@ -729,17 +730,17 @@ extend(Vue.options.components, platformComponents)
 
 ```js
 Vue.options = {
-	components: {
-		KeepAlive,
-		Transition,
-		TransitionGroup
-	},
-	directives: {
-		model,
-		show
-	},
-	filters: Object.create(null),
-	_base: Vue
+    components: {
+        KeepAlive,
+        Transition,
+        TransitionGroup
+    },
+    directives: {
+        model,
+        show
+    },
+    filters: Object.create(null),
+    _base: Vue
 }
 ```
 
