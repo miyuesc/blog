@@ -1,15 +1,12 @@
 ## 1. Bpmn.js简介
 
 > 📌BPMN (Business Process Model and Notation): 业务流程模型和标记法，是对象管理组织维护的关于业务流程建模的行业性标准。目标是通过提供一套既符合业务人员直观又能表现复杂流程语义的标记法，同时为技术人员和业务人员从事业务流程管理提供支持。
-> 
 
 [Bpmn.js: BPMN 2.0 rendering toolkit and web modeler](https://bpmn.io/toolkit/bpmn-js/).  Create, embed and extend BPMN diagrams in your Browser. 
 
 由 Camunda 团队研发的一个 BPMN 2.0渲染工具包和web建模器。使得可以在浏览器中创建、嵌入和扩展 BPMN 流程图。
 
 采用JavaScript编写，包含一个基础的查看器，与“增强”后的建模器，可以嵌入到任何web应用程序中（需要 web 程序支持 SVG 绘制，比如旧版 IE 浏览器就不行）。
-
-
 
 Bpmn.js 内部依赖 [diagram.js](https://github.com/bpmn-io/diagram-js) 和 [bpmn-moddle](https://github.com/bpmn-io/bpmn-moddle) 。
 
@@ -24,10 +21,8 @@ Bpmn.js 内部依赖 [diagram.js](https://github.com/bpmn-io/diagram-js) 和 [bp
 ### 2.1 Diagram.js
 
 > 📌[diagram-js](https://github.com/bpmn-io/diagram-js) is a toolbox for displaying and modifying diagrams on the web. It allows us to render visual elements and build interactive experiences on top of them.Additionally, diagram-js defines a data model for graphical elements and their relationships.
->
+> 
 > 译：diagram.js是一个用于在web应用程序上显示和修改图表的工具集合，它允许我们渲染可见元素并在此基础上提供交互。此外，diagram.js还为图形元素及其关系定义了一个数据模型。
-
-
 
 **Module System**
 
@@ -69,7 +64,7 @@ const diagram = new Diagram({
 });
 ```
 
-> 🚀要将模块插入到 bpmn.js 中，可以使用 `additionalModules` 选项。	
+> 🚀要将模块插入到 bpmn.js 中，可以使用 `additionalModules` 选项。    
 
 ```javascript
 import BpmnModeler from "bpmn-js/lib/Modeler"
@@ -79,8 +74,6 @@ const modeler = new BpmnModeler({
   additionalModules: [MyLoggingModule]
 })
 ```
-
-
 
 **Core Services**
 
@@ -92,8 +85,6 @@ const modeler = new BpmnModeler({
 - [`ElementRegistry`](https://github.com/bpmn-io/diagram-js/blob/master/lib/core/ElementRegistry.js) - 记录所有图形元素的注册表函数，并提供根据ID查找元素模型实例的API。
 - [`GraphicsFactory`](https://github.com/bpmn-io/diagram-js/blob/master/lib/core/GraphicsFactory.js) - 负责创建形状和连线的SVG元素。其实际的外观和形状是由渲染器定义的，即绘制模块( Draw Module )中的DefaultRenderer。
 
-
-
 **Data Model**
 
 diagram.js 在内部创建了一个关于形状和连线的基础数据模型。
@@ -102,8 +93,6 @@ diagram.js 在内部创建了一个关于形状和连线的基础数据模型。
 - 连线（Connection）：包含父元素，来源形状和目标形状
 
 `ElementRegistry` 负责根据该模型创建形状和连接。在建模期间，通过 `Modeling` 基础建模服务来根据用户操作更新元素关系。
-
-
 
 **Auxiliary Services**
 
@@ -123,8 +112,6 @@ diagram.js 在内部创建了一个关于形状和连线的基础数据模型。
 Bpmn Moddle 封装了BPMN 2.0元模型，并为我们提供了读写BPMN 2.0 XML文档的方法。
 
 导入XMl的时候，可以将XML文档转换为JavaScript对象树。在用户进行编辑时验证XML模型的合法性，并将结果保存后转换为BPMN 2.0 XML。
-
-
 
 ## 3. Bpmn.js（Plugging Things Together）
 
@@ -161,8 +148,6 @@ Bpmn.js 的元素外观渲染主要通过 BpmnRenderer 模块，我们还可以�
 
 在导入XML模型结束之后，也可以通过 BpmnRules 模块来创建或者更改一些建模操作。
 
-
-
 Bpmn.js 提供了三种不同的模式供我们使用，我们可以根据不同的业务场景来选择对应的模式：
 
 - [`Viewer`](https://github.com/bpmn-io/bpmn-js/blob/master/lib/Viewer.js) 仅显示和查看 BPMN 图表
@@ -171,12 +156,10 @@ Bpmn.js 提供了三种不同的模式供我们使用，我们可以根据不同
 
 另外还有两种基础模式：
 
-- BaseViewer：Viewer的上级构造方法，基于 Diagram.js ，提供导入导出、清空销毁等方法。
-- BaseModeler：Modeler的上级构造方法，继承 BaseViewer，只增加了一个私有的moddle和一个私有的id处理方法。
+- `BaseViewer`：Viewer的上级构造方法，基于 Diagram.js ，提供导入导出、清空销毁等方法。
+- `BaseModeler`：Modeler的上级构造方法，继承 BaseViewer，只增加了一个私有的moddle和一个私有的id处理方法。
 
 > 🚀 通常在仅需要提供基础的BPMN流程查看功能时，可以使用 Viewer 模式，否则更推荐使用 Modeler 模式。
-
-
 
 ## 4. 基础使用
 
@@ -185,8 +168,8 @@ Bpmn.js 提供了三种不同的模式供我们使用，我们可以根据不同
 在未引入其他插件的情况下，使用 `Modeler` 模式，生产的画布可见功能主要包含以下部分：
 
 1. `Palette`：左侧元素工具栏，可以通过点击或者拖拽触发添加新元素
-2. `Shape`s：所有 Bpmn.js 可见节点，Moddle 描述文件内可发现均继承自 `Element`
-3. `Connection`s：所有节点之间的连线，Bpmn.js 中连线的类型均为 `SequenceFlow`
+2. `Shapes`：所有 Bpmn.js 可见节点，Moddle 描述文件内可发现均继承自 `Element`
+3. `Connections`：所有节点之间的连线，Bpmn.js 中连线的类型均为 `SequenceFlow`
 4. `ContentPad`：用鼠标选中一个元素时会出现，主要是操作该元素的上下文以及节点自身的类型等
 5. `PopupMenu`：默认在鼠标点击 `ContentPad` 中的扳手图表时出现，主要用于控制选中元素类型的调整等
 
@@ -210,8 +193,6 @@ npm install bpmn-js
 
 > 🚩 需要使用其他模式或者压缩格式时，可以在 [Unpkg/bpmn-js](https://unpkg.com/browse/bpmn-js@8.9.1/dist/) 查找需要的版本和模式对应 cdn 地址。
 
-
-
 ### 4.3 实例化建模器
 
 首先，需要创建一个 Dom 节点来挂载画布元素。
@@ -234,8 +215,6 @@ this.bpmnModeler = new BpmnModeler({
 });
 ```
 
-
-
 ### 4.4 导入流程图
 
 最后，导入一个预设的 xml 字符串（**该 xml 必须包含一个 process 节点，否则无法创建新元素**）
@@ -255,15 +234,13 @@ async createNewDiagram(xml) {
     console.error(`[Process Designer Warn]: ${e?.message || e}`);
   }
 },
-  
+
 // DefaultEmptyXML 方法见 https://github.com/miyuesc/bpmn-process-designer/blob/main/package/designer/plugins/defaultEmpty.js
 ```
 
 ### 4.5 引入侧边栏
 
 `Camunda` 团队内部实现了属性侧边栏 [bpmn-js-properties-panel](https://github.com/bpmn-io/bpmn-js-properties-panel)，同时包含了最基础的 Bpmn 属性版本，以及适配 `Camunda` 流程引擎的完整属性版本。
-
-
 
 使用方式如下：
 
@@ -384,10 +361,6 @@ this.bpmnModeler = new BpmnModeler({
 相关文件可以参考 [https://github.com/miyuesc/bpmn-process-designer/tree/main/package/designer/plugins/descriptor](https://github.com/miyuesc/bpmn-process-designer/tree/main/package/designer/plugins/descriptor) ，但是需要与后端确认属性版本。
 
 也可以根据文件规则进行简化或者重写，具体规则见：[Bpmn.js描述文件说明](https://juejin.cn/post/6912331982701592590)
-
-
-
-
 
 ## 后语
 
