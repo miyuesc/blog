@@ -13,7 +13,7 @@ highlight: a11y-dark
 
 ## 1. 创建基础页面
 
-首先，我们需要创建一个“容器”，用来显示 `Designer` 流程设计器实例 与 `PropertiesPenal` 属性配置边栏。根据 `bpmn-js-properties-penal` 仓库的说明，只需要在页面放置一个 `Div` 并设置对应的 `id` 即可，在后续初始化设计器实例时将边栏元素 `id` 传递给 `Modeler` 构造函数。
+首先，我们需要创建一个“容器”，用来显示 `Designer` 流程设计器实例 与 `PropertiesPanel` 属性配置边栏。根据 `bpmn-js-properties-Panel` 仓库的说明，只需要在页面放置一个 `Div` 并设置对应的 `id` 即可，在后续初始化设计器实例时将边栏元素 `id` 传递给 `Modeler` 构造函数。
 
 当然，一个“设计器”不可能没有工具栏，所以我们也需要实现一个 `Toolbar` 组件，用来提供放大缩小、撤销恢复等相关功能。
 
@@ -28,7 +28,7 @@ const App = defineComponent({
             <div class="main-content">
                 <Toolbar></Toolbar>
                 <Designer v-model={[processXml.value, 'xml']}></Designer>
-                <div class="camunda-penal" id="camunda-penal"></div>
+                <div class="camunda-Panel" id="camunda-Panel"></div>
             </div>
         )
     }
@@ -144,7 +144,7 @@ export default function (designer: Ref<HTMLElement | null>, modelerModules: View
         additionalModules: modelerModules[0] || [],
         moddleExtensions: modelerModules[1] || {},
         propertiesPanel: {
-            parent: '#camunda-penal'
+            parent: '#camunda-panel'
         },
         ...modelerModules[2]
     }
@@ -527,14 +527,116 @@ declare class BaseModeler extends BaseViewer {
 
 > 当然，由于没有引入流程引擎对应的解析文件与 `panel` 属性侧边栏，所以这种方式实际作用不是很大。
 
-### 3.6 Camunda Properties Penal
+### 3.6 Camunda Properties Panel
 
-在 `bpmn.io` 的团队介绍中，可以得知该团队主要成员均来自 `camunda` 的团队，所以官方也针对 `camunda` 流程引擎开发了对应的 `Properties Penal` 插件，主要用来编辑一些不能体现在可视界面上的特殊属性（也包含通用属性，类似 Id、name、documentation 等）。
+在 `bpmn.io` 的团队介绍中，可以得知该团队主要成员均来自 `camunda` 的团队，所以官方也针对 `camunda` 流程引擎开发了对应的 `Properties Panel` 插件，主要用来编辑一些不能体现在可视界面上的特殊属性（也包含通用属性，类似 Id、name、documentation 等）。
 
-> 🚩🚩 在 `bpmn-js-properties-penal` 的 1.x 版本进行了颠覆性的更新，不仅重写了 UI 界面，1.x 版本之前的部分 API 和属性编辑栏构造函数都进行了重写，并将属性栏 DOM 构造函数等迁移到了 [@bpmn-io/properties-panel](https://github.com/bpmn-io/properties-panel) 仓库中
+> 🚩🚩 在 `bpmn-js-properties-Panel` 的 1.x 版本进行了颠覆性的更新，不仅重写了 UI 界面，1.x 版本之前的部分 API 和属性编辑栏构造函数都进行了重写，并将属性栏 DOM 构建与更新方式改写为 `React JSX Hooks` 与 `Components` 的形式，迁移到了 [@bpmn-io/properties-panel](https://github.com/bpmn-io/properties-panel) 仓库中。
 
+##### 1. 基础属性侧边栏
 
+使用侧边栏的方式与引入一个 `additionalModule` 一样，代码如下：
 
+```typescript
+import Modeler from 'bpmn-js/lib/Modeler';
+import { BpmnPropertiesPanelModule, BpmnPropertiesProviderModule } from 'bpmn-js-properties-panel';
+
+import 'bpmn-js-properties-panel/dist/assets/properties-panel.css';
+
+const modeler = new Modeler({
+  container: '#canvas',
+  propertiesPanel: {
+    parent: '#properties'
+  },
+  additionalModules: [
+    BpmnPropertiesPanelModule,
+    BpmnPropertiesProviderModule
+  ]
+});
+```
+
+这样我们就已经引入了一个最基础的属性侧边栏模块。当然这里需要注意以下几点：
+
+1. 必须引入 `properties-panel.css` 样式文件
+2. `new Modeler()` 时，必须传入配置项 `propertiesPanel`，并设置 `parent` 属性，用来指定侧边栏挂载的 DOM 节点
+3. `additionalModules` 需要同时引入 `BpmnPropertiesPanelModule` 与 `BpmnPropertiesProviderModule` ，否则不能正常使用。
+
+这里对第二、三点大致解释一下：
+
+在第 3 节的开头，我们说到过在进行实例化的时候，会把 `new Modeler(options)` 时的 `options` 作为一个 `configModule` 注入到依赖系统里面。其他 `module` 可以通过声明构造函数属性 `Constructor.$inject = ['config']` 或者 `Constructor.$inject = ['config.xxxModule']` 来读取配置项数据。
+
+而 `BpmnPropertiesPanelModule` 作为属性侧边栏的 `DOM` 构造器，主要用来渲染侧边栏基础界面，并在流程创建完成或者元素属性更新之后，通过 `additionalModules` 内引用的 `PropertiesProviderModules` 来创建具体的属性编辑表单项。
+
+`BpmnPropertiesProviderModule` 作为 `bpmn.js` 本身依赖的基础属性构造器，主要包含以下部分：
+
+1. `Id`, `Name` 和 `Documentation` 属性，以及 `Process` 节点或者具有 `processRef` 定义的 `Participant` 节点特有的 `isExecutable` 属性
+2. 具有 “特殊事件定义” 的事件节点(例如 `StartEvent`, `EndEvent`, `BoundaryEvent` 节点等)，可以配置的 `Message`, `Error`, `Singal` 等
+3. 具有 “多实例定义” 的任务类型节点，可以配置的 `MultiInstance` 属性(又分为 `LoopCardinality` 和 `CompletionCondition`)
+
+##### 2. camunda 流程引擎关联的属性侧边栏
+
+基础属性侧边栏可配置的属性非常少，基本上不能满足一个业务流程的配置需求。所以 camunda 的团队针对自身的流程引擎对属性侧边栏进行了补充。引用代码如下：
+
+```typescript
+import Modeler from 'bpmn-js/lib/Modeler';
+import {
+  BpmnPropertiesPanelModule,
+  BpmnPropertiesProviderModule,
+  CamundaPlatformPropertiesProviderModule
+} from 'bpmn-js-properties-panel';
+
+import CamundaExtensionModule from 'camunda-bpmn-moddle/lib'
+
+import camundaModdleDescriptors from 'camunda-bpmn-moddle/resources/camunda';
+
+const modeler = new Modeler({
+  container: '#canvas',
+  propertiesPanel: {
+    parent: '#properties'
+  },
+  additionalModules: [
+    BpmnPropertiesPanelModule,
+    BpmnPropertiesProviderModule,
+    CamundaPlatformPropertiesProviderModule,
+    CamundaExtensionModule
+  ],
+  moddleExtensions: {
+    camunda: camundaModdleDescriptors
+  }
+});
+```
+
+这里与引入基础属性侧边栏相比，增加了一下几点配置项：
+
+1. `additionalModules` 增加 `CamundaExtensionModule`(扩展校验模块，用来校验复制粘贴、属性移除等) 和 `CamundaPlatformPropertiesProviderModule`(提供异步控制属性、监听器配置、扩展属性、条件配置等)
+2. `moddleExtensions` 配置属性 `camunda: camundaModdleDescriptors`，用来解析与识别 `camunda` 流程引擎配置的特殊业务属性以及属性关联格式等。
+
+> 具体的 `moddleExtension` 配置可以查看 [Bpmn-js自定义描述文件说明-掘金](https://juejin.cn/post/6912331982701592590)
+
+#### `BpmnPropertiesPanelModule` 与 `PropertiesProviderModule`
+
+上文我们已经讲过，`BpmnPropertiesPanelModule` 主要用于构建基础的属性侧边栏面板，并通过 `PropertiesProviderModule` 来生成对应的属性表单项。
+
+```typescript
+declare class BpmnPropertiesPanelRenderer extends ModuleConstructor {
+    constructor(config: Object, injector: Injector, eventBus: EventBus)
+    _eventBus: EventBus
+    _injector: Injector
+    _layoutConfig: undefined | Object
+    _descriptionConfig: undefined | Object
+    _container: Element
+
+    attachTo(container: Element): void
+    detach(): void
+    registerProvider(priority: number | PropertiesProvider, provider?: PropertiesProvider): void
+
+    _getProviders(): PropertiesProvider[]
+    _render(): void
+    _destroy(): void
+}
+```
+
+这里的 `BpmnPropertiesPanelRenderer` 即是 `BpmnPropertiesPanelModule`，只是在 ``
 
 
 
