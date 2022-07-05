@@ -955,16 +955,437 @@ const bpmnModeler = new BpmnModeler({
 });
 ```
 
+## 5. Toolbar
+
+在画布与属性面板都创建好之后，我们就得到了一个完整的流程图编辑器了。
+
+![default designer.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/3d8510c0996d4f5e85423f86bab15517~tplv-k3u1fbpfcp-watermark.image?)
+
+但是，这个模式下的编辑器没有绑定键盘快捷键，也没有导入导出的按钮和入口，并且也不能支持一键对齐等等功能。所以我们可以在此基础上，实现一个工具栏，来优化用户体验。
+
+### 5.1 Import And Export
+
+#### 导入
+
+首先，我们先实现文件导入的功能。利用 `Modeler` 实例本身的 `importXML(xmlString)` 的方法，可以很简单的完成导入，只需要创建一个 `input` 和一个 `button` 即可。
+
+通过 `button` 的点击事件来模拟文件选择 `input` 的点击来触发文件选择，在确认文件选取之后初始化一个 `FileReader` 来读取数据并渲染。
+
+> 这里使用的组件库是 naive ui
+
+```tsx
+import { defineComponent, ref } from 'vue'
+import { NButton } from 'naive-ui'
+import modeler from '@/store/modeler'
+
+const Imports = defineComponent({
+  name: 'Imports',
+  setup() {
+    const modelerStore = modeler()
+    const importRef = ref<HTMLInputElement | null>(null)
+
+    const openImportWindow = () => {
+      importRef.value && importRef.value.click()
+    }
+
+    const changeImportFile = () => {
+      if (importRef.value && importRef.value.files) {
+        const file = importRef.value.files[0]
+        const reader = new FileReader()
+        reader.readAsText(file)
+        reader.onload = function () {
+          const xmlStr = this.result
+          modelerStore.getModeler!.importXML(xmlStr as string)
+        }
+      }
+    }
+
+    return () => (
+      <span>
+        <NButton type="info" secondary onClick={openImportWindow}>
+          打开文件
+        </NButton>
+        <input
+          type="file"
+          ref={importRef}
+          style="display: none"
+          accept=".xml,.bpmn"
+          onChange={changeImportFile}
+        ></input>
+      </span>
+    )
+  }
+})
+
+export default Imports
+
+```
+
+#### 导出
+
+至于文件导出的功能，官方在 `BaseViewer` 的原型上就提供了 `saveXML` 和 `saveSVG` 这两个方法，分别用来获取 `xml` 字符串与 `svg` 渲染结果。
+
+```tsx
+import { defineComponent } from 'vue'
+import { NButton, NPopover } from 'naive-ui'
+import { downloadFile, setEncoded } from '@/utils/files'
+import modeler from '@/store/modeler'
+
+const Exports = defineComponent({
+  name: 'Exports',
+  setup() {
+    const moderlerStore = modeler()
+    // 下载流程图到本地
+    /**
+     * @param {string} type
+     * @param {*} name
+     */
+    const downloadProcess = async (type: string, name = 'diagram') => {
+      try {
+        const modeler = moderlerStore.getModeler
+        // 按需要类型创建文件并下载
+        if (type === 'xml') {
+          const { err, xml } = await modeler!.saveXML()
+          // 读取异常时抛出异常
+          if (err) {
+            console.error(`[Process Designer Warn ]: ${err.message || err}`)
+          }
+          const { href, filename } = setEncoded(type.toUpperCase(), name, xml!)
+          downloadFile(href, filename)
+        } else {
+          const { err, svg } = await modeler!.saveSVG()
+          // 读取异常时抛出异常
+          if (err) {
+            return console.error(err)
+          }
+          const { href, filename } = setEncoded('SVG', name, svg!)
+          downloadFile(href, filename)
+        }
+      } catch (e: any) {
+        console.error(`[Process Designer Warn ]: ${e.message || e}`)
+      }
+    }
+
+    const downloadProcessAsXml = () => {
+      downloadProcess('xml')
+    }
+    const downloadProcessAsSvg = () => {
+      downloadProcess('svg')
+    }
+
+    return () => (
+      <NPopover
+        v-slots={{
+          trigger: () => (
+            <NButton type="info" secondary>
+              导出为...
+            </NButton>
+          ),
+          default: () => (
+            <div class="button-list_column">
+              <NButton type="info" onClick={downloadProcessAsXml}>
+                导出为XML
+              </NButton>
+              <NButton type="info" onClick={downloadProcessAsSvg}>
+                导出为SVG
+              </NButton>
+            </div>
+          )
+        }}
+      ></NPopover>
+    )
+  }
+})
+
+export default Exports
+```
+
+```typescript
+// 根据所需类型进行转码并返回下载地址
+export function setEncoded(type: string, filename: string, data: string) {
+  const encodedData: string = encodeURIComponent(data)
+  return {
+    filename: `${filename}.${type.toLowerCase()}`,
+    href: `data:application/${
+      type === 'svg' ? 'text/xml' : 'bpmn20-xml'
+    };charset=UTF-8,${encodedData}`,
+    data: data
+  }
+}
+
+// 文件下载方法
+export function downloadFile(href: string, filename: string) {
+  if (href && filename) {
+    const a: HTMLAnchorElement = document.createElement('a')
+    a.download = filename //指定下载的文件名
+    a.href = href //  URL对象
+    a.click() // 模拟点击
+    URL.revokeObjectURL(a.href) // 释放URL 对象
+  }
+}
+```
+
+### 5.2 Canvas Zoom
+
+因为没有绑定键盘事件，所以当前情况下想通过键盘和鼠标滚轮来控制画布缩放层级也不行。
+
+但是 `diagram.js` 的核心模块 `Canvas`，就提供了画布的相关控制方法，我们可以通过 `Canvas` 的实例来实现对画布的控制。
+
+```tsx
+import { defineComponent, ref } from 'vue'
+import { NButton, NButtonGroup, NPopover } from 'naive-ui'
+import LucideIcon from '@/components/common/LucideIcon.vue'
+import EventEmitter from '@/utils/EventEmitter'
+import type Modeler from 'bpmn-js/lib/Modeler'
+import type Canvas from 'diagram-js/lib/core/Canvas'
+import { CanvasEvent } from 'diagram-js/lib/core/EventBus'
+
+const Scales = defineComponent({
+  name: 'Scales',
+  setup() {
+    const currentScale = ref(1)
+    let canvas: Canvas | null = null
+
+    EventEmitter.on('modeler-init', (modeler: Modeler) => {
+      canvas = modeler.get<Canvas>('canvas')
+      currentScale.value = canvas.zoom()
+      modeler.on('canvas.viewbox.changed', ({ viewbox }: CanvasEvent<any>) => {
+        currentScale.value = viewbox.scale
+      })
+    })
+
+    const zoomOut = (newScale?: number) => {
+      currentScale.value = newScale || Math.floor(currentScale.value * 100 - 0.1 * 100) / 100
+      zoomReset(currentScale.value)
+    }
+
+    const zoomIn = (newScale?: number) => {
+      currentScale.value = newScale || Math.floor(currentScale.value * 100 + 0.1 * 100) / 100
+      zoomReset(currentScale.value)
+    }
+
+    const zoomReset = (newScale: number | string) => {
+      canvas && canvas.zoom(newScale, newScale === 'fit-viewport' ? undefined : { x: 0, y: 0 })
+    }
+
+    return () => (
+      <NButtonGroup>
+        <NPopover
+          v-slots={{
+            default: () => '缩小视图',
+            trigger: () => (
+              <NButton onClick={() => zoomOut()}>
+                <LucideIcon name="ZoomOut" size={16}></LucideIcon>
+              </NButton>
+            )
+          }}
+        ></NPopover>
+        <NPopover
+          v-slots={{
+            default: () => '重置缩放',
+            trigger: () => (
+              <NButton onClick={() => zoomReset('fit-viewport')}>
+                <span style="text-align: center; display: inline-block; width: 40px">
+                  {Math.floor(currentScale.value * 10) * 10 + '%'}
+                </span>
+              </NButton>
+            )
+          }}
+        ></NPopover>
+        <NPopover
+          v-slots={{
+            default: () => '放大视图',
+            trigger: () => (
+              <NButton onClick={() => zoomIn()}>
+                <LucideIcon name="ZoomIn" size={16}></LucideIcon>
+              </NButton>
+            )
+          }}
+        ></NPopover>
+      </NButtonGroup>
+    )
+  }
+})
+
+export default Scales
+
+```
+
+### 5.3 Command Stack
+
+撤销恢复个人觉得是最简单的封装之一，毕竟 `CommandStack` 本身就记录了相关的图形操作以及属性更新。
+
+```tsx
+import { defineComponent } from 'vue'
+import { NButton, NButtonGroup, NPopover } from 'naive-ui'
+import EventEmitter from '@/utils/EventEmitter'
+import type Modeler from 'bpmn-js/lib/Modeler'
+import type CommandStack from 'diagram-js/lib/command/CommandStack'
+import { createNewDiagram } from '@/utils'
+import LucideIcon from '@/components/common/LucideIcon.vue'
+
+const Commands = defineComponent({
+  name: 'Commands',
+  setup() {
+    let command: CommandStack | null = null
+
+    EventEmitter.on('modeler-init', (modeler: Modeler) => {
+      command = modeler.get<CommandStack>('commandStack')
+    })
+
+    const undo = () => {
+      command && command.canUndo() && command.undo()
+    }
+
+    const redo = () => {
+      command && command.canRedo() && command.redo()
+    }
+
+    const restart = () => {
+      command && command.clear()
+      createNewDiagram()
+    }
+
+    return () => (
+      <NButtonGroup>
+        <NPopover
+          v-slots={{
+            default: () => '撤销',
+            trigger: () => (
+              <NButton onClick={undo}>
+                <LucideIcon name="Undo2" size={16}></LucideIcon>
+              </NButton>
+            )
+          }}
+        ></NPopover>
+        <NPopover
+          v-slots={{
+            default: () => '恢复',
+            trigger: () => (
+              <NButton onClick={redo}>
+                <LucideIcon name="Redo2" size={16}></LucideIcon>
+              </NButton>
+            )
+          }}
+        ></NPopover>
+        <NPopover
+          v-slots={{
+            default: () => '擦除重做',
+            trigger: () => (
+              <NButton onClick={restart}>
+                <LucideIcon name="Eraser" size={16}></LucideIcon>
+              </NButton>
+            )
+          }}
+        ></NPopover>
+      </NButtonGroup>
+    )
+  }
+})
+
+export default Commands
+```
 
 
+## 5. Module Configuration
 
+在进行深度自定义之前，这里先介绍 `bpmn.js Modeler` 本身默认引用的 `Modules` 的一些配置项。
 
+### 5.1 BpmnRenderer Configuration
 
+控制画布区域的元素渲染
 
+1. `defaultFillColor`：元素填充色，例如任务节点中间的空白部分的填充色，默认为 `undefined`
+2. `defaultStrokeColor`：元素边框颜色，也可以理解为路径类元素的颜色，默认为 `undefined`，显示为黑色
+3. `defaultLabelColor`：`Label` 标签字体颜色，默认为 `undefined`，显示为黑色
 
+可以通过以下方式更改：
 
+```typescript
+const modeler = new Modeler({
+    container: 'xx',
+    bpmnRenderer: {
+        defaultFillColor: '#eeeeee',
+        defaultStrokeColor: '#2a2a2a',
+        defaultLabelColor: '#333333'
+    }
+})
+```
 
+### 5.2 TextRenderer Configuration
 
+控制画布区域的文字渲染
 
+1. `fontFamily`: 文字字体，默认为 `'Arial, sans-serif'`
+2. `fontSize`: 文字大小，默认 `12px`
+3. `fontWeight`: 文字粗细，默认为 `'normal'`
+4. `lineHeight`: 文本行高，默认为 1.2
+5. `size`: 生成的文本标签的大小，默认为 `{ width: 150, height: 50 }`
+6. `padding`: 文本标签内间距，默认为 0
+7. `style`: 文本标签其他 css 样式
+8. `align`: 内部文本对齐方式，默认为 `center-top`
 
+可以通过传入配置项 `textRenderer: {}` 更改
+
+### 5.3 ContextPad Configuration
+
+控制元素的上下文菜单位置与大小缩放
+
+1. `autoPlace`：是否调用 `AutoPlace` 模块来实现新元素创建时自动定位，默认为 `undefined`，如果配置该属性并设置为 `false` 的话，在利用 `contextPad` 创建新元素时需要手动选择新元素位置
+2. `scale`：缩放的限制范围，默认为 `{ min: 1.0, max: 1.5 }`
+
+可以通过传入配置项 `contextPad: {}` 更改
+
+### 5.4 Canvas Configuration
+
+控制画布区域大小与更新频率
+
+1. `deferUpdate`: 是否配置延迟更新画布改变，默认为 `undefined`，如果配置该属性并设置为 `false` 的话，则会即时更新画布显示（会消耗大量资源）
+2. `width`: 宽度，默认为 '100%'
+3. `height`: 高度，默认为 '100%'
+
+### 5.5 Keyboard Configuration
+
+键盘事件的绑定对象
+
+1. `bindTo`: 设置绑定对象，默认为 `undefined`，一般会配置为 `document` 或者 `window`
+
+可以通过传入配置项 `keyboard: {}` 配置，默认快捷键列表如下：
+
+![Keyboard Shortcuts.png](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/cf44d66d6fc440c7a0e3211bdfb6f19e~tplv-k3u1fbpfcp-watermark.image?)
+
+### 5.6 AutoScroll Configuration
+
+鼠标焦点移动到画布边框位置时开启画布滚动，主要配置触发区域与滚动设置
+
+1. `scrollThresholdIn`：触发滚动的边界距离最大值，默认为 `[ 20, 20, 20, 20 ]`
+2. `scrollThresholdOut`：触发滚动的边界距离最小值，默认为 `[ 0, 0, 0, 0 ]`
+3. `scrollRepeatTimeout`：滚动间隔，默认为 15 ms
+4. `scrollStep`：滚动步长。默认为 6
+
+可以通过传入配置项 `autoScroll: {}` 配置
+
+### 5.7 ZoomScroll Configuration
+
+鼠标滚轮缩放的配置
+
+1. `enabled`: 是否启动鼠标滚轮缩放功能，默认为 `undefined`，如果配置该属性并设置为 `false` 的话，则会禁用鼠标滚动缩放功能
+2. `scale`: 缩放倍率，默认为 0.75
+
+可以通过传入配置项 `zoomScroll: {}` 配置
+
+> 当然，这部分只是 `bpmn.js` 与 `diagram.js` 内部的插件模块提供的配置项，在我们的自定义模块也可以通过依赖 `config` 来配置更多的可用配置项，使 `Modeler` 更加灵活
+
+# 下面，进行 `Modeler` 的核心插件自定义的讲解
+
+## 6. Custom Element And Properties
+
+在第四节 `Properties Panel` 中，大概讲解了自定义元素属性的方式。参照 [Bpmn-js自定义描述文件说明-掘金](https://juejin.cn/post/6912331982701592590)，这里再重新说明一下。
+
+一个 `moddleExtension` 描述文件的格式为 `json`，或者是一个可以导出 `json` 对象的 `js/ts` 文件，该描述文件(对象)包含以下几个属性：
+
+1. `name`: 该部分扩展的名称，一般根据流程引擎来命名，字符串格式
+2. `uri`: 统一资源标识符，一般是一个地址字符串
+3. `prefix`: 属性或者元素统一前缀，小写字符串格式
+4. 
 
