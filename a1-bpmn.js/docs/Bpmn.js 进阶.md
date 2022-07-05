@@ -193,13 +193,13 @@ export const createNewDiagram = async function (newXml?: string) {
 3. `moddleExtensions` ：用来进行 xml 字符串解析以及元素、属性实例定义的声明，是一个对象格式参数，通常 `key` 是声明的属性前缀，对应的属性值则是一个模块的所有扩展属性定义声明，通常为外部引入的一个json文件或者js对象
 4. `options` ：其他配置项，包括上文提到的 `propertiesPanel`，这些配置项一般以插件实例的名称作为 `key`，用来给对应插件提供特殊的实例化配置参数
 
-在进行 `new Modeler` 时，首先会与 bpmn.js 的 `Modeler` 默认配置进行合并，之后创建一个 `BpmnModdle(moddleExtensions)` 实例作为 `modeler._moddle` 的属性值，该模块主要用来进行 xml 字符串的解析和属性转换，也可以用来**注册新的解析规则**和**创建对应的元素实例**。
+在进行 `new Modeler()` 时，首先会与 bpmn.js 的 `Modeler` 默认配置进行合并，之后创建一个 `BpmnModdle(moddleExtensions)` 实例作为 `modeler._moddle` 的属性值，该模块主要用来进行 xml 字符串的解析和属性转换，也可以用来**注册新的解析规则**和**创建对应的元素实例**。
 
 之后创建一个 DOM 节点作为画布区域，挂载到 `modeler._container` 上，并添加 bpmn-io 的 logo。
 
 然后，会根据 `additionalModules` 和默认的 `{ bpmnjs: [ 'value', this ], moddle: [ 'value', moddle ] }` 合并，再合并 `canvas` 配置，调用 `Diagram` 进行后续逻辑，结束后再将 `_container` 挂载到传入的 `container` 对应的 DOM 节点上。
 
-从 `new Modeler()` 到 `new Diagram` 主要过程如下：
+从 `new Modeler()` 到 `new Diagram()` 主要过程如下：
 
 ```typescript
 function Modeler(options) {
@@ -527,13 +527,11 @@ declare class BaseModeler extends BaseViewer {
 
 > 当然，由于没有引入流程引擎对应的解析文件与 `panel` 属性侧边栏，所以这种方式实际作用不是很大。
 
-### 3.6 Camunda Properties Panel
-
-在 `bpmn.io` 的团队介绍中，可以得知该团队主要成员均来自 `camunda` 的团队，所以官方也针对 `camunda` 流程引擎开发了对应的 `Properties Panel` 插件，主要用来编辑一些不能体现在可视界面上的特殊属性（也包含通用属性，类似 Id、name、documentation 等）。
+## 4. Properties Panel
 
 > 🚩🚩 在 `bpmn-js-properties-Panel` 的 1.x 版本进行了颠覆性的更新，不仅重写了 UI 界面，1.x 版本之前的部分 API 和属性编辑栏构造函数都进行了重写，并将属性栏 DOM 构建与更新方式改写为 `React JSX Hooks` 与 `Components` 的形式，迁移到了 [@bpmn-io/properties-panel](https://github.com/bpmn-io/properties-panel) 仓库中。
 
-##### 1. 基础属性侧边栏
+### 1. Basic Properties Panel
 
 使用侧边栏的方式与引入一个 `additionalModule` 一样，代码如下：
 
@@ -573,52 +571,14 @@ const modeler = new Modeler({
 2. 具有 “特殊事件定义” 的事件节点(例如 `StartEvent`, `EndEvent`, `BoundaryEvent` 节点等)，可以配置的 `Message`, `Error`, `Singal` 等
 3. 具有 “多实例定义” 的任务类型节点，可以配置的 `MultiInstance` 属性(又分为 `LoopCardinality` 和 `CompletionCondition`)
 
-##### 2. camunda 流程引擎关联的属性侧边栏
+### 2. `BpmnPropertiesPanelModule`, `BpmnPropertiesPanel` 与 `PropertiesProviderModule`
 
-基础属性侧边栏可配置的属性非常少，基本上不能满足一个业务流程的配置需求。所以 camunda 的团队针对自身的流程引擎对属性侧边栏进行了补充。引用代码如下：
-
-```typescript
-import Modeler from 'bpmn-js/lib/Modeler';
-import {
-  BpmnPropertiesPanelModule,
-  BpmnPropertiesProviderModule,
-  CamundaPlatformPropertiesProviderModule
-} from 'bpmn-js-properties-panel';
-
-import CamundaExtensionModule from 'camunda-bpmn-moddle/lib'
-
-import camundaModdleDescriptors from 'camunda-bpmn-moddle/resources/camunda';
-
-const modeler = new Modeler({
-  container: '#canvas',
-  propertiesPanel: {
-    parent: '#properties'
-  },
-  additionalModules: [
-    BpmnPropertiesPanelModule,
-    BpmnPropertiesProviderModule,
-    CamundaPlatformPropertiesProviderModule,
-    CamundaExtensionModule
-  ],
-  moddleExtensions: {
-    camunda: camundaModdleDescriptors
-  }
-});
-```
-
-这里与引入基础属性侧边栏相比，增加了一下几点配置项：
-
-1. `additionalModules` 增加 `CamundaExtensionModule`(扩展校验模块，用来校验复制粘贴、属性移除等) 和 `CamundaPlatformPropertiesProviderModule`(提供异步控制属性、监听器配置、扩展属性、条件配置等)
-2. `moddleExtensions` 配置属性 `camunda: camundaModdleDescriptors`，用来解析与识别 `camunda` 流程引擎配置的特殊业务属性以及属性关联格式等。
-
-> 具体的 `moddleExtension` 配置可以查看 [Bpmn-js自定义描述文件说明-掘金](https://juejin.cn/post/6912331982701592590)
-
-#### `BpmnPropertiesPanelModule` 与 `PropertiesProviderModule`
+#### 2.1 `BpmnPropertiesPanelModule`
 
 上文我们已经讲过，`BpmnPropertiesPanelModule` 主要用于构建基础的属性侧边栏面板，并通过 `PropertiesProviderModule` 来生成对应的属性表单项。
 
 ```typescript
-declare class BpmnPropertiesPanelRenderer extends ModuleConstructor {
+declare class BpmnPropertiesPanelModule extends ModuleConstructor {
     constructor(config: Object, injector: Injector, eventBus: EventBus)
     _eventBus: EventBus
     _injector: Injector
@@ -636,20 +596,18 @@ declare class BpmnPropertiesPanelRenderer extends ModuleConstructor {
 }
 ```
 
-> 这里的 `BpmnPropertiesPanelRenderer` 即是 `BpmnPropertiesPanelModule`，只是在 `bpmn-js-properties-panel` 导出时进行了重新命名。
-
-`BpmnPropertiesPanelRenderer` 在初始化时，会监听三个事件：
+`BpmnPropertiesPanelModule` 在初始化时，会监听三个事件：
 
 1. `diagram.init`：在画布初始化时，调用 `attach` 方法将自己的 `_container` 面板节点挂载到 `config.propertiesPenal.parent` 上
 2. `diagram.destroy`：在画布销毁时，将面板节点从 `_container.parentNode` 移除
 3. `root.added`：在根节点创建完成后，调用 `_render()` 方法，创建一个 `BpmnPropertiesPanel` 组件并渲染
 
-##### `BpmnPropertiesPanel` 组件
+#### 2.2 `BpmnPropertiesPanel` 组件
 
 `BpmnPropertiesPanel` 组件的写法与 `React Hooks Component` 的写法一样，主要实现一下几个方面的功能：
 
 1. 通过 `EventBus` 实例来设置 `selection.changed`, `elements.changed`, `propertiesPanel.providersChanged`, `elementTemplates.changed`, `root.added` 几个事件的监听函数，根据选中元素变化来更新当前状态。
-2. 通过 `BpmnPropertiesPanelRenderer._getProviders()` 获取已注册的 `PropertiesProviderModules` 数组，遍历数组，调用 `PropertiesProviderModule.getGroups(element)` 来获取当前元素对应的属性配置项分组，用于后面的组件渲染。
+2. 通过 `BpmnPropertiesPanelModule._getProviders()` 获取已注册的 `PropertiesProviderModules` 数组，遍历数组，调用 `PropertiesProviderModule.getGroups(element)` 来获取当前元素对应的属性配置项分组，用于后面的组件渲染。
 
 ```javascript
 const eventBus = injector.get('eventBus');
@@ -718,6 +676,285 @@ const groups = useMemo(() => {
     }, []);
 }, [ providers, selectedElement ]);
 ```
+
+#### 2.3 `PropertiesProviderModule`
+
+该模块(或者说这类模块)主要用来注册元素的属性配置项，依赖 `BpmnPropertiesPanelModule` 组件，通过实例化时调用 `BpmnPropertiesPanelModule.registerProvider(this)` 来将自身注册到属性侧边栏面板的构造器当中。当然，通过 `BpmnPropertiesPanel` 组件的内部逻辑，我们知道每个 `PropertiesProviderModule` 还需要提供一个 `getGroups` 方法，用来获取当前元素对应的属性配置项分组。
+
+```typescript
+// 基础的 Provider ts 定义
+declare class PropertiesProviderModule {
+    constructor(propertiesPanel: BpmnPropertiesPanelModule)
+
+    getGroups(element: Base): () => Group[]
+}
+
+// 下面是 bpmn 基础属性栏的 PropertiesProviderModule 定义
+function getGroups$1(element) {
+    const groups = [
+        GeneralGroup(element),
+        DocumentationGroup(element),
+        CompensationGroup(element),
+        ErrorGroup(element),
+        LinkGroup(element),
+        MessageGroup(element),
+        MultiInstanceGroup(element),
+        SignalGroup(element),
+        EscalationGroup(element),
+        TimerGroup(element)
+    ];
+    return groups.filter(group => group !== null);
+}
+export default class BpmnPropertiesProvider {
+    constructor(propertiesPanel) {
+        propertiesPanel.registerProvider(this);
+    }
+    getGroups(element) {
+        return (groups) => {
+            groups = groups.concat(getGroups$1(element));
+            return groups;
+        };
+    }
+}
+BpmnPropertiesProvider.$inject = [ 'propertiesPanel' ];
+```
+
+> 这里需要注意的是 `getGroups` 最终返回的是一个函数，通过传入参数 `groups` 来合并当前 `PropertiesProviderModule` 的属性分组定义
+
+### 3. Camunda Properties Panel
+
+在 `bpmn.io` 的团队介绍中，可以得知该团队主要成员均来自 `camunda` 的团队，所以官方也针对 `camunda` 流程引擎开发了对应的 `Properties Panel` 插件，主要用来编辑一些不能体现在可视界面上的特殊属性（也包含通用属性，类似 Id、name、documentation 等）。
+
+基础属性侧边栏可配置的属性非常少，基本上不能满足一个业务流程的配置需求。所以 camunda 的团队针对自身的流程引擎对属性侧边栏进行了补充。引用代码如下：
+
+```typescript
+import Modeler from 'bpmn-js/lib/Modeler';
+import {
+  BpmnPropertiesPanelModule,
+  BpmnPropertiesProviderModule,
+  CamundaPlatformPropertiesProviderModule
+} from 'bpmn-js-properties-panel';
+
+import CamundaExtensionModule from 'camunda-bpmn-moddle/lib'
+
+import camundaModdleDescriptors from 'camunda-bpmn-moddle/resources/camunda';
+
+const modeler = new Modeler({
+  container: '#canvas',
+  propertiesPanel: {
+    parent: '#properties'
+  },
+  additionalModules: [
+    BpmnPropertiesPanelModule,
+    BpmnPropertiesProviderModule,
+    CamundaPlatformPropertiesProviderModule,
+    CamundaExtensionModule
+  ],
+  moddleExtensions: {
+    camunda: camundaModdleDescriptors
+  }
+});
+```
+
+这里与引入基础属性侧边栏相比，增加了一下几点配置项：
+
+1. `additionalModules` 增加 `CamundaExtensionModule`(扩展校验模块，用来校验复制粘贴、属性移除等) 和 `CamundaPlatformPropertiesProviderModule`(提供异步控制属性、监听器配置、扩展属性、条件配置等)
+2. `moddleExtensions` 配置属性 `camunda: camundaModdleDescriptors`，用来解析与识别 `camunda` 流程引擎配置的特殊业务属性以及属性关联格式等。
+
+> 具体的 `moddleExtension` 配置可以查看 [Bpmn-js自定义描述文件说明-掘金](https://juejin.cn/post/6912331982701592590)
+
+### 4. Custom Properties Panel
+
+虽然 `camunda` 官方提供了一个属性编辑面板，但是内部对属性的更新和读取都与 `camunda` 流程引擎做了强关联，所以在没有使用 `camunda` 流程引擎的时候，如何去更新元素属性就成了一个亟需解决的问题（特别是国内使用率最多的除了国产流程引擎外就是 `flowable` 和 `activiti`）。
+
+对于这个问题，`bpmn-io` 官方也编写了一个示例项目[properties-panel-extension](https://github.com/bpmn-io/bpmn-js-examples/tree/master/properties-panel-extension)，对如何扩展属性侧边栏进行了简单说明，这里我们也以这个例子进行讲解。
+
+#### 4.1 Properties Moddle Extension
+
+首先，在创建自定义的属性编辑面板之前，需要先定义相关的自定义属性，这里我们以 `flowable` 流程引擎对应的属性为例。
+
+第一步：定义相关的属性
+
+```json
+{
+  "name": "Flowable",
+  "uri": "http://flowable.org/bpmn",
+  "prefix": "flowable",
+  "xml": {
+    "tagAlias": "lowerCase"
+  },
+  "associations": [],
+  "types": [
+    {
+      "name": "JobPriorized",
+      "isAbstract": true,
+      "extends": ["bpmn:Process"],
+      "properties": [
+        {
+          "name": "jobPriority",
+          "isAttr": true,
+          "type": "String"
+        }
+      ]
+    },
+    {
+      "name": "Process",
+      "isAbstract": true,
+      "extends": ["bpmn:Process"],
+      "properties": [
+        {
+          "name": "candidateStarterGroups",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "candidateStarterUsers",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "versionTag",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "historyTimeToLive",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "isStartableInTasklist",
+          "isAttr": true,
+          "type": "Boolean",
+          "default": true
+        }
+      ]
+    }
+  ]
+}
+```
+
+在这个 json 文件里面，我们对 `Process` 节点进行了扩展，增加了 `versionTag`, `jobPriority` 等属性。
+
+#### 4.2 `CustomPropertiesProviderModule`
+
+第二步：创建属性对应的 `PropertiesProviderModule`
+
+```typescript
+import { is } from 'bpmn-js/lib/util/ModelUtil';
+
+class FlowablePropertiesProvider {
+    constructor(propertiesPanel: BpmnPropertiesPanelModule) {
+        propertiesPanel.registerProvider(this)
+    }
+    getGroups(element) {
+        return function (groups) {
+            if (is(element, 'bpmn:Process')) {
+                // 这里只用 versionTag 属性的配置项作为示例
+                const group = [VersionTag(element)]
+                
+                groups.concat(group)
+            }
+            return groups
+        }
+    }
+}
+FlowablePropertiesProvider.$inject = ['propertiesPanel']
+
+export default FlowablePropertiesProvider
+```
+
+#### 4.3 `CustomPropertiesGroup`
+
+第三步：实现自定义属性栏分组与 `VsersionTag` 属性编辑组件
+
+```typescript
+import { getBusinessObject } from 'bpmn-js/lib/util/ModelUtil';
+import { useService } from 'bpmn-js-properties-panel';
+import { TextFieldEntry, isTextFieldEntryEdited } from '@bpmn-io/properties-panel';
+
+// 创建 VersionTag 的属性编辑栏入口 Entry
+function VersionTag(props) {
+    const { element } = props;
+    
+    const commandStack = useService('commandStack');
+    const modeling = useService('modeling');
+    const debounce = useService('debounceInput');
+    
+    const processBo = getBusinessObject(element);
+    
+    const getValue = () => processBo.get('flowable:versionTag') || ''
+    
+    const setValue = (value) => {
+        // 写法 1
+        commandStack.execute('element.updateModdleProperties', {
+            element,
+            moddleElement: processBo,
+            properties: { 'flowable:versionTag': value }
+        });
+        // 写法 2
+        modeling.updateModdleProperties(element, processBo, { 'flowable:versionTag': value })
+    };
+    
+    // 返回一个属性编辑组件
+    return TextFieldEntry({
+        element,
+        id: 'versionTag',
+        label: 'Version Tag',
+        getValue,
+        setValue,
+        debounce
+    });
+}
+
+// 返回获取自定义属性面板分组的函数
+export default function (element) {
+    return [
+        {
+            id: 'custom version',
+            element,
+            component: VersionTag,
+            isEdited: isTextFieldEntryEdited
+        }
+    ]
+}
+```
+
+#### 4.4 `Use CustomPropertiesProviderModule`
+
+第四步：引入自定义属性构造器 `FlowablePropertiesProvider`
+
+```typescript
+// 省略 modeler 部分引入
+
+// 引入属性声明文件
+import flowableDescriptor from 'xxx/flowable.json'
+
+// 引入自定义属性编辑组件的构造函数
+import FlowablePropertiesProvider from 'xxx/FlowablePropertiesProvider.ts'
+
+// 组成符合 ModuleDefinition 格式的对应 (可以像官方实例那样放到一个 index 文件内部)
+const FlowablePropertiesProviderModule = {
+    __init__: [ 'flowablePropertiesProvider' ],
+    flowablePropertiesProvider: [ 'type', FlowablePropertiesProvider ]
+}
+
+const bpmnModeler = new BpmnModeler({
+    container: '#js-canvas',
+    propertiesPanel: {
+        parent: '#js-properties-panel'
+    },
+    additionalModules: [
+        BpmnPropertiesPanelModule,
+        BpmnPropertiesProviderModule,
+        FlowablePropertiesProviderModule
+    ],
+    moddleExtensions: {
+        flowable: flowableDescriptor
+    }
+});
+```
+
 
 
 
