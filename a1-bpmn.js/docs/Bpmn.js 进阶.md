@@ -630,15 +630,94 @@ declare class BpmnPropertiesPanelRenderer extends ModuleConstructor {
     detach(): void
     registerProvider(priority: number | PropertiesProvider, provider?: PropertiesProvider): void
 
-    _getProviders(): PropertiesProvider[]
-    _render(): void
+    _getProviders(element?: Base): PropertiesProvider[]
+    _render(element?: Base): void
     _destroy(): void
 }
 ```
 
-这里的 `BpmnPropertiesPanelRenderer` 即是 `BpmnPropertiesPanelModule`，只是在 ``
+> 这里的 `BpmnPropertiesPanelRenderer` 即是 `BpmnPropertiesPanelModule`，只是在 `bpmn-js-properties-panel` 导出时进行了重新命名。
 
+`BpmnPropertiesPanelRenderer` 在初始化时，会监听三个事件：
 
+1. `diagram.init`：在画布初始化时，调用 `attach` 方法将自己的 `_container` 面板节点挂载到 `config.propertiesPenal.parent` 上
+2. `diagram.destroy`：在画布销毁时，将面板节点从 `_container.parentNode` 移除
+3. `root.added`：在根节点创建完成后，调用 `_render()` 方法，创建一个 `BpmnPropertiesPanel` 组件并渲染
+
+##### `BpmnPropertiesPanel` 组件
+
+`BpmnPropertiesPanel` 组件的写法与 `React Hooks Component` 的写法一样，主要实现一下几个方面的功能：
+
+1. 通过 `EventBus` 实例来设置 `selection.changed`, `elements.changed`, `propertiesPanel.providersChanged`, `elementTemplates.changed`, `root.added` 几个事件的监听函数，根据选中元素变化来更新当前状态。
+2. 通过 `BpmnPropertiesPanelRenderer._getProviders()` 获取已注册的 `PropertiesProviderModules` 数组，遍历数组，调用 `PropertiesProviderModule.getGroups(element)` 来获取当前元素对应的属性配置项分组，用于后面的组件渲染。
+
+```javascript
+const eventBus = injector.get('eventBus');
+const [ state, setState ] = useState({ selectedElement: element });
+const selectedElement = state.selectedElement;
+
+// 1
+useEffect(() => {
+    const onSelectionChanged = (e) => {
+        const { newSelection = [] } = e;
+        if (newSelection.length > 1) {
+            return _update(newSelection);
+        }
+        const newElement = newSelection[0];
+        const rootElement = canvas.getRootElement();
+        if (isImplicitRoot(rootElement)) {
+            return;
+        }
+        _update(newElement || rootElement);
+    };
+    eventBus.on('selection.changed', onSelectionChanged);
+
+    return () => {
+        eventBus.off('selection.changed', onSelectionChanged);
+    };
+}, [])
+
+useEffect(() => {
+    const onElementsChanged = (e) => {
+        const elements = e.elements;
+        const updatedElement = findElement(elements, selectedElement);
+        if (updatedElement && elementExists(updatedElement, elementRegistry)) {
+            _update(updatedElement);
+        }
+    };
+    eventBus.on('elements.changed', onElementsChanged);
+    return () => {
+        eventBus.off('elements.changed', onElementsChanged);
+    };
+}, [selectedElement])
+
+// 省略了 useEffect 部分，详细内容见源码 https://github.com/bpmn-io/bpmn-js-properties-panel/blob/master/src/render/BpmnPropertiesPanel.js
+const onRootAdded = (e) => {
+    const element = e.element;
+    _update(element);
+};
+eventBus.on('root.added', onRootAdded);
+
+const onProvidersChanged = () => {
+    _update(selectedElement);
+};
+eventBus.on('propertiesPanel.providersChanged', onProvidersChanged);
+
+const onTemplatesChanged = () => {
+    _update(selectedElement);
+};
+eventBus.on('elementTemplates.changed', onTemplatesChanged);
+
+// 2
+const providers = getProviders(selectedElement);
+const groups = useMemo(() => {
+    return reduce(providers, function(groups, provider) {
+        if (isArray(selectedElement)) return [];
+        const updater = provider.getGroups(selectedElement);
+        return updater(groups);
+    }, []);
+}, [ providers, selectedElement ]);
+```
 
 
 
