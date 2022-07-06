@@ -1286,7 +1286,6 @@ const Commands = defineComponent({
 export default Commands
 ```
 
-
 ## 5. Module Configuration
 
 在进行深度自定义之前，这里先介绍 `bpmn.js Modeler` 本身默认引用的 `Modules` 的一些配置项。
@@ -1435,8 +1434,8 @@ example = {
             superClass: ['Element'],
             /**
              * 与 superClass 相反，extends 表示扩展原始元素的配置，并不代表继承。
-             * 使用 extends 之后，该类型定义的 properties 最终都会体现到原始元素上，展示方式为 ex:propertyName='xxx' (这只代表配置的 propertyName 是一个简单属性，如果是自定义属性的话，需要根据属性类型来区分)
-             * 📌📌📌 注意：superClass 与 extends 不能同时使用，两者的区别也可以查看官方回复 [issue-21](https://github.com/bpmn-io/moddle/issues/21)
+             * 使用 extends 之后，该类型定义的 properties 最终都会体现到原始元素上，展示方式为 ex:propertyName='xxx' 
+             * (这只代表配置的 propertyName 是一个简单属性，如果是自定义属性的话，需要根据属性类型来区分)
              */
             extends: ['bpmn:StartEvent'],
             /**
@@ -1457,4 +1456,222 @@ example = {
 }
 ```
 
+> 注意：superClass 与 extends 不能同时使用，两者的区别也可以查看官方回复 [issue-21](https://github.com/bpmn-io/moddle/issues/21)
+> 
+> 完整演示见 [properties-panel-extension](https://github.com/bpmn-io/bpmn-js-examples/tree/master/properties-panel-extension), [bpmn-js-example-custom-elements](https://github.com/bpmn-io/bpmn-js-example-custom-elements)
+
+## 7. Custom Renderer, Palette and ContextPad
+
+关于如何扩展原始 `Renderer`, `Palette` (这里其实应该是 `PaletteProvider`) 和 `ContextPad` (这里其实应该是 `ContextPadProvider`)，霖呆呆和 `bpmn` 官方都给出了示例。
+
+1. [官方示例/bpmn-js-example-custom-elements](https://github.com/bpmn-io/bpmn-js-example-custom-elements)
+2. 霖呆呆的文档地址 [全网最详bpmn.js教材目录](https://juejin.cn/post/6844904017567416328) 和示例仓库 [bpmn-vue-custom](https://github.com/LinDaiDai/bpmn-vue-custom)
+
+这里针对核心部分简单讲解一下。
+
+### 7.1 `Renderer`
+
+重新自定义元素的渲染逻辑，可以区分为 “部分自定义” 与 “完全自定义”，“部分自定义” 又可以分为 “自定义新增元素类型渲染” 和 “自定义原始类型渲染”，核心逻辑其实就是改变 `Renderer` 构造函数上的 `drawShape` 方法。
+
+```typescript
+declare class BpmnRenderer extends BaseRenderer {
+    constructor(config: Object, eventBus: EventBus, styles: Styles, pathMap: PathMap, canvas: Canvas, textRenderer: TextRenderer, priority?: number)
+
+    handlers: Record<string, RendererHandler>
+    _drawPath(parentGfx: SVGElement, element: Base, attrs?: Object): SVGElement
+    _renderer(type: RendererType): RendererHandler
+    getConnectionPath<E extends Base>(connection: E): string
+    getShapePath<E extends Base>(element: E): string
+    canRender<E extends Base>(element: E): boolean
+    drawShape<E extends Base>(parentGfx: SVGElement, element: E): SVGRectElement
+}
+```
+
+原生 `BpmnRenderer` 继承自抽象函数 `BaseRenderer`，通过 `drawShape` 方法来绘制 svg 元素，之后添加到 `canvas` 画布上。但是 `drawShape` 的核心逻辑其实就是根据 `element` 元素类型来调用 `handler[element.type]()` 实现元素绘制的。
+
+```javascript
+BpmnRenderer.prototype.drawShape = function(parentGfx, element) {
+  var type = element.type;
+  var h = this._renderer(type);
+  return h(parentGfx, element);
+};
+```
+
+在 “自定义新增元素类型渲染” 或者 “对原始 svg 元素增加细节调整” 的时候，可以通过继承 `BaseRenderer` 之后实现 `drawShape` 方法来实现。
+
+```typescript
+class CustomRenderer extends BaseRenderer {
+    constructor(eventBus: EventBus, bpmnRenderer: BpmnRenderer) {
+        super(eventBus, 2000);
+        this.bpmnRenderer = bpmnRenderer;
+    }
+    drawShape(parentNode: SVGElement, element: Base) {
+        // 处理自定义元素
+        if (is(element, 'ex:ExampleElement')) {
+            const customElementsSVGPath = '这里是自定义元素的 svg path 路径'
+            const path = svgCreate('path')
+            svgAttr(path, { d: customElementsSVGPath })
+            svgAttr(path, attrs)
+            svgAppend(parentGfx, path)
+            // 需要 return 该 svg 元素
+            return path
+        }
+        // 调用 bpmnRenderer.drawShape 来实现原始元素的绘制
+        const shape = this.bpmnRenderer.drawShape(parentNode, element);
+        // 对原有元素 UserTask 增加细节调整
+        if (is(element, 'bpmn:UserTask')) {
+            svgAttr(shape, { fill: '#eee' });
+        }
+        return shape
+    }
+}
+CustomRenderer.$inject = [ 'eventBus', 'bpmnRenderer' ];
+
+// 使用时，需要注意大小写
+export default {
+    __init__: ['customRenderer'],
+    customRenderer: ['type', CustomRenderer]
+}
+```
+
+当然，上面这种方式基本上很难满足大部分的自定义渲染需求，毕竟有时候需要的不是给原始元素增加细节，而是需要将整个元素全部重新实现（UI同事的审美通常都比我们要“强”不少），虽然可以在调用 `this.bpmnRenderer.drawShape()` 来绘制剩余类型之前，我们还可以增加很多个元素的处理逻辑，但这样无疑会使得这个方法变得异常臃肿，而且很难通过配置来实现不同的元素样式。
+
+**所以，我们可以在 `BpmnRenderer` 的源码基础上，重新实现一个 `RewriteRenderer`。**不过这部分代码有点长（2000+行），这里暂时就不放出来了🤪
+
+### 7.2 `Palette` 与 `ContextPad` 
+
+针对这两个模块，自定义的逻辑其实与 `Renderer` 类似，只不过是对应的方法不一样。
+
+`CustomPaletteProvider` 需要依赖 `Palette` 实例，并实现 `getPaletteEntries` 方法来将自定义部分的内容插入到 `palette` 中。
+
+```typescript
+class CustomPaletteProvider {
+    // ... 需要定义 _palette 等属性
+    constructor(palette, create, elementFactory, spaceTool, lassoTool, handTool, globalConnect) {
+        this._palette = palette
+        this._create = create
+        this._elementFactory = elementFactory
+        this._spaceTool = spaceTool
+        this._lassoTool = lassoTool
+        this._handTool = handTool
+        this._globalConnect = globalConnect
+        
+        // 注册该 Provider
+        palette.registerProvider(this);
+    }
+    getPaletteEntries() {
+        return {
+            'custom-palette-item': {
+                group: 'custom', // 分组标志，group 值相同的选项会出现在同一个区域
+                className: 'custom-palette-icon-1',
+                title: '自定义选项1',
+                action: {
+                    click: function (event) {
+                        alert(1)
+                    },
+                    dragstart: function (event) {
+                        alert(2)
+                    }
+                }
+            },
+            'tool-separator': {
+                group: 'tools',
+                separator: true // 指定该配置是显示一个分割线
+            },
+        }
+    }
+}
+
+export default {
+    __init__: ['customPaletteProvider'],
+    // 如果要覆盖原有的 paletteProvider, 可以写为 paletteProvider: ['type', CustomPaletteProvider]，__init__ 属性此时可以省略
+    customPaletteProvider: ['type', CustomPaletteProvider]
+}
+```
+
+`CustomContextPadProvider` 作为元素选中时会提示的上下文菜单，与 `CustomPaletteProvider` 的实现逻辑基本一致，但是需要注意 `AutoPlace` 模块的引用。
+
+```typescript
+class CustomContextPadProvider {
+    constructor(
+        config: Object,
+        injector: Injector,
+        eventBus: EventBus,
+        contextPad: ContextPad,
+        modeling: Modeling,
+        elementFactory: ElementFactory,
+        connect: Connect,
+        create: Create,
+        popupMenu: PopupMenu,
+        canvas: Canvas,
+        rules: Rules
+    ) {
+        if (config.autoPlace !== false) {
+            this._autoPlace = injector.get('autoPlace', false);
+        }
+        contextPad.registerProvider(this);
+    }
+
+    getContextPadEntries(element: Base) {
+        const actions: Record<string, any> = {}
+
+        const appendUserTask = (event: Event, element: Shape) => {
+            const shape = this._elementFactory.createShape({ type: 'bpmn:UserTask' })
+            this._create.start(event, shape, {
+                source: element
+            })
+        }
+
+        const append = this._autoPlace
+            ? (event: Event, element: Shape) => {
+                const shape = this._elementFactory.createShape({ type: 'bpmn:UserTask' })
+                this._autoPlace.append(element, shape)
+            }
+            : appendUserTask
+
+        // 添加创建用户任务按钮
+        actions['append.append-user-task'] = {
+            group: 'model',
+            className: 'bpmn-icon-user-task',
+            title: '用户任务',
+            action: {
+                dragstart: appendUserTask,
+                click: append
+            }
+        }
+
+        // 添加一个与edit一组的按钮
+        actions['enhancement-op-1'] = {
+            group: 'edit',
+            className: 'enhancement-op',
+            title: '扩展操作1',
+            action: {
+                click: function (e: Event) {
+                    alert('点击 扩展操作1')
+                }
+            }
+        }
+
+        // 添加一个新分组的自定义按钮
+        actions['enhancement-op'] = {
+            group: 'enhancement',
+            className: 'enhancement-op',
+            title: '扩展操作2',
+            action: {
+                click: function (e: Event) {
+                    alert('点击 扩展操作2')
+                }
+            }
+        }
+
+        return actions
+    }
+}
+
+export default {
+    __init__: ['customContextPadProvider'],
+    // 如果要覆盖原有的 ContextPadProvider, 可以写为 contextPadProvider: ['type', CustomContextPadProvider]，__init__ 属性此时可以省略
+    customContextPadProvider: ['type', CustomContextPadProvider]
+}
+```
 
