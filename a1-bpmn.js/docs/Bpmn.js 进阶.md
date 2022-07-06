@@ -391,6 +391,8 @@ function createInitializer(moduleDefinition: ModuleDefinition, injector: Injecto
 
 直到这里为止，都依然在 `Injector` 的实例化过程中，在 `injector` 实例上，目前 `_instances` 属性也只有在初始化时挂载的 `injector` 本身。但 `_providers` 属性上已经包含了所有的模块定义。
 
+> 这里是通过遍历 `moduleDefinition` 来更新 `_providers` 对象，所以后面我们才可以用同名模块来覆盖 `bpmn.js` 原有的模块
+
 并且为 `init` 定义了一个模块实例的初始化函数，内部使用 `initialized` 变量（闭包）避免二次初始化。
 
 ### 3.2 Diagram
@@ -531,7 +533,7 @@ declare class BaseModeler extends BaseViewer {
 
 > 🚩🚩 在 `bpmn-js-properties-Panel` 的 1.x 版本进行了颠覆性的更新，不仅重写了 UI 界面，1.x 版本之前的部分 API 和属性编辑栏构造函数都进行了重写，并将属性栏 DOM 构建与更新方式改写为 `React JSX Hooks` 与 `Components` 的形式，迁移到了 [@bpmn-io/properties-panel](https://github.com/bpmn-io/properties-panel) 仓库中。
 
-### 1. Basic Properties Panel
+### 4.1 Basic Properties Panel
 
 使用侧边栏的方式与引入一个 `additionalModule` 一样，代码如下：
 
@@ -571,9 +573,9 @@ const modeler = new Modeler({
 2. 具有 “特殊事件定义” 的事件节点(例如 `StartEvent`, `EndEvent`, `BoundaryEvent` 节点等)，可以配置的 `Message`, `Error`, `Singal` 等
 3. 具有 “多实例定义” 的任务类型节点，可以配置的 `MultiInstance` 属性(又分为 `LoopCardinality` 和 `CompletionCondition`)
 
-### 2. `BpmnPropertiesPanelModule`, `BpmnPropertiesPanel` 与 `PropertiesProviderModule`
+### 4.2 `BpmnPropertiesPanelModule`, `BpmnPropertiesPanel` 与 `PropertiesProviderModule`
 
-#### 2.1 `BpmnPropertiesPanelModule`
+#### 4.2.1 `BpmnPropertiesPanelModule`
 
 上文我们已经讲过，`BpmnPropertiesPanelModule` 主要用于构建基础的属性侧边栏面板，并通过 `PropertiesProviderModule` 来生成对应的属性表单项。
 
@@ -602,7 +604,7 @@ declare class BpmnPropertiesPanelModule extends ModuleConstructor {
 2. `diagram.destroy`：在画布销毁时，将面板节点从 `_container.parentNode` 移除
 3. `root.added`：在根节点创建完成后，调用 `_render()` 方法，创建一个 `BpmnPropertiesPanel` 组件并渲染
 
-#### 2.2 `BpmnPropertiesPanel` 组件
+#### 4.2.2 `BpmnPropertiesPanel` 组件
 
 `BpmnPropertiesPanel` 组件的写法与 `React Hooks Component` 的写法一样，主要实现一下几个方面的功能：
 
@@ -677,7 +679,7 @@ const groups = useMemo(() => {
 }, [ providers, selectedElement ]);
 ```
 
-#### 2.3 `PropertiesProviderModule`
+#### 4.2.3 `PropertiesProviderModule`
 
 该模块(或者说这类模块)主要用来注册元素的属性配置项，依赖 `BpmnPropertiesPanelModule` 组件，通过实例化时调用 `BpmnPropertiesPanelModule.registerProvider(this)` 来将自身注册到属性侧边栏面板的构造器当中。当然，通过 `BpmnPropertiesPanel` 组件的内部逻辑，我们知道每个 `PropertiesProviderModule` 还需要提供一个 `getGroups` 方法，用来获取当前元素对应的属性配置项分组。
 
@@ -721,7 +723,7 @@ BpmnPropertiesProvider.$inject = [ 'propertiesPanel' ];
 
 > 这里需要注意的是 `getGroups` 最终返回的是一个函数，通过传入参数 `groups` 来合并当前 `PropertiesProviderModule` 的属性分组定义
 
-### 3. Camunda Properties Panel
+### 4.3 Camunda Properties Panel
 
 在 `bpmn.io` 的团队介绍中，可以得知该团队主要成员均来自 `camunda` 的团队，所以官方也针对 `camunda` 流程引擎开发了对应的 `Properties Panel` 插件，主要用来编辑一些不能体现在可视界面上的特殊属性（也包含通用属性，类似 Id、name、documentation 等）。
 
@@ -763,13 +765,13 @@ const modeler = new Modeler({
 
 > 具体的 `moddleExtension` 配置可以查看 [Bpmn-js自定义描述文件说明-掘金](https://juejin.cn/post/6912331982701592590)
 
-### 4. Custom Properties Panel
+### 4.4 Custom Properties Panel
 
 虽然 `camunda` 官方提供了一个属性编辑面板，但是内部对属性的更新和读取都与 `camunda` 流程引擎做了强关联，所以在没有使用 `camunda` 流程引擎的时候，如何去更新元素属性就成了一个亟需解决的问题（特别是国内使用率最多的除了国产流程引擎外就是 `flowable` 和 `activiti`）。
 
 对于这个问题，`bpmn-io` 官方也编写了一个示例项目[properties-panel-extension](https://github.com/bpmn-io/bpmn-js-examples/tree/master/properties-panel-extension)，对如何扩展属性侧边栏进行了简单说明，这里我们也以这个例子进行讲解。
 
-#### 4.1 Properties Moddle Extension
+#### 4.4.1 Properties Moddle Extension
 
 首先，在创建自定义的属性编辑面板之前，需要先定义相关的自定义属性，这里我们以 `flowable` 流程引擎对应的属性为例。
 
@@ -836,7 +838,7 @@ const modeler = new Modeler({
 
 在这个 json 文件里面，我们对 `Process` 节点进行了扩展，增加了 `versionTag`, `jobPriority` 等属性。
 
-#### 4.2 `CustomPropertiesProviderModule`
+#### 4.4.2 `CustomPropertiesProviderModule`
 
 第二步：创建属性对应的 `PropertiesProviderModule`
 
@@ -864,7 +866,7 @@ FlowablePropertiesProvider.$inject = ['propertiesPanel']
 export default FlowablePropertiesProvider
 ```
 
-#### 4.3 `CustomPropertiesGroup`
+#### 4.4.3 `CustomPropertiesGroup`
 
 第三步：实现自定义属性栏分组与 `VsersionTag` 属性编辑组件
 
@@ -920,7 +922,7 @@ export default function (element) {
 }
 ```
 
-#### 4.4 `Use CustomPropertiesProviderModule`
+#### 4.4.4 `Use CustomPropertiesProviderModule`
 
 第四步：引入自定义属性构造器 `FlowablePropertiesProvider`
 
@@ -1675,7 +1677,7 @@ export default {
 }
 ```
 
-## Replace Options (PopupMenu)
+## 8. Replace Options (PopupMenu)
 
 这部分功能默认是通过 `ContextPad` 中间的小扳手 🔧 来触发的，主要是用来更改当前元素的类型。很多小伙伴反馈说其实里面的很多选项都不需要，这里对如何实现该部分更改进行说明。
 
@@ -1725,4 +1727,268 @@ ReplaceMenuProvider.$inject = [
     'replaceMenuProvider',
     'translate'
 ];
+```
+
+## 9. 自己实现 Properties Panel
+
+虽然根据 第 4.4 小节可以知道，我们可以通过自定义一个属性面板分组，来插入到原生的 `Bpmn Properties Panel` 中，但是这样实现，第一是基本不符合国内的审美，第二就是写法太复杂，第三则是对控制参数传递的实现十分困难。既然现在的 `MVVM` 框架都支持 `props` 数据传递来控制参数改变，并且有很多精美的开源组件库，那可不可以自己实现一个属性面板呢？
+
+答案是当然可以的。
+
+`bpmn.js` 的属性更新操作都是通过 `modeling.updateProperties` 与 `modeling.updateModdlePropertis` 这两个 api 来实现的，实现一个属性面板的核心逻辑就在于监听当前选中元素的变化，来控制对应的属性面板的渲染；并且对属性面板的输出结果通过以上两个 api 更新到元素实例上，从而实现完整的属性更新流程。
+
+> 后续以 `Flowable` 流程引擎为例进行讲解。
+
+### 9.1 第一步：设置监听事件寻找选中元素
+
+如何设置当前的选中元素来控制属性面板的渲染，根据第 4.2 小节，可以结合 `BpmnPropertiesPanel` 组件的写法，通过监听 `selection.changed`, `elements.changed`, `root.added`(或者 `import.done`) 几个事件来设置当前元素。这里大致解释一下为什么是这几个事件：
+
+1. `root.added`(或者 `import.done`)：在根元素(`Process`节点)创建完成(或者流程导入结束)时，默认是没有办法通过 `selection` 模块拿到选中元素，所以我们可以默认设置根元素为选中元素来渲染属性面板
+2. `selection.changed`：这个事件在鼠标点击选中事件改变时会触发，默认返回一个选中元素数组（可能为空），这里我们取数组第一个元素(为空时设置成根元素)来渲染属性面板
+3. `elements.changed`：这个事件则是为了控制属性面板的数据回显，因为数据有可能是通过其他方式更新了属性
+
+我们先创建一个 `PropertiesPanel` 组件：
+
+```tsx
+import { defineComponent, ref } from 'vue'
+import debounce from 'lodash.debounce'
+import EventEmitter from '@/utils/EventEmitter'
+import modelerStore from '@/store/modeler'
+
+const PropertiesPanel = defineComponent({
+    setup() {
+        // 这里通过 pinia 来共享当前的 modeler 实例和选中元素
+        const modeler = modelerStore()
+        const penal = ref<HTMLDivElement | null>(null)
+        const currentElementId = ref<string | undefined>(undefined)
+        const currentElementType = ref<string | undefined>(undefined)
+
+        // 在 modeler 实例化结束之后在创建监听函数 (也可以监听 modeler().getModeler 的值来创建)
+        EventEmitter.on('modeler-init', (modeler) => {
+            // 导入完成后默认选中 process 节点
+            modeler.on('import.done', () => setCurrentElement(null))
+            // 监听选择事件，修改当前激活的元素以及表单
+            modeler.on('selection.changed', ({ newSelection }) => setCurrentElement(newSelection[0] || null))
+            // 监听元素改变事件
+            modeler.on('element.changed', ({ element }) => {
+                // 保证 修改 "默认流转路径" 等类似需要修改多个元素的事件发生的时候，更新表单的元素与原选中元素不一致。
+                if (element && element.id === currentElementId.value) setCurrentElement(element)
+            })
+        })
+
+        // 设置选中元素，更新 store；这里做了防抖处理，避免重复触发（可以取消）
+        const setCurrentElement = debounce((element: Shape | Base | Connection | Label | null) => {
+            let activatedElement: BpmnElement | null | undefined = element
+            if (!activatedElement) {
+                activatedElement =
+                    modeler.getElRegistry?.find((el) => el.type === 'bpmn:Process') ||
+                    modeler.getElRegistry?.find((el) => el.type === 'bpmn:Collaboration')
+
+                if (!activatedElement) {
+                    return Logger.prettyError('No Element found!')
+                }
+            }
+
+            modeler.setElement(markRaw(activatedElement), activatedElement.id)
+            currentElementId.value = activatedElement.id
+            currentElementType.value = activatedElement.type.split(':')[1]
+        }, 100)
+        
+        return () => (<div ref={penal} class="penal"></div>)
+    }
+})
+
+```
+
+### 9.2 第二步：判断元素类型和数据来控制属性面板
+
+在获取到选中元素之后，我们需要根据元素类型来控制显示不同的属性面板组件（这里建议参考官方的属性面板的写法，将判断方法和属性值的更新读取拆分成不同的 `hooks` 函数）。
+
+比如几个异步属性(`asyncBefore`, `asyncAfter`, `exclusive`)，这几个属性只有在选中元素的 `superClass` 继承链路中有继承 `flowable:AsyncCapable` 才会体现。所以我们编写一个判断函数：
+
+```typescript
+import { is } from 'bpmn-js/lib/util/ModelUtil'
+export function isAsynchronous(element: Base): boolean {
+  return is(element, 'flowable:AsyncCapable')
+}
+```
+
+在 `PropertiesPanel` 组件中，就可以通过调用该函数判断是否显示对应部分的属性面板
+
+```tsx
+import { defineComponent, ref } from 'vue'
+const PropertiesPanel = defineComponent({
+    setup() {
+        // ...
+        return () => (
+            <div ref={penal} class="penal">
+                <NCollapse arrow-placement="right">
+                    <ElementGenerations></ElementGenerations>
+                    <ElementDocumentations></ElementDocumentations>
+                    {isAsynchronous(modeler.getActive!) && (
+                        <ElementAsyncContinuations></ElementAsyncContinuations>
+                    )}
+                </NCollapse>
+            </div>
+        )
+    }
+})
+export default PropertiesPanel
+```
+
+### 9.3 第三步：实现对应的属性面板更新组件
+
+上一步，我们通过判断元素时候满足异步属性来显示了 `ElementAsyncContinuations` 组件，但是 `ElementAsyncContinuations` 组件内部如何实现元素的读取和更新呢？
+
+首先，我们先实现 `ElementAsyncContinuations` 组件，包含 `template` 模板和基础的更新方法。
+
+```vue
+<template>
+  <n-collapse-item name="element-async-continuations">
+    <template #header>
+      <collapse-title title="异步属性">
+        <lucide-icon name="Shuffle" />
+      </collapse-title>
+    </template>
+    <edit-item label="Before" :label-width="120">
+      <n-switch v-model:value="acBefore" @update:value="updateElementACBefore" />
+    </edit-item>
+    <edit-item label="After" :label-width="120">
+      <n-switch v-model:value="acAfter" @update:value="updateElementACAfter" />
+    </edit-item>
+    <edit-item v-if="showExclusive" label="Exclusive" :label-width="120">
+      <n-switch v-model:value="acExclusive" @update:value="updateElementACExclusive" />
+    </edit-item>
+  </n-collapse-item>
+</template>
+
+<script lang="ts">
+  import { defineComponent } from 'vue'
+  import { mapState } from 'pinia'
+  import modelerStore from '@/store/modeler'
+  import {
+    getACAfter,
+    getACBefore,
+    getACExclusive,
+    setACAfter,
+    setACBefore,
+    setACExclusive
+  } from '@/bo-utils/asynchronousContinuationsUtil'
+
+  export default defineComponent({
+    name: 'ElementAsyncContinuations',
+    data() {
+      return {
+        acBefore: false,
+        acAfter: false,
+        acExclusive: false
+      }
+    },
+    computed: {
+      ...mapState(modelerStore, ['getActive', 'getActiveId']),
+      showExclusive() {
+        return this.acBefore || this.acAfter
+      }
+    },
+    watch: {
+      getActiveId: {
+        immediate: true,
+        handler() {
+          this.reloadACStatus()
+        }
+      }
+    },
+    methods: {
+      reloadACStatus() {
+        this.acBefore = getACBefore(this.getActive as Base)
+        this.acAfter = getACAfter(this.getActive as Base)
+        this.acExclusive = getACExclusive(this.getActive as Base)
+      },
+      updateElementACBefore(value: boolean) {
+        setACBefore(this.getActive as Base, value)
+        this.reloadACStatus()
+      },
+      updateElementACAfter(value: boolean) {
+        setACAfter(this.getActive as Base, value)
+        this.reloadACStatus()
+      },
+      updateElementACExclusive(value: boolean) {
+        setACExclusive(this.getActive as Base, value)
+        this.reloadACStatus()
+      }
+    }
+  })
+</script>
+```
+
+这里基本实现了根据元素 id 的变化，来更新元素的异步属性配置，并且在属性面板的表单项发生改变时更新该元素的属性。
+
+这里对几个属性的获取和更新方法提取了出来。
+
+```typescript
+import { Base, ModdleElement } from 'diagram-js/lib/model'
+import editor from '@/store/editor'
+import modeler from '@/store/modeler'
+import { is } from 'bpmn-js/lib/util/ModelUtil'
+
+////////// only in element extends bpmn:Task
+export function getACBefore(element: Base): boolean {
+  const prefix = editor().getProcessEngine
+  return isAsyncBefore(element.businessObject, prefix)
+}
+export function setACBefore(element: Base, value: boolean) {
+  const prefix = editor().getProcessEngine
+  const modeling = modeler().getModeling
+  // overwrite the legacy `async` property, we will use the more explicit `asyncBefore`
+  modeling.updateModdleProperties(element, element.businessObject, {
+    [`${prefix}:asyncBefore`]: value,
+    [`${prefix}:async`]: undefined
+  })
+}
+
+export function getACAfter(element: Base): boolean {
+  const prefix = editor().getProcessEngine
+  return isAsyncAfter(element.businessObject, prefix)
+}
+export function setACAfter(element: Base, value: boolean) {
+  const prefix = editor().getProcessEngine
+  const modeling = modeler().getModeling
+  modeling.updateModdleProperties(element, element.businessObject, {
+    [`${prefix}:asyncAfter`]: value
+  })
+}
+
+export function getACExclusive(element: Base): boolean {
+  const prefix = editor().getProcessEngine
+  return isExclusive(element.businessObject, prefix)
+}
+export function setACExclusive(element: Base, value: boolean) {
+  const prefix = editor().getProcessEngine
+  const modeling = modeler().getModeling
+  modeling.updateModdleProperties(element, element.businessObject, {
+    [`${prefix}:exclusive`]: value
+  })
+}
+
+//////////////////// helper
+// 是否支持异步属性
+export function isAsynchronous(element: Base): boolean {
+  const prefix = editor().getProcessEngine
+  return is(element, `${prefix}:AsyncCapable`)
+}
+
+// Returns true if the attribute 'asyncBefore' is set to true.
+function isAsyncBefore(bo: ModdleElement, prefix: string): boolean {
+  return !!(bo.get(`${prefix}:asyncBefore`) || bo.get('camunda:async'))
+}
+
+// Returns true if the attribute 'asyncAfter' is set to true.
+function isAsyncAfter(bo: ModdleElement, prefix: string): boolean {
+  return !!bo.get(`${prefix}:asyncAfter`)
+}
+
+// Returns true if the attribute 'exclusive' is set to true.
+function isExclusive(bo: ModdleElement, prefix: string): boolean {
+  return !!bo.get(`${prefix}:exclusive`)
+}
 ```
