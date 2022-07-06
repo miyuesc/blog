@@ -1675,3 +1675,54 @@ export default {
 }
 ```
 
+## Replace Options (PopupMenu)
+
+这部分功能默认是通过 `ContextPad` 中间的小扳手 🔧 来触发的，主要是用来更改当前元素的类型。很多小伙伴反馈说其实里面的很多选项都不需要，这里对如何实现该部分更改进行说明。
+
+1. 通过 `css` 隐藏 `dev.djs-popup-body` 节点下的多余节点，因为不同的元素类型有不同的 `css class` 类名，可以通过类名设置 `display: none` 隐藏
+2. 直接修改 `ReplaceOptions` 的数据
+
+```javascript
+import { TASK } from 'bpmn-js/lib/features/replace/ReplaceOptions';
+
+// 移除多余的选项
+GATEWAY.splice(2, GATEWAY.length);
+
+// 注意需要在 new Modeler 之前，并且这种方式不支持 cdn 引入
+```
+3. 修改 `ReplaceMenuProvider`, 这里与自定义 `ContextPadProvider` 的逻辑类似。
+
+```typescript
+// 源码位置见 bpmn-js/lib/features/popup-menu/ReplaceMenuProvider.js
+
+import * as replaceOptions from '../replace/ReplaceOptions';
+
+class CustomReplaceMenuProvider extends ReplaceMenuProvider {
+    constructor(bpmnFactory, popupMenu, modeling, moddle, bpmnReplace, rules, replaceMenuProvider, translate) {
+        super(bpmnFactory, popupMenu, modeling, moddle, bpmnReplace, rules, translate);
+        this.register();
+    }
+
+    getEntries(element) {
+        if (!rules.allowed('shape.replace', { element: element })) {
+            return [];
+        }
+        const differentType = isDifferentType(element);
+        if (is(elemeny, 'bpmn:Gateway')) {
+            entries = filter(replaceOptions.GATEWAY.splice(2, replaceOptions.GATEWAY.length), differentType);
+            return this._createEntries(element, entries);
+        }
+        return replaceMenuProvider.getEntries(element)
+    }
+}
+ReplaceMenuProvider.$inject = [
+    'bpmnFactory',
+    'popupMenu',
+    'modeling',
+    'moddle',
+    'bpmnReplace',
+    'rules',
+    'replaceMenuProvider',
+    'translate'
+];
+```
