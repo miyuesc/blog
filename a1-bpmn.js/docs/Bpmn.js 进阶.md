@@ -1840,6 +1840,8 @@ export default PropertiesPanel
 
 上一步，我们通过判断元素时候满足异步属性来显示了 `ElementAsyncContinuations` 组件，但是 `ElementAsyncContinuations` 组件内部如何实现元素的读取和更新呢？
 
+> 具体包含哪些属性，可以查看 `flowable.json`
+
 首先，我们先实现 `ElementAsyncContinuations` 组件，包含 `template` 模板和基础的更新方法。
 
 ```vue
@@ -1900,20 +1902,20 @@ export default PropertiesPanel
     },
     methods: {
       reloadACStatus() {
-        this.acBefore = getACBefore(this.getActive as Base)
-        this.acAfter = getACAfter(this.getActive as Base)
-        this.acExclusive = getACExclusive(this.getActive as Base)
+        this.acBefore = getACBefore(this!.getActive)
+        this.acAfter = getACAfter(this!.getActive)
+        this.acExclusive = getACExclusive(this!.getActive)
       },
       updateElementACBefore(value: boolean) {
-        setACBefore(this.getActive as Base, value)
+        setACBefore(this!.getActive, value)
         this.reloadACStatus()
       },
       updateElementACAfter(value: boolean) {
-        setACAfter(this.getActive as Base, value)
+        setACAfter(this!.getActive, value)
         this.reloadACStatus()
       },
       updateElementACExclusive(value: boolean) {
-        setACExclusive(this.getActive as Base, value)
+        setACExclusive(this!.getActive, value)
         this.reloadACStatus()
       }
     }
@@ -1933,40 +1935,36 @@ import { is } from 'bpmn-js/lib/util/ModelUtil'
 
 ////////// only in element extends bpmn:Task
 export function getACBefore(element: Base): boolean {
-  const prefix = editor().getProcessEngine
-  return isAsyncBefore(element.businessObject, prefix)
+  return isAsyncBefore(element.businessObject, 'flowable')
 }
 export function setACBefore(element: Base, value: boolean) {
-  const prefix = editor().getProcessEngine
   const modeling = modeler().getModeling
   // overwrite the legacy `async` property, we will use the more explicit `asyncBefore`
   modeling.updateModdleProperties(element, element.businessObject, {
-    [`${prefix}:asyncBefore`]: value,
-    [`${prefix}:async`]: undefined
+    [`flowable:asyncBefore`]: value,
+    [`flowable:async`]: undefined
   })
 }
 
 export function getACAfter(element: Base): boolean {
-  const prefix = editor().getProcessEngine
-  return isAsyncAfter(element.businessObject, prefix)
+  return isAsyncAfter(element.businessObject, 'flowable')
 }
 export function setACAfter(element: Base, value: boolean) {
   const prefix = editor().getProcessEngine
   const modeling = modeler().getModeling
   modeling.updateModdleProperties(element, element.businessObject, {
-    [`${prefix}:asyncAfter`]: value
+    [`flowable:asyncAfter`]: value
   })
 }
 
 export function getACExclusive(element: Base): boolean {
-  const prefix = editor().getProcessEngine
-  return isExclusive(element.businessObject, prefix)
+  return isExclusive(element.businessObject, 'flowable')
 }
 export function setACExclusive(element: Base, value: boolean) {
   const prefix = editor().getProcessEngine
   const modeling = modeler().getModeling
   modeling.updateModdleProperties(element, element.businessObject, {
-    [`${prefix}:exclusive`]: value
+    [`flowable:exclusive`]: value
   })
 }
 
@@ -1974,21 +1972,193 @@ export function setACExclusive(element: Base, value: boolean) {
 // 是否支持异步属性
 export function isAsynchronous(element: Base): boolean {
   const prefix = editor().getProcessEngine
-  return is(element, `${prefix}:AsyncCapable`)
+  return is(element, `flowable:AsyncCapable`)
 }
 
 // Returns true if the attribute 'asyncBefore' is set to true.
 function isAsyncBefore(bo: ModdleElement, prefix: string): boolean {
-  return !!(bo.get(`${prefix}:asyncBefore`) || bo.get('camunda:async'))
+  return !!(bo.get(`flowable:asyncBefore`) || bo.get('flowable:async'))
 }
 
 // Returns true if the attribute 'asyncAfter' is set to true.
 function isAsyncAfter(bo: ModdleElement, prefix: string): boolean {
-  return !!bo.get(`${prefix}:asyncAfter`)
+  return !!bo.get(`flowable:asyncAfter`)
 }
 
 // Returns true if the attribute 'exclusive' is set to true.
 function isExclusive(bo: ModdleElement, prefix: string): boolean {
-  return !!bo.get(`${prefix}:exclusive`)
+  return !!bo.get(`flowable:exclusive`)
 }
 ```
+
+这样，我们就得到了一个基础的属性面板。
+
+> 当前模式只能在 id 更新时才更新数据，不是十分完美。建议在 `element.changed` 事件发生时通过 `EventEmitter` 来触发业务组件内部的数据更新。
+
+### 9.4 复杂属性的更新
+
+上一节提到的属性都是作为很简单的属性，可以直接通过 `updateModdleProperties(element, moddleElement, { key: value})` 的形式来更新，不需要其他步骤。
+
+但是如果这个属性不是一个简单属性，需要如何创建？这里我们以在 `Process` 节点下创建 `ExecutionListener` 为例。
+
+首先，我们在 `flowable.json` 中查看 `ExecutionListener` 的属性配置。
+
+```json
+{
+  "name": "ExecutionListener",
+  "superClass": ["Element"],
+  "meta": {
+    "allowedIn": [
+      // ...
+      "bpmn:Process"
+    ]
+  },
+  "properties": [
+    {
+      "name": "expression",
+      "isAttr": true,
+      "type": "String"
+    },
+    {
+      "name": "class",
+      "isAttr": true,
+      "type": "String"
+    },
+    {
+      "name": "delegateExpression",
+      "isAttr": true,
+      "type": "String"
+    },
+    {
+      "name": "event",
+      "isAttr": true,
+      "type": "String"
+    },
+    {
+      "name": "script",
+      "type": "Script"
+    },
+    {
+      "name": "fields",
+      "type": "Field",
+      "isMany": true
+    }
+  ]
+}
+```
+
+可以看到这个属性继承了 `Element` 属性，所以肯定可以创建一个 xml 标签；`meta` 配置里面表示它允许被插入到 `Process` 节点中。
+
+但是 `Process` 节点的定义下并没有支持 `ExecutionListener` 属性的相关配置，所以我们接着查看 `bpmn.json`，发现也没有相关的定义。这时候怎么办呢？
+
+我们仔细研究一下两个文件里面关于 `Process` 元素的配置：
+
+```
+// flowable.json
+{
+  "name": "Process",
+  "isAbstract": true,
+  "extends": ["bpmn:Process"],
+  "properties": [
+    {
+      "name": "candidateStarterGroups",
+      "isAttr": true,
+      "type": "String"
+    },
+    {
+      "name": "candidateStarterUsers",
+      "isAttr": true,
+      "type": "String"
+    },
+    {
+      "name": "versionTag",
+      "isAttr": true,
+      "type": "String"
+    },
+    {
+      "name": "historyTimeToLive",
+      "isAttr": true,
+      "type": "String"
+    },
+    {
+      "name": "isStartableInTasklist",
+      "isAttr": true,
+      "type": "Boolean",
+      "default": true
+    }
+  ]
+}
+// bpmn.json
+{
+  "name": "Process",
+  "superClass": ["FlowElementsContainer", "CallableElement"],
+  "properties": [
+    // ...
+  ]
+}
+
+// 向上查找 FlowElementsContainer
+{
+  "name": "FlowElementsContainer",
+  "isAbstract": true,
+  "superClass": ["BaseElement"],
+  "properties": [
+    //. ..
+  ]
+}
+
+// 向上查找 BaseElement
+{
+  "name": "BaseElement",
+  "isAbstract": true,
+  "properties": [
+    {
+      "name": "id",
+      "isAttr": true,
+      "type": "String",
+      "isId": true
+    },
+    {
+      "name": "documentation",
+      "type": "Documentation",
+      "isMany": true
+    },
+    {
+      "name": "extensionDefinitions",
+      "type": "ExtensionDefinition",
+      "isMany": true,
+      "isReference": true
+    },
+    {
+      "name": "extensionElements",
+      "type": "ExtensionElements"
+    }
+  ]
+}
+
+// 接着查找 ExtensionDefinition 和 ExtensionElements
+{
+  "name": "ExtensionElements",
+  "properties": [
+    {
+      "name": "valueRef",
+      "isAttr": true,
+      "isReference": true,
+      "type": "Element"
+    },
+    {
+      "name": "values",
+      "type": "Element",
+      "isMany": true
+    },
+    {
+      "name": "extensionAttributeDefinition",
+      "type": "ExtensionAttributeDefinition",
+      "isAttr": true,
+      "isReference": true
+    }
+  ]
+}
+```
+
+这里可以找到 `Process` 节点继承的 `BaseElement`, 有定义 `ExtensionElements`，并且 `ExtensionElements` 的 `values` 属性支持配置多个 `Element`。所以这里大概就是我们需要关注的地方了。
