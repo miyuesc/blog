@@ -2161,4 +2161,65 @@ function isExclusive(bo: ModdleElement, prefix: string): boolean {
 }
 ```
 
-这里可以找到 `Process` 节点继承的 `BaseElement`, 有定义 `ExtensionElements`，并且 `ExtensionElements` 的 `values` 属性支持配置多个 `Element`。所以这里大概就是我们需要关注的地方了。
+这里可以找到 `Process` 节点继承的 `BaseElement`, 有定义 `ExtensionElements`，并且 `ExtensionElements` 的 `values` 属性支持配置多个 `Element`。所以这里大概就是我们需要关注的地方了。他们之间的大致关系如下：
+
+```
+BaseElement     (superClass)-->     FlowElementsContainer     (superClass)-->     Process
+ ↓ hasProperty
+extensionElements(ExtensionElements)
+ ↓ hasProperty
+values(Element[])
+ ↓ hasProperty
+Element         (superClass)-->     ExecutionListener
+```
+
+虽然 `ExtensionElements` 没有声明是继承的 `Element` 的，但是因为 `values` 属性是配置的多属性，所以也会在 xml 中插入一个 `extensionElements` 标签。
+
+既然现在已经找到了这几个元素和属性直接的关系，那么如何给 `Process` 节点添加 `ExecutionListener` 就很明了了。
+
+> 🚀 因为这些属性虽然会在 xml 上体现为一个标签，但是并不会显示在图形界面上，所以一般不能用 `BpmnFactory` 来创建。
+> 
+> 这里我们可以通过 `Moddle` 模块来创建这类属性实例（包含自定义的其他属性也可以用这种方式）
+
+```typescript
+const canvas = modeler.get<Canvas>('canvas');
+const moddle = modeler.get<Moddle>('moddle');
+const modeling = modeler.get<Modeling>('modeling');
+
+// 1. 获取 Process 节点
+const process: Base = canvas.getRootElement();
+const businessObject = process.businessObject
+
+// 2. 获取或者创建一个 ExtensionElements 并更新节点业务属性
+let extensionElements: ModdleElement & ExtensionElements = businessObject.get('extensionElements')
+if (!extensionElements) {
+    extensionElements = moddle.create('bpmn:ExtensionElements', { values: [] })
+    // 设置 $parent, 指向 业务节点实例的 businessObject
+    extensionElements.$parent = process.businessObject
+    // 将 extensionElements 更新到节点上
+    modeling.updateModdleProperties(process, businessObject, { extensionElements })
+}
+
+// 3. 创建一个 ExecutionListener 并更新到 ExtensionElements 上
+const listener = moddle.create(`flowable:ExecutionListener`, {
+    // ... 这里是相关的属性
+    // 如果是 Script, Field 这些属性类型，需要像创建 ExecutionListener 这样创建对应的 script, field 实例，并更新到 listener 上
+})
+listener.$parent = extensionElements
+// 这里注意 values 数组里面需要把原来的数据填充进来
+modeling.updateModdleProperties(element, extensionElements, {
+    values: [...extensionElements.get('values'), listener]
+})
+```
+
+> 上文说到更新元素属性可以通过 `modeling.updateProperties` 与 `modeling.updateModdlePropertis` 来处理，但是这两个方法有一点点细微差别。
+
+`updateProperties`：接收两个参数 `Element` 和 `properties`，内部会获取当前 `Element` 的所有属性配置，进行以下操作：
+
+1. 比较 `id` 是否改变，如果改变则通过 `elementRegistry.updateId` 来更新索引表中的元素 Id，同时更新该对象的 Id 和对象对应的 DI 图形元素的 id
+2. 如果元素具有 `default` 属性（用于设置默认路径），则比较该属性的变化并更新
+3. 遍历 `properties` 对象，更新 `element.businessObject` 业务属性(如果 `properties` 中有 `key` 等于 `DI` 的，则会更新对应属性到图形配置属性上)
+4. 如果有 `name` 属性，或者发生了改变，则会更新 `Element` 对应的 `Label` 标签。
+5. 计算更新后的元素大小并重新调整位置
+
+`updateModdlePropertis`：接收三个参数 `Element`, `ModdleElement` 和 `properties`，这个方法内部逻辑比较单一，通过遍历 `properties` 来读取 `ModdleElement` 的原始数据，之后再次遍历 `properties` 将配置的属性更新到 `ModdleElement` 中。
