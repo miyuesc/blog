@@ -2,14 +2,17 @@
 theme: nico
 highlight: a11y-dark
 ---
+## 前言
 
-> 由于 bpmn.js 内部各个模块相互独立，很难编写出全面且流畅的使用教程，之前写的文章也常常是写到一半便没了头绪，所以看起来和没看没什么区别。
->
-> 现在在了解了 bpmn.js 与 diagram.js 的源码，并对相关模块和插件进行了 dts (typescript declare) 的编写之后，心里大致明白如何在原来的基础上进行扩展与重置，所以希望这篇文章能写的尽量全面和清晰，减少大家入坑时消耗的时间和精力。
->
-> 上节 [Bpmn.js简介与基础使用 - 掘金](https://juejin.cn/post/7064485347186442271) 中，讲述了 bpmn.js 的简介和相关底层依赖，以及在 Vue 2.x 项目中的基础使用。本篇将在该基础上介绍几种常见 `additionalModule` 的扩展和自定义重写。
->
-> 本篇示例代码将采用 `Vue 3.0` 结合 `Pinia` 和 `Tsx` 来展示，并且 bpmn.js 版本为 9.2，具体项目Demo见 [Vite Vue Process Designer](https://miyuesc.github.io/vite-vue-bpmn-process/)
+由于 bpmn.js 内部各个模块相互独立，很难编写出全面且流畅的使用教程，之前写的文章也常常是写到一半便没了头绪，所以看起来和没看没什么区别。
+
+现在在了解了 bpmn.js 与 diagram.js 的源码，并对相关模块和插件进行了 dts (typescript declare) 的编写之后，心里大致明白如何在原来的基础上进行扩展与重置，所以希望这篇文章能写的尽量全面和清晰，减少大家入坑时消耗的时间和精力。
+
+上节 [Bpmn.js简介与基础使用 - 掘金](https://juejin.cn/post/7064485347186442271) 中，讲述了 bpmn.js 的简介和相关底层依赖，以及在 Vue 2.x 项目中的基础使用。本篇将在该基础上介绍几种常见 `additionalModule` 的扩展和自定义重写。
+
+本篇示例代码将采用 `Vue 3.0` 结合 `Pinia` 和 `Tsx` 来展示，并且 bpmn.js 版本为 9.2，具体项目Demo见 [Vite Vue Process Designer](https://miyuesc.github.io/vite-vue-bpmn-process/)
+
+> 因为作者很少写文章，所以排版和描述可能有些不够清晰，希望大家多多包涵。如果您觉得有地方可以改进或者描述有误差，希望您能及时指出，让我可以加以改正，谢谢😋😋
 
 ## 1. 创建基础页面
 
@@ -2223,3 +2226,158 @@ modeling.updateModdleProperties(element, extensionElements, {
 5. 计算更新后的元素大小并重新调整位置
 
 `updateModdlePropertis`：接收三个参数 `Element`, `ModdleElement` 和 `properties`，这个方法内部逻辑比较单一，通过遍历 `properties` 来读取 `ModdleElement` 的原始数据，之后再次遍历 `properties` 将配置的属性更新到 `ModdleElement` 中。
+
+
+### 9.5 快速定位属性类型和更新方式
+
+上面这种方式，需要对 `moddleExtension` 和 `xml` 规范比较熟悉才能比较快速找到需要的元素对应的逻辑关系，这种方式无疑耗时巨大。虽然我建议通过阅读 `bpmn-js-peroperties-panel` 的源码，但是可能很多小伙伴的时间也比较短，没有办法去仔细阅读。
+
+所以这里介绍另外一种方式。
+
+**注意，这种方式最好找后端的朋友提供一个配置比较全面的xml，然后将这个 xml 导入到我们的项目中。** 之后配置一下 `element.click` 点击事件的监听，将回调参数打印一下。其中 `element.businessObject` 的值大致如下：
+
+![image.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a4d7410c486541458539ccb7c022f868~tplv-k3u1fbpfcp-watermark.image?)
+
+因为浏览器控制台打印对象时，会提示该对象对应的构造函数名称，我们可以通过这个来判断该使用什么方式。
+
+比如上图中打印的 `element.businessObject` 提示的类型是 `ModdleElement`，所以才可以作为 `updateModdleProperties` 的第二个参数。
+
+后续的 `extensionElements` 和 `extensionElements.values[0]` 都是 `ModdleElement`，所以这种类型的数据都需要通过 `moddle.create` 来创建，其中以 `$` 符号开头的属性更新或者创建的时候可以忽略，主要是用来表示这个 `ModdleElement` 实例具体属于那种自定义类型，在 `moddle.create` 创建时第一个参数就是这个 `$type` 属性。
+
+在创建好对应的属性实例之后，一步一步更新到 `element.businessObject` 上就大功告成啦。
+
+> 这里还有一点需要注意：如果 `flowable.json` 或者 `bpmn.json` 中定义了某个自定义元素的属性 `isReference: true` (例如元素的默认流转路径 `default`)，这个体现在 xml 中是作为自定义元素标签的一个 attribute 属性，但是在控制台打印出来则是一个指向该 id 对应的元素的 `businessObject` 对象，这里需要特别注意。
+> 
+> 并且在更新该属性的时候，也需要设置为 `default: element` ，不能直接使用 `default: 'elementId'`。
+
+## 10. 自己实现 Palette
+
+因为原生的 `Palette` 模块不支持手风琴式操作，想显示元素类型名称或者改变面板显示效果，都需要进行比较大的改动。如果要配合自定义的 `Renderer` 渲染方式，可能改动更大，这个时候就需要我们自己来实现一个 `Palette` 组件了。
+
+首先，我们先研究一下 `bpmn.js` 的 `PaletteProvider` 里面的显示入口配置(这里省略其他内容，主要查看 `getPaletteEntries` 的返回数据)。
+
+```javascript
+function createAction(type, group, className, title, options) {
+    function createListener(event) {
+        var shape = elementFactory.createShape(assign({ type: type }, options));
+        if (options) {
+            var di = getDi(shape);
+            di.isExpanded = options.isExpanded;
+        }
+        create.start(event, shape);
+    }
+    var shortType = type.replace(/^bpmn:/, '');
+    return {
+        group: group,
+        className: className,
+        title: title || translate('Create {type}', { type: shortType }),
+        action: {
+            dragstart: createListener,
+            click: createListener
+        }
+    };
+}
+PaletteProvider.prototype.getPaletteEntries = function(element) {
+    // ...
+    return {
+        'hand-tool': {
+            group: 'tools',
+            className: 'bpmn-icon-hand-tool',
+            title: translate('Activate the hand tool'),
+            action: {
+                click: function(event) {
+                    handTool.activateHand(event);
+                }
+            }
+        },
+        'lasso-tool': {
+            group: 'tools',
+            className: 'bpmn-icon-lasso-tool',
+            title: translate('Activate the lasso tool'),
+            action: {
+                click: function(event) {
+                    lassoTool.activateSelection(event);
+                }
+            }
+        },
+        // ...
+        'create.start-event': createAction(
+            'bpmn:StartEvent', 'event', 'bpmn-icon-start-event-none',
+            translate('Create StartEvent')
+        )
+        // ...
+    }
+}
+```
+
+通过以上代码，可以发现 `PaletteProvider` 里面的按钮入口主要实现两个类型的功能：
+
+1. 开启其他工具模块
+2. 创建对应类型的元素
+
+既然已经明白了里面的功能了逻辑，那么实现这样的功能就比较简单了
+
+```tsx
+import { defineComponent } from 'vue'
+import { assign } from 'min-dash'
+import modelerStore from '@/store/modeler'
+
+const Palette = defineComponent({
+    name: 'Palette',
+    setup() {
+        const store = modelerStore()
+        const createElement = (ev: Event, type: string, options?: any) => {
+          const ElementFactory: ElementFactory = store.getModeler!.get('elementFactory')
+          const create: Create = store.getModeler!.get('create')
+          const shape = ElementFactory.createShape(assign({ type: `bpmn:${type}` }, options))
+          if (options) {
+            shape.businessObject.di.isExpanded = options.isExpanded
+          }
+          create.start(ev, shape)
+        }
+        
+        const toggleTool = (ev: Event, toolName: string) => {
+            const tool = store.getModeler!.get(toolName)
+            // 工具基本上都有 toggle 方法，用来改变启用状态
+            tool?.toggle()
+        }
+    
+    return () => (
+      <div class="palette">
+        <NCollapse>
+          <NCollapseItem title="工具" name="tools">
+            工具部分
+              <div
+                  class="palette-el-item start-event"
+                  onClick={(e) => toggleTool(e, 'handTool')}
+              >
+                  <i class="bpmn-icon-hand-tool"></i>
+                  <span>开始</span>
+              </div>
+          </NCollapseItem>
+          <NCollapseItem title="事件" name="events">
+            <div class="palette-el-list">
+              <div
+                class="palette-el-item start-event"
+                onClick={(e) => createElement(e, 'StartEvent')}
+              >
+                <i class="bpmn-icon-start-event-none"></i>
+                <span>开始</span>
+              </div>
+            </div>
+          </NCollapseItem>
+          <NCollapseItem title="任务" name="tasks">
+            任务部分
+          </NCollapseItem>
+          <NCollapseItem title="网关" name="gateways">
+            网关部分
+          </NCollapseItem>
+        </NCollapse>
+      </div>
+    )
+    }
+})
+
+export default Palette
+```
+
