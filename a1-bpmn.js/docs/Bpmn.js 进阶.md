@@ -2,6 +2,7 @@
 theme: nico
 highlight: a11y-dark
 ---
+
 ## 前言
 
 由于 bpmn.js 内部各个模块相互独立，很难编写出全面且流畅的使用教程，之前写的文章也常常是写到一半便没了头绪，所以看起来和没看没什么区别。
@@ -1462,7 +1463,7 @@ example = {
 ```
 
 > 注意：superClass 与 extends 不能同时使用，两者的区别也可以查看官方回复 [issue-21](https://github.com/bpmn-io/moddle/issues/21)
-> 
+>
 > 完整演示见 [properties-panel-extension](https://github.com/bpmn-io/bpmn-js-examples/tree/master/properties-panel-extension), [bpmn-js-example-custom-elements](https://github.com/bpmn-io/bpmn-js-example-custom-elements)
 
 ## 7. Custom Renderer, Palette and ContextPad
@@ -1543,7 +1544,7 @@ export default {
 
 **所以，我们可以在 `BpmnRenderer` 的源码基础上，重新实现一个 `RewriteRenderer`。**不过这部分代码有点长（2000+行），这里暂时就不放出来了🤪
 
-### 7.2 `Palette` 与 `ContextPad` 
+### 7.2 `Palette` 与 `ContextPad`
 
 针对这两个模块，自定义的逻辑其实与 `Renderer` 类似，只不过是对应的方法不一样。
 
@@ -2181,7 +2182,7 @@ Element         (superClass)-->     ExecutionListener
 既然现在已经找到了这几个元素和属性直接的关系，那么如何给 `Process` 节点添加 `ExecutionListener` 就很明了了。
 
 > 🚀 因为这些属性虽然会在 xml 上体现为一个标签，但是并不会显示在图形界面上，所以一般不能用 `BpmnFactory` 来创建。
-> 
+>
 > 这里我们可以通过 `Moddle` 模块来创建这类属性实例（包含自定义的其他属性也可以用这种方式）
 
 ```typescript
@@ -2247,7 +2248,7 @@ modeling.updateModdleProperties(element, extensionElements, {
 在创建好对应的属性实例之后，一步一步更新到 `element.businessObject` 上就大功告成啦。
 
 > 这里还有一点需要注意：如果 `flowable.json` 或者 `bpmn.json` 中定义了某个自定义元素的属性 `isReference: true` (例如元素的默认流转路径 `default`)，这个体现在 xml 中是作为自定义元素标签的一个 attribute 属性，但是在控制台打印出来则是一个指向该 id 对应的元素的 `businessObject` 对象，这里需要特别注意。
-> 
+>
 > 并且在更新该属性的时候，也需要设置为 `default: element` ，不能直接使用 `default: 'elementId'`。
 
 ## 10. 自己实现 Palette
@@ -2381,3 +2382,82 @@ const Palette = defineComponent({
 export default Palette
 ```
 
+## 11. 官方的增强版元素创建与元素更新插件
+
+在 `bpmn.js 9.0` 版本之后，官方提供了一个增强版的元素选择器，对 `PaletteProvider` 和 `ContextPad` 触发的 `PopupMenu （ReplaceProvider）` 进行了二次配置。具体使用效果如下：
+
+<image src="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/0b72efa54e824d549543b312896bd7c3~tplv-k3u1fbpfcp-watermark.image?" width="40%" alt="palette provider.png"></image>
+<image src="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/2391ee1527484058a166bba57c1f6a2a~tplv-k3u1fbpfcp-watermark.image?" width="40%" alt="palette provider.png"></image>
+
+> 🚀 这个插件与使用的流程引擎无关，都可以使用。不过需要注意 `bpmn.js` 的版本
+
+这个插件的主要依赖是 [@bpmn-io/element-template-chooser](https://github.com/bpmn-io/element-template-chooser)。
+
+我们先进入 `element-template-chooser` 插件的入口文件。
+
+```javascript
+import ElementTemplateChooserModule from './element-template-chooser';
+import ChangeMenuModule from './change-menu';
+
+export default {
+  __depends__: [
+    ElementTemplateChooserModule,
+    ChangeMenuModule
+  ]
+};
+```
+
+这里可以看到默认是需要依赖两个插件 `ElementTemplateChooserModule` 和 `ChangeMenuModule`。
+
+```javascript
+export default function ChangeMenu(injector, eventBus) {
+    // ...
+}
+ChangeMenu.$inject = [
+    'injector',
+    'eventBus'
+];
+
+export default function ElementTemplateChooser(
+    config,
+    eventBus,
+    elementTemplates,
+    changeMenu) {
+    // ...
+}
+ElementTemplateChooser.$inject = [
+    'config.connectorsExtension',
+    'eventBus',
+    'elementTemplates',
+    'changeMenu'
+];
+```
+
+这里需要特别注意，`ElementTemplateChooserModule` 会依赖 `elementTemplates` 模块，所以在实例化 `Modeler` 时也需要引用该插件。
+
+不过因为这个部分会影响 `Palette` 和 `PopupMenu`，所以我们根据官方示例代码使用即可（这里可以不需要 `zeebe` 模块）。
+
+```javascript
+import BpmnModeler from 'bpmn-js/lib/Modeler';
+import {
+    BpmnPropertiesPanelModule,
+    BpmnPropertiesProviderModule,
+    ZeebePropertiesProviderModule,
+    CloudElementTemplatesPropertiesProviderModule
+} from 'bpmn-js-properties-panel';
+import ElementTemplateChooserModule from '@bpmn-io/element-template-chooser';
+
+const modeler = new BpmnModeler({
+  container: '#canvas',
+  additionalModules: [
+    ElementTemplateChooserModule,
+    BpmnPropertiesPanelModule,
+    BpmnPropertiesProviderModule,
+    CloudElementTemplatesPropertiesProviderModule
+  ],
+  exporter: {
+    name: 'element-template-chooser-demo',
+    version: '0.0.0'
+  }
+});
+```
