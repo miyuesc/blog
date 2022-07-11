@@ -2461,3 +2461,198 @@ const modeler = new BpmnModeler({
   }
 });
 ```
+
+## 12. 扩展右键菜单
+
+有的小伙伴这样的有需求：需要用户右键的时候有弹出框，用来改变元素类型或者创建新的元素，这里提供两种方案来实现。
+
+### 12.1 完全自定义的右键菜单
+
+#### 第一步：阻止默认事件
+
+> 为了组织默认的浏览器右键事件，不管哪种方式都需要第一步：阻止默认事件。
+
+```typescript
+document.body.addEventListener('contextmenu', function (ev) {
+    ev.preventDefault()
+})
+```
+
+> 这里为什么不在 `modeler.on(eventName, callback(event))` 的回调函数中调用 `event.preventDefault()`，主要是因为原生的插件模块 `ElementTemplateChooser` 会生成一个遮罩层插入到 `body` 元素中，在回调内阻止默认事件无法全部阻止成功。当然这里可以按照实际情况具体确认该监听函数添加到哪个元素上。
+
+#### 第二步：创建一个弹出框组件
+
+这里使用的是 `Naive UI` 的 `Popover` 组件，采用手动定位的形式。
+
+```vue
+<template>
+  <n-popover
+    :show="showPopover"
+    :x="x"
+    :y="y"
+    :show-arrow="false"
+    trigger="manual"
+    placement="right-start"
+  >
+    <div @click.stop>测试右键菜单</div>
+  </n-popover>
+</template>
+
+<script lang="ts">
+  import { defineComponent, onMounted, ref } from 'vue'
+  import EventEmitter from '@/utils/EventEmitter'
+
+  export default defineComponent({
+    name: 'ContextMenu',
+    setup() {
+      const showPopover = ref(false)
+      const x = ref(0)
+      const y = ref(0)
+
+      onMounted(() => {
+        EventEmitter.on('show-contextmenu', (event: MouseEvent) => {
+          x.value = event.clientX
+          y.value = event.clientY
+          showPopover.value = true
+        })
+        // 手动隐藏 (注意 模板中的 click.stop)
+        document.body.addEventListener('click', () => (showPopover.value = false))
+      })
+
+      return {
+        showPopover,
+        x,
+        y
+      }
+    }
+  })
+</script>
+```
+
+> 这里使用的是 `EventEmitter` 事件订阅来触发显示，也可以创建一个显示方法，在父组件调用。
+
+#### 第三步：配置监听事件回调函数
+
+```typescript
+// EnhancementContextmenu.ts
+export default function (modeler: Modeler) {
+  modeler.on('element.contextmenu', 2000, (event) => {
+    const { element, originalEvent } = event
+    EventEmitter.emit('show-contextmenu', originalEvent)
+  })
+}
+```
+
+这里将函数抽离成了一个 `hook` 方法，因为笔者在这里有其他逻辑，如果大家只是需要该事件来触发显示的话，可以直接将这部分代码放置在 `new Modeler()` 之后。
+
+这个 `element.contextmenu` 主要包含以下属性：
+
+1. `element`: 当前右键的元素
+2. `gfx`: 该元素对应的 svg 元素节点
+3. `originalEvent`: 浏览器原生的右键事件实例
+4. `type`: 事件类型，一般是监听的事件的类型字符串，但是打印出来经常是 `undefined`
+
+#### 扩展：区分右键事件的触发对象来替换元素或者创建元素
+
+第三步我们知道了 `element.contextmenu` 事件的回调函数参数有哪些值，那如何判断当前显示的弹出框内容呢？
+
+根据原生的绘图逻辑和规则，在泳道和流程根节点中触发事件时，应该是创建新的流程元素节点的，而其他时候则应该是更改元素类型（这个看具体情况，有可能泳道、子流程也需要更改当前元素类型）。
+
+1. 创建新元素：这里与 `Palette` 的 `dragstart` 事件类似，可以通过 `ElementFactory` 和 `Create` 来实现
+2. 更改元素类型：可以使用 `BpmnReplace.replaceElement(element, target, hints?)` 来实现
+
+当前，当触发的时候更改元素类型的时候，需要根据当前元素的类型进行判断，也可以根据业务需求改成其他类型的元素。
+
+### 12.2 使用原生的 `PopupMenu`
+
+这里根据第 11 小节，根据是否引用了 `ElementTemplateChooser` 模块也有两种情况。
+
+```typescript
+export default function (modeler: Modeler) {
+    modeler.on('element.contextmenu', 2000, (event) => {
+        const config = editor().getEditorConfig
+        if (!config.contextmenu) return
+        const { element, originalEvent } = event
+        if (
+            isAny(element, ['bpmn:Process', 'bpmn:Collaboration', 'bpmn:Participant', 'bpmn:SubProcess'])
+        ) {
+            // 这一部分也可以进行拆分
+            if (config.templateChooser) {
+                const connectorsExtension: any = modeler.get('connectorsExtension')
+                connectorsExtension.createAnything(originalEvent, {
+                    x: originalEvent.clientX,
+                    y: originalEvent.clientY
+                })
+            }
+        } else {
+            config.templateChooser
+                ? openEnhancementPopupMenu(modeler, element)
+                : openPopupMenu(modeler, element)
+        }
+    })
+}
+
+// default replace popupMenu
+function openPopupMenu(modeler: Modeler, element: Base) {
+    const popupMenu: PopupMenu = modeler.get('popupMenu')
+    if (popupMenu && !popupMenu.isEmpty(element, 'bpmn-replace')) {
+        popupMenu.open(element, 'bpmn-replace', {
+            cursor: {
+                x: getReplaceMenuPosition(element, modeler).x || element.x + element.width,
+                y: getReplaceMenuPosition(element, modeler).y || element.y + element.height
+            }
+        })
+        // 设置点击事件清除
+        const canvas = modeler.get<Canvas>('canvas')
+        const container = canvas.getContainer()
+        const closePopupMenu = () => {
+            if (popupMenu && popupMenu.isOpen()) {
+                popupMenu.close()
+                container.removeEventListener('click', closePopupMenu)
+            }
+        }
+        container.addEventListener('click', closePopupMenu)
+    }
+}
+
+// templateChooser enhancement replace popupMenu
+function openEnhancementPopupMenu(modeler: Modeler, element: Base) {
+    const replaceMenu: any = modeler.get('replaceMenu')
+    const changeMenu: any = modeler.get('changeMenu')
+    if (replaceMenu && changeMenu) {
+        replaceMenu.open(element, {
+            x: element.x + element.width,
+            y: element.y + element.height
+        })
+        const canvas = modeler.get<Canvas>('canvas')
+        const container = canvas.getContainer()
+        const closePopupMenu = () => changeMenu && changeMenu._refresh()
+        container.addEventListener('click', closePopupMenu)
+    }
+}
+
+///// utils
+function getReplaceMenuPosition(element, modeler) {
+    const canvas = modeler.get('canvas')
+    const Y_OFFSET = 5
+
+    const diagramContainer = canvas.getContainer()
+    const diagramRect = diagramContainer.getBoundingClientRect()
+
+    const top = element.y + element.height + diagramRect.top
+    const left = element.x + element.width - diagramRect.left
+
+    return {
+        x: left,
+        y: top + Y_OFFSET
+    }
+}
+```
+
+实现效果如下：
+
+<image src="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/fe019787487c49cfb7223615807de33c~tplv-k3u1fbpfcp-watermark.image?" width="40%" alt="palette provider.png"></image>
+<image src="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/ecef75e11b0741eca5d6b355e645411b~tplv-k3u1fbpfcp-watermark.image?" width="40%" alt="palette provider.png"></image>
+<image src="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/0d662422a7fb4874ac4326ae27cb8c57~tplv-k3u1fbpfcp-watermark.image?" width="40%" alt="palette provider.png"></image>
+
+> 这里的定位逻辑需要优化，篇幅有限暂时不做更新
