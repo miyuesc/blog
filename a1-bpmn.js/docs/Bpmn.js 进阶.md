@@ -2568,41 +2568,46 @@ export default function (modeler: Modeler) {
 这里根据第 11 小节，根据是否引用了 `ElementTemplateChooser` 模块也有两种情况。
 
 ```typescript
+// 右键扩展
+import Modeler from 'bpmn-js/lib/Modeler'
+import PopupMenu from 'diagram-js/lib/features/popup-menu/PopupMenu'
+import { Base } from 'diagram-js/lib/model'
+import Canvas, { Position } from 'diagram-js/lib/core/Canvas'
+import { isAny } from 'bpmn-js/lib/util/ModelUtil'
+import editor from '@/store/editor'
+import ContextPad from 'diagram-js/lib/features/context-pad/ContextPad'
+
 export default function (modeler: Modeler) {
+    const config = editor().getEditorConfig
+    if (!config.contextmenu) return
     modeler.on('element.contextmenu', 2000, (event) => {
-        const config = editor().getEditorConfig
-        if (!config.contextmenu) return
         const { element, originalEvent } = event
+        console.log('originalEvent', originalEvent)
         if (
             isAny(element, ['bpmn:Process', 'bpmn:Collaboration', 'bpmn:Participant', 'bpmn:SubProcess'])
         ) {
-            // 这一部分也可以进行拆分
             if (config.templateChooser) {
                 const connectorsExtension: any = modeler.get('connectorsExtension')
-                connectorsExtension.createAnything(originalEvent, {
-                    x: originalEvent.clientX,
-                    y: originalEvent.clientY
-                })
+                connectorsExtension &&
+                connectorsExtension.createAnything(originalEvent, getContextMenuPosition(originalEvent))
             }
         } else {
             config.templateChooser
-                ? openEnhancementPopupMenu(modeler, element)
-                : openPopupMenu(modeler, element)
+                ? openEnhancementPopupMenu(modeler, element, originalEvent)
+                : openPopupMenu(modeler, element, originalEvent)
         }
     })
 }
 
 // default replace popupMenu
-function openPopupMenu(modeler: Modeler, element: Base) {
-    const popupMenu: PopupMenu = modeler.get('popupMenu')
+function openPopupMenu(modeler: Modeler, element: Base, event: MouseEvent) {
+    const contextPad = modeler.get<ContextPad>('contextPad')
+    const popupMenu = modeler.get<PopupMenu>('popupMenu')
     if (popupMenu && !popupMenu.isEmpty(element, 'bpmn-replace')) {
-        popupMenu.open(element, 'bpmn-replace', {
-            cursor: {
-                x: getReplaceMenuPosition(element, modeler).x || element.x + element.width,
-                y: getReplaceMenuPosition(element, modeler).y || element.y + element.height
-            }
-        })
-        // 设置点击事件清除
+        popupMenu.isOpen() && popupMenu.close()
+        const { left: x, top: y } = contextPad._getPosition(element).position
+        popupMenu.open(element, 'bpmn-replace', { cursor: { x, y } })
+        // 设置画布点击清除事件
         const canvas = modeler.get<Canvas>('canvas')
         const container = canvas.getContainer()
         const closePopupMenu = () => {
@@ -2616,37 +2621,21 @@ function openPopupMenu(modeler: Modeler, element: Base) {
 }
 
 // templateChooser enhancement replace popupMenu
-function openEnhancementPopupMenu(modeler: Modeler, element: Base) {
+function openEnhancementPopupMenu(modeler: Modeler, element: Base, event: MouseEvent) {
     const replaceMenu: any = modeler.get('replaceMenu')
-    const changeMenu: any = modeler.get('changeMenu')
-    if (replaceMenu && changeMenu) {
-        replaceMenu.open(element, {
-            x: element.x + element.width,
-            y: element.y + element.height
-        })
-        const canvas = modeler.get<Canvas>('canvas')
-        const container = canvas.getContainer()
-        const closePopupMenu = () => changeMenu && changeMenu._refresh()
-        container.addEventListener('click', closePopupMenu)
+    if (replaceMenu) {
+        replaceMenu.open(element, getContextMenuPosition(event, true))
     }
 }
 
 ///// utils
-function getReplaceMenuPosition(element, modeler) {
-    const canvas = modeler.get('canvas')
-    const Y_OFFSET = 5
-
-    const diagramContainer = canvas.getContainer()
-    const diagramRect = diagramContainer.getBoundingClientRect()
-
-    const top = element.y + element.height + diagramRect.top
-    const left = element.x + element.width - diagramRect.left
-
+function getContextMenuPosition(event: MouseEvent, offset?: boolean): Position {
     return {
-        x: left,
-        y: top + Y_OFFSET
+        x: event.clientX + (offset ? 10 : 0),
+        y: event.clientY + (offset ? 25 : 0)
     }
 }
+
 ```
 
 实现效果如下：
@@ -2656,3 +2645,21 @@ function getReplaceMenuPosition(element, modeler) {
 <image src="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/0d662422a7fb4874ac4326ae27cb8c57~tplv-k3u1fbpfcp-watermark.image?" width="40%" alt="palette provider.png"></image>
 
 > 这里的定位逻辑需要优化，篇幅有限暂时不做更新
+
+**使用基于 `ElementTemplateChooser` 模块的方式来实现右键菜单需要注意一个问题：该模块产生的 DOM 节点是直接插入到 body 节点下的，如果需要使用该方式的话，记得在最外层添加以下 css 代码，用来重置鼠标事件。但是这样会导致正常的点击事件无法关闭 `ContextMenu` 面板，所以建议修改遮罩层样式，以提示用户关闭**
+
+```scss
+.cmd-change-menu {
+  pointer-events: none !important;
+  .cmd-change-menu__overlay {
+    pointer-events: auto;
+  }
+}
+
+.cmd-change-menu {
+  background-color: rgba(0, 0, 0, .3);
+}
+```
+
+## 13. 实现元素节点信息提示窗(Tooltip)
+
