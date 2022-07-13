@@ -15,6 +15,8 @@ highlight: a11y-dark
 
 > 因为作者很少写文章，所以排版和描述可能有些不够清晰，希望大家多多包涵。如果您觉得有地方可以改进或者描述有误差，希望您能及时指出，让我可以加以改正，谢谢😋😋
 
+---
+
 ## 1. 创建基础页面
 
 首先，我们需要创建一个“容器”，用来显示 `Designer` 流程设计器实例 与 `PropertiesPanel` 属性配置边栏。根据 `bpmn-js-properties-Panel` 仓库的说明，只需要在页面放置一个 `Div` 并设置对应的 `id` 即可，在后续初始化设计器实例时将边栏元素 `id` 传递给 `Modeler` 构造函数。
@@ -2665,7 +2667,5 @@ function getContextMenuPosition(event: MouseEvent, offset?: boolean): Position {
 ## 15. 引入 Bpmn Lint 并设置校验规则
 
 ## 16. 引入 Bpmn Token Simulation 模拟流程流转
-
-
 
 ## 17. 根据流程进度更新元素样式
