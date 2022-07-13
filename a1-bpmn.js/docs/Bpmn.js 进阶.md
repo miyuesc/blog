@@ -2568,34 +2568,32 @@ export default function (modeler: Modeler) {
 这里根据第 11 小节，根据是否引用了 `ElementTemplateChooser` 模块也有两种情况。
 
 ```typescript
-// 右键扩展
 import Modeler from 'bpmn-js/lib/Modeler'
 import PopupMenu from 'diagram-js/lib/features/popup-menu/PopupMenu'
 import { Base } from 'diagram-js/lib/model'
 import Canvas, { Position } from 'diagram-js/lib/core/Canvas'
-import { isAny } from 'bpmn-js/lib/util/ModelUtil'
 import editor from '@/store/editor'
 import ContextPad from 'diagram-js/lib/features/context-pad/ContextPad'
+import EventEmitter from '@/utils/EventEmitter'
+import { isAppendAction } from '@/utils/BpmnDesignerUtils'
 
 export default function (modeler: Modeler) {
     const config = editor().getEditorConfig
     if (!config.contextmenu) return
     modeler.on('element.contextmenu', 2000, (event) => {
         const { element, originalEvent } = event
-        console.log('originalEvent', originalEvent)
-        if (
-            isAny(element, ['bpmn:Process', 'bpmn:Collaboration', 'bpmn:Participant', 'bpmn:SubProcess'])
-        ) {
-            if (config.templateChooser) {
-                const connectorsExtension: any = modeler.get('connectorsExtension')
-                connectorsExtension &&
-                connectorsExtension.createAnything(originalEvent, getContextMenuPosition(originalEvent))
-            }
-        } else {
-            config.templateChooser
+        // 原生面板扩展
+        // 1. 更改元素类型
+        if (!isAppendAction(element)) {
+            return config.templateChooser
                 ? openEnhancementPopupMenu(modeler, element, originalEvent)
                 : openPopupMenu(modeler, element, originalEvent)
         }
+        // 2. 创建新元素 (仅开始模板扩展时可以)
+        if (!config.templateChooser) return
+        const connectorsExtension: any = modeler.get('connectorsExtension')
+        connectorsExtension &&
+        connectorsExtension.createAnything(originalEvent, getContextMenuPosition(originalEvent))
     })
 }
 
@@ -2604,14 +2602,14 @@ function openPopupMenu(modeler: Modeler, element: Base, event: MouseEvent) {
     const contextPad = modeler.get<ContextPad>('contextPad')
     const popupMenu = modeler.get<PopupMenu>('popupMenu')
     if (popupMenu && !popupMenu.isEmpty(element, 'bpmn-replace')) {
-        popupMenu.isOpen() && popupMenu.close()
-        const { left: x, top: y } = contextPad._getPosition(element).position
-        popupMenu.open(element, 'bpmn-replace', { cursor: { x, y } })
+        popupMenu.open(element, 'bpmn-replace', {
+            cursor: { x: event.clientX + 10, y: event.clientY + 10 }
+        })
         // 设置画布点击清除事件
         const canvas = modeler.get<Canvas>('canvas')
         const container = canvas.getContainer()
-        const closePopupMenu = () => {
-            if (popupMenu && popupMenu.isOpen()) {
+        const closePopupMenu = (ev) => {
+            if (popupMenu && popupMenu.isOpen() && ev.delegateTarget.tagName === 'svg') {
                 popupMenu.close()
                 container.removeEventListener('click', closePopupMenu)
             }
@@ -2635,7 +2633,6 @@ function getContextMenuPosition(event: MouseEvent, offset?: boolean): Position {
         y: event.clientY + (offset ? 25 : 0)
     }
 }
-
 ```
 
 实现效果如下：
@@ -2663,3 +2660,12 @@ function getContextMenuPosition(event: MouseEvent, offset?: boolean): Position {
 
 ## 13. 实现元素节点信息提示窗(Tooltip)
 
+## 14. 自定义 Rules 规则
+
+## 15. 引入 Bpmn Lint 并设置校验规则
+
+## 16. 引入 Bpmn Token Simulation 模拟流程流转
+
+
+
+## 17. 根据流程进度更新元素样式
