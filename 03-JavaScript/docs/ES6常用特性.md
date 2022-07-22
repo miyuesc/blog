@@ -30,7 +30,7 @@ export { name, age }; // 导出多个变量
 
 // 导出函数
 export function myModule(someArg) {
-	return someArg;
+    return someArg;
 }
 ```
 
@@ -287,9 +287,9 @@ const target = {
     foo: 'bar'
 }
 const handler = {
-	// 捕获器在处理程序对象中以方法名为键
+    // 捕获器在处理程序对象中以方法名为键
     get() {
-    	return 'handler override'
+        return 'handler override'
     }
 }
 const proxy = new Proxy(target, handler)
@@ -337,10 +337,10 @@ ES6 提供的用来处理JavaScript异步编程的一个对象，在一个 `Prom
 
 ```javascript
 const promiseFunc = (new Promise())
-	.then(handleResolvedA)
-	.then(handleResolvedB)
-	.then(handleResolvedC)
-	.catch(handleRejectA)
+    .then(handleResolvedA)
+    .then(handleResolvedB)
+    .then(handleResolvedC)
+    .catch(handleRejectA)
 ```
 
 ### 1.14 其他

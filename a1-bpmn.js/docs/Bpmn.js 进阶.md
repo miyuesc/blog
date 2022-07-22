@@ -73,7 +73,6 @@ const Designer = defineComponent({
 export default Designer
 ```
 
-
 ```typescript
 // store/modeler.ts
 import { defineStore } from 'pinia'
@@ -164,7 +163,6 @@ export default function (designer: Ref<HTMLElement | null>, modelerModules: View
     store.setModules('canvas', markRaw(modeler.get<Canvas>('canvas')))
     store.setModules('elementRegistry', markRaw(modeler.get<ElementRegistry>('elementRegistry')))
 }
-
 ```
 
 ```typescript
@@ -310,7 +308,7 @@ function bootstrap(moduleDefinitions) {
     var initializers = moduleDefinitions
         .reduce(resolveDependencies, [])
         .map(loadModule);
-    
+
     var initialized = false;
 
     return function() {
@@ -355,20 +353,20 @@ function loadModule(moduleDefinition: ModuleDefinition): Function {
     Object.keys(moduleDefinition).forEach(function(key: string) {
         // 区分模块依赖定义字段
         if (key === '__init__' || key === '__depends__') return;
-        
+
         if (moduleDefinition[key][2] === 'private') {
             providers[key] = moduleDefinition[key];
             return;
         }
-        
+
         const type: string = moduleDefinition[key][0];
         const value: Object | Function = moduleDefinition[key][1];
-        
+
         // arrayUnwrap 主要是判断模块定义类型，如果是 'value' 或者 'factory'，则直接返回对应函数
         // 否则判断第二个参数类型，如果是数组格式，则对其按照模块标准定义格式重新进行格式化再返回格式化后的函数
         providers[key] = [ factoryMap[type], arrayUnwrap(type, value), type ];
     });
-    
+
     // self 在 Injector() 已经定义，指向 injector 实例
     return createInitializer(moduleDefinition, self);
 }
@@ -860,7 +858,7 @@ class FlowablePropertiesProvider {
             if (is(element, 'bpmn:Process')) {
                 // 这里只用 versionTag 属性的配置项作为示例
                 const group = [VersionTag(element)]
-                
+
                 groups.concat(group)
             }
             return groups
@@ -884,15 +882,15 @@ import { TextFieldEntry, isTextFieldEntryEdited } from '@bpmn-io/properties-pane
 // 创建 VersionTag 的属性编辑栏入口 Entry
 function VersionTag(props) {
     const { element } = props;
-    
+
     const commandStack = useService('commandStack');
     const modeling = useService('modeling');
     const debounce = useService('debounceInput');
-    
+
     const processBo = getBusinessObject(element);
-    
+
     const getValue = () => processBo.get('flowable:versionTag') || ''
-    
+
     const setValue = (value) => {
         // 写法 1
         commandStack.execute('element.updateModdleProperties', {
@@ -903,7 +901,7 @@ function VersionTag(props) {
         // 写法 2
         modeling.updateModdleProperties(element, processBo, { 'flowable:versionTag': value })
     };
-    
+
     // 返回一个属性编辑组件
     return TextFieldEntry({
         element,
@@ -1026,7 +1024,6 @@ const Imports = defineComponent({
 })
 
 export default Imports
-
 ```
 
 #### 导出
@@ -1216,7 +1213,6 @@ const Scales = defineComponent({
 })
 
 export default Scales
-
 ```
 
 ### 5.3 Command Stack
@@ -1465,7 +1461,7 @@ example = {
 ```
 
 > 注意：superClass 与 extends 不能同时使用，两者的区别也可以查看官方回复 [issue-21](https://github.com/bpmn-io/moddle/issues/21)
->
+> 
 > 完整演示见 [properties-panel-extension](https://github.com/bpmn-io/bpmn-js-examples/tree/master/properties-panel-extension), [bpmn-js-example-custom-elements](https://github.com/bpmn-io/bpmn-js-example-custom-elements)
 
 ## 7. Custom Renderer, Palette and ContextPad
@@ -1563,7 +1559,7 @@ class CustomPaletteProvider {
         this._lassoTool = lassoTool
         this._handTool = handTool
         this._globalConnect = globalConnect
-        
+
         // 注册该 Provider
         palette.registerProvider(this);
     }
@@ -1698,6 +1694,7 @@ GATEWAY.splice(2, GATEWAY.length);
 
 // 注意需要在 new Modeler 之前，并且这种方式不支持 cdn 引入
 ```
+
 3. 修改 `ReplaceMenuProvider`, 这里与自定义 `ContextPadProvider` 的逻辑类似。
 
 ```typescript
@@ -1799,11 +1796,10 @@ const PropertiesPanel = defineComponent({
             currentElementId.value = activatedElement.id
             currentElementType.value = activatedElement.type.split(':')[1]
         }, 100)
-        
+
         return () => (<div ref={penal} class="penal"></div>)
     }
 })
-
 ```
 
 ### 9.2 第二步：判断元素类型和数据来控制属性面板
@@ -2184,7 +2180,7 @@ Element         (superClass)-->     ExecutionListener
 既然现在已经找到了这几个元素和属性直接的关系，那么如何给 `Process` 节点添加 `ExecutionListener` 就很明了了。
 
 > 🚀 因为这些属性虽然会在 xml 上体现为一个标签，但是并不会显示在图形界面上，所以一般不能用 `BpmnFactory` 来创建。
->
+> 
 > 这里我们可以通过 `Moddle` 模块来创建这类属性实例（包含自定义的其他属性也可以用这种方式）
 
 ```typescript
@@ -2230,7 +2226,6 @@ modeling.updateModdleProperties(element, extensionElements, {
 
 `updateModdlePropertis`：接收三个参数 `Element`, `ModdleElement` 和 `properties`，这个方法内部逻辑比较单一，通过遍历 `properties` 来读取 `ModdleElement` 的原始数据，之后再次遍历 `properties` 将配置的属性更新到 `ModdleElement` 中。
 
-
 ### 9.5 快速定位属性类型和更新方式
 
 上面这种方式，需要对 `moddleExtension` 和 `xml` 规范比较熟悉才能比较快速找到需要的元素对应的逻辑关系，这种方式无疑耗时巨大。虽然我建议通过阅读 `bpmn-js-peroperties-panel` 的源码，但是可能很多小伙伴的时间也比较短，没有办法去仔细阅读。
@@ -2250,7 +2245,7 @@ modeling.updateModdleProperties(element, extensionElements, {
 在创建好对应的属性实例之后，一步一步更新到 `element.businessObject` 上就大功告成啦。
 
 > 这里还有一点需要注意：如果 `flowable.json` 或者 `bpmn.json` 中定义了某个自定义元素的属性 `isReference: true` (例如元素的默认流转路径 `default`)，这个体现在 xml 中是作为自定义元素标签的一个 attribute 属性，但是在控制台打印出来则是一个指向该 id 对应的元素的 `businessObject` 对象，这里需要特别注意。
->
+> 
 > 并且在更新该属性的时候，也需要设置为 `default: element` ，不能直接使用 `default: 'elementId'`。
 
 ## 10. 自己实现 Palette
@@ -2338,13 +2333,13 @@ const Palette = defineComponent({
           }
           create.start(ev, shape)
         }
-        
+
         const toggleTool = (ev: Event, toolName: string) => {
             const tool = store.getModeler!.get(toolName)
             // 工具基本上都有 toggle 方法，用来改变启用状态
             tool?.toggle()
         }
-    
+
     return () => (
       <div class="palette">
         <NCollapse>

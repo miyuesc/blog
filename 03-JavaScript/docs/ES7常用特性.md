@@ -31,6 +31,3 @@ ECMAScript 2016 （即 ES 7）只增加了两个新特性：`Array.prototype.inc
 let powC = 2;
 powC **= 10; // 1024
 ```
-
-
-
