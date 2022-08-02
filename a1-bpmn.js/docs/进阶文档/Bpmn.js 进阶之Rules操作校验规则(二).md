@@ -1,5 +1,5 @@
 ---
-theme: nico
+theme: scrolls-light
 highlight: a11y-dark
 ---
 
