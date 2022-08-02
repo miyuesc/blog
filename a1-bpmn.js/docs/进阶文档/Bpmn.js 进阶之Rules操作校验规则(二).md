@@ -161,13 +161,13 @@ RuleProvider.prototype.init = function() {};
 
 可以看到这里的注册方法其实就是继承 `CommandInterceptor` 实现了 `action.canExecute` 方法。最终都是在 `EventBus` 上注册一个事件 `commandStack.${action}.canExecute` 对应的监听函数。
 
-### 3. `BpmnRules`
+## 3. `BpmnRules`
 
 `BpmnRules` 作为 `bpmn.js` 的核心操作规则模块，默认定义了九个操作校验规则，具体见 [Bpmn.js 进阶之Rules操作校验规则(一) -- 默认规则](https://juejin.cn/post/7126184218375225375#heading-2)。
 
 并且在注册这些默认规则之外，提供了 `canCopy`, `canMove`, `canReplace` 等 13 个校验方法，分别校验连线的连接校验、元素的创建移动修改类型校验、元素复制以及插入校验等。
 
-### 4. 总结
+## 4. 总结
 
 根据这两节的 `Rules` 操作校验规则的讲解，可以看到 `bpmn.js` 内部的各个模块都是基本独立的，都通过 `EventBus` 模块来连接各个模块，通过 `Provider` 来扩展基础模块，即使有模块间依赖，也是通过依赖注入的形式去避免对依赖模块代码的直接操作。
 
