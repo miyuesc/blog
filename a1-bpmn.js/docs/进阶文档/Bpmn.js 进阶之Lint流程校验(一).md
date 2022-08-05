@@ -15,7 +15,7 @@ highlight: a11y-dark
 
 ## 1. 介绍
 
-**bpmn.js** 的流程校验通过 **bpmnlint** 模块提供基础的校验规则与 **bpmn-js-bpmnlint** 模块来完成 **node** 环境下的 JavaScript 使用。
+**bpmn.js** 的流程校验通过 **bpmnlint** 模块提供基础的校验规则与 **bpmn-js-bpmnlint** 模块来完成错误标识和动态校验。
 
 ### 1.1 bpmnlint 流程校验模块
 
