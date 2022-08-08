@@ -36,7 +36,7 @@ export default Vue
 **src/core/instance/index.ts** 则包含以下部分：
 
 1.  **function Vue** ：创建 Vue 构造函数
-2.  **initMixin(Vue)**：定义 **_init** 方法，为实例添加一些标识字段并合并组件配置项，之后初始化生命周期、事件、渲染函数并触发 **beforeCreate**；之后依次初始化 inject、props、methods、data、computed、watch，最后触发 **created** 并调用 **mounted** 方法挂载实例
+2.  **initMixin(Vue)**：定义 **_init** 方法，为实例添加一些标识字段并合并组件配置项，之后初始化生命周期、事件、渲染函数并触发 **beforeCreate**；之后依次初始化 inject、props、methods、data、computed、watch，最后触发 **created** 并调用 **$mount** 方法挂载实例
 3.  **stateMixin(Vue)**：定义组件数据的处理方法，并声明禁止修改 props；然后在原型上添加 **$set**, **$delete** 和 **$watch** 方法
 4.  **eventsMixin(Vue)**：定义组件间的事件处理方法，包括 **$on**，**$off** 等，并且会判断有没有生命周期监听，将监听方法保存到实例的 **_events** 对象中
 5.  **lifecycleMixin(Vue)**：定义 **_update**，**$forceUpdate**，**$destroy** 方法和一些实例属性，并触发对应的生命周期钩子函数
@@ -55,6 +55,10 @@ export default Vue
 9. **Vue.mixin**：全局混入
 10. **Vue.extend**：构造一个具有配置项的子类
 11. **Vue.component, Vue.directive, Vue.filter**：注册全局组件、指令、过滤器
+
+> 上面的 Vue 构造函数定义还缺少最重要的 **$mount** 挂载方法（initMixin(Vue)）处有使用。
+
+**$mount** 函数
 
 
 
