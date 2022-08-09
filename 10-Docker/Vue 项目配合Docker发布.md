@@ -141,3 +141,71 @@ docker run -p 80:80 -d -name vue-app-container vue-app
 ```
 
 这里指定了将容器的 80 端口映射到宿主机的80,端口，这样我们直接在本地打开浏览器访问 **http://localhost** 即可。
+
+## 6. 根据环境变量创建镜像
+
+在实际的开发过程中，通常需要区分不同的环境，比如开发环境、测试环境、演示环境等。这个时候如果只有一个配置文件的话就经常需要改来改去，非常容易造成发布事故。
+
+**所以，我们需要通过一个『变量』来区分不同的环境**，这里介绍一种比较简单的方法：创建不同的**nginx.conf** 文件按照不同的环境动态引用到镜像中。
+
+1. 第一步，按照特定格式创建nginx配置文件，这里我们以**nginx.serverName.conf** 为例。
+
+```
+# nginx.dev.conf 文件
+server {
+    # 其他配置一般不变，只调整接口转发。当然也可以按照实际情况配置负载均衡、https等
+    # 接口转发
+    location ~* ^\/(sys|app)\/ {
+       proxy_pass                 http://app-server-dev:8080;
+       proxy_redirect             off;
+       proxy_set_header           Host $host;
+       proxy_set_header           X-Real-IP $remote_addr;
+       proxy_set_header           X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+
+
+# nginx.prod.conf 文件
+server {
+    # 其他配置一般不变，只调整接口转发。当然也可以按照实际情况配置负载均衡、https等
+    # 接口转发
+    location ~* ^\/(sys|app)\/ {
+       proxy_pass                 http://app-server-dev:8080;
+       proxy_redirect             off;
+       proxy_set_header           Host $host;
+       proxy_set_header           X-Real-IP $remote_addr;
+       proxy_set_header           X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+```
+
+2. 第二步，修改 **Dockerfile** 打包配置文件
+
+上面我们已经创建好了不同的 nginx 的配置文件，但是具体使用哪一个，还需要在**Dockerfile** 中声明一个环境变量，来区分打包命令执行时的配置。
+
+```dockerfile
+# 配置 nginx 资源转发, alpine 为纯净版本
+FROM nginx:1.21.6
+
+# 服务器环境
+ARG SERVER
+
+COPY dist/ /usr/share/nginx/vue-app/
+
+COPY nginx.${SERVER}conf /etc/nginx/conf.d/default.conf
+```
+
+3. 第三步，调整打包命令
+
+在已经修改了**Dockerfile** 添加好环境变量配置后，我们只需要根据不同的环境，在打包镜像时传入不同的环境变量参数即可。
+
+```bash
+# 开发环境
+docker build -t vue-app:1.0.0 --build-arg SERVER=dev .
+# 正式环境
+docker build -t vue-app:1.0.0 --build-arg SERVER=prod .
+```
+
+4. 第四步，根据镜像创建容器。
+
+这一步与上文的容器创建一致，不再赘述。
