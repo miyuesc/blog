@@ -56,9 +56,5 @@ export default Vue
 10. **Vue.extend**：构造一个具有配置项的子类
 11. **Vue.component, Vue.directive, Vue.filter**：注册全局组件、指令、过滤器
 
-> 上面的 Vue 构造函数定义还缺少最重要的 **$mount** 挂载方法（initMixin(Vue)）处有使用。
-
-**$mount** 函数
-
-
+> 上面的 Vue 构造函数定义还缺少最重要的 **$mount** 挂载方法（initMixin(Vue)处有使用）。
 
