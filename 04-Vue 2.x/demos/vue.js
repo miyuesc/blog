@@ -10975,6 +10975,7 @@
   ) {
     var state = new CodegenState(options);
     var code = ast ? genElement(ast, state) : '_c("div")';
+    console.log('generate \n', code, '\n', state.staticRenderFns)
     return {
       render: ("with(this){return " + code + "}"),
       staticRenderFns: state.staticRenderFns
