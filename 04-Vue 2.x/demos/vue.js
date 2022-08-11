@@ -9632,6 +9632,8 @@
   ) {
     warn$2 = options.warn || baseWarn;
 
+    console.log('parse options', options);
+
     platformIsPreTag = options.isPreTag || no;
     platformMustUseProp = options.mustUseProp || no;
     platformGetTagNamespace = options.getTagNamespace || no;
@@ -9641,6 +9643,8 @@
     transforms = pluckModuleFunction(options.modules, 'transformNode');
     preTransforms = pluckModuleFunction(options.modules, 'preTransformNode');
     postTransforms = pluckModuleFunction(options.modules, 'postTransformNode');
+
+    console.log('modules', transforms, preTransforms, postTransforms)
 
     delimiters = options.delimiters;
 
@@ -11872,6 +11876,9 @@
     options
   ) {
     var ast = parse(template.trim(), options);
+
+    console.log('AST:', ast)
+
     if (options.optimize !== false) {
       optimize(ast, options);
     }
