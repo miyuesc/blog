@@ -98,8 +98,12 @@
     const DemoVmTwo = Vue.component("demo-vm-two", {
         template: "<div class='demo-vm-2'>" +
             "<h2>Demo VM 2</h2>" +
-            "<p>demo2 data is: {{ data2 }}</p>" +
-            "<p>demo2 props data is: {{ result }}</p>" +
+            "<p v-once>demo2 data is: {{ data2 }}</p>" +
+            "<p v-for='(i, k) in [{}, {}, {}, {}]' :key='k'>" +
+            "<span>for node {{ i.name + k }}</span>"+
+            "<demo-vm-three></demo-vm-three>" +
+            "</p>" +
+            "<p v-if='999 + 888'>demo2 props data is: {{ result }}</p>" +
             "<span>test span</span>" +
             "<button @click='demoClick2'>button2</button>" +
             "<br />" +

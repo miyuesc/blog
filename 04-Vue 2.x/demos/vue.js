@@ -9830,6 +9830,7 @@
         if (inVPre) {
           processRawAttrs(element);
         } else if (!element.processed) {
+          console.log('not pre')
           // structural directives
           processFor(element);
           processIf(element);
