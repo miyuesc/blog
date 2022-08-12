@@ -3,11 +3,7 @@
 > 这里就省略内部组件的配置合并，只是几个简单属性的合并
 
 ```javascript
-export function mergeOptions(
-parent: Record<string, any>,
- child: Record<string, any>,
- vm?: Component | null
-): ComponentOptions {
+export function mergeOptions(parent: Record<string, any>,child: Record<string, any>,vm?: Component | null): ComponentOptions {
   if (__DEV__) {
     checkComponents(child)
   }
