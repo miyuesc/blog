@@ -120,6 +120,38 @@ strats.provide = mergeDataOrFn
 
 > 在定义 strats 之后还定义了 **strats.el** 和 **strats.propsData** 的合并策略，但是内部使用的还是 **defaultStrat**，只是增加了一层校验，警告只能在 new Vue 的时候使用定义这些配置。
 
+最终，在标准化处理和合并完成之后的配置，大概就长这样：
+
+```javascript
+options = {
+  el: '#app',
+  filters: {},
+  props: {
+    propOne: { type: [String, Number], default: 0 }
+  },
+  directives: {}, // 原型链上会有默认的 model 和 show
+  components: {   // 原型链上会有默认的 Translation，TranslationGroup，KeepAlive
+    subComponent: { components: {}, name: '', /** */ },
+  },
+  data() {},
+  created: [createdFc1, createdFc2],
+  mounted: [mountedFc],
+  watch: {
+    xxx1: function() {},
+    xxx2: {
+      deep: true,
+      immediate: true,
+      handler: function() {}
+    }
+  },
+  _base: Vue,
+  // 使用 Vue.component 之类的方式注册的组件会有 _Ctor
+  _Ctor: [
+    VueComponent
+  ]
+}
+```
+
 
 
 
