@@ -50,7 +50,7 @@
         <demo-vm-four v-if="showFour"></demo-vm-four>
         <br />
         <br />
-        <demo-vm-two v-bind:result="result" @click="demoTwoClick" @change-watch="demoTwoChange">
+        <demo-vm-two v-bind:result="result" ref="demoTwo" key="demo2" v-on:click.stop="demoTwoClick" @change-watch="demoTwoChange">
             <div class="slot-1" slot="slot1"></div>
             <div class="slot-default"></div>
         </demo-vm-two>
@@ -177,6 +177,13 @@
         watch: {
             result: function () {
                 this.changeCount += 1;
+            },
+            showFour: {
+                immediate: true,
+                deep: false,
+                handler(val) {
+                    console.log(val)
+                }
             }
         },
         created() {
@@ -184,6 +191,7 @@
         },
         mounted() {
             console.log("demoOne:  demoOne mounted");
+            console.log("demoTwo:", this.$refs.demoTwo);
         },
         beforeDestroy() {
             console.log("demoOne:  demoOne beforeDestroy");
@@ -204,10 +212,9 @@
         }
     })
 
-    console.log(DemoVmOne);
-    console.log(DemoVmTwo);
-    console.log(DemoVmThree);
-    console.log(DemoVmFour);
+    console.log('DemoVmOne', DemoVmOne);
+    console.log('DemoVmOne', DemoVmThree);
+    console.log('DemoVmOne', DemoVmFour);
 
 </script>
 </body>

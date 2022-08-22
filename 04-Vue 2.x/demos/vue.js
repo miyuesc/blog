@@ -1579,6 +1579,8 @@
       var strat = strats[key] || defaultStrat;
       options[key] = strat(parent[key], child[key], vm, key);
     }
+
+    console.log('normalize options:', options)
     return options
   }
 
@@ -3795,6 +3797,7 @@
   /*  */
 
   function initEvents (vm) {
+    debugger
     vm._events = Object.create(null);
     vm._hasHookEvent = false;
     // init parent attached events
@@ -11986,6 +11989,7 @@
         }
       }
     }
+    debugger
     return mount.call(this, el, hydrating)
   };
 
