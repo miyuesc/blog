@@ -3517,6 +3517,7 @@
   /*  */
 
   function initRender (vm) {
+    debugger
     vm._vnode = null; // the root of the child tree
     vm._staticTrees = null; // v-once cached trees
     var options = vm.$options;
