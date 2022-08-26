@@ -187,4 +187,4 @@ staticRenderFns: ["with(this){return _c('div',{staticClass:\"demo-vm-4\"},[_c('h
 
 **compile** 函数由 **createCompiler** 函数创建，接收 template 模板字符串和 baseOptions 编译配置，并通过闭包的方式使用上面的 **baseCompile** 方法来编译 template 模板。
 
-> 最终 **compile** 函数内部核心逻辑就是将 **compileToFunctions()** 传入的编译配置项和 baseOptions 基础配置项合并为一个配置项 **finalOptions**，并通过 **baseCompile(template, finalOptions)** 来得到最终的组件渲染函数。
+> 最终 **compile** 函数内部核心逻辑就是将 **compileToFunctions()** 传入的编译配置项和 baseOptions 基础配置项合并为一个配置项 **finalOptions**，并通过 **baseCompile(template, finalOptions)** 来得到最终的组件渲染函数。	
