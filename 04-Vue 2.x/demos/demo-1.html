@@ -67,6 +67,7 @@
         },
         mounted() {
             console.log("demoFour:  demoFour mounted");
+            console.log("demoFour Instance: ", this);
         },
         beforeDestroy() {
             console.log("demoFour:  demoFour beforeDestroy");
@@ -86,6 +87,7 @@
         },
         mounted() {
             console.log("demoThree:  demoThree mounted");
+            console.log("demoThree Instance: ", this);
         },
         beforeDestroy() {
             console.log("demoThree:  demoThree beforeDestroy");
@@ -122,7 +124,8 @@
         data() {
             return{
                 data2: "我是 demo2 的数据",
-                clickEventNum: 0
+                clickEventNum: 0,
+                arr: [1, 2, 3, {name: 'test' }]
             }
         },
         created() {
@@ -130,6 +133,7 @@
         },
         mounted() {
             console.log("demoTwo:  demoTwo mounted");
+            console.log("demoTwo Instance: ", this);
         },
         beforeDestroy() {
             console.log("demoTwo:  demoTwo beforeDestroy");
@@ -191,7 +195,7 @@
         },
         mounted() {
             console.log("demoOne:  demoOne mounted");
-            console.log("demoTwo:", this.$refs.demoTwo);
+            console.log("demoOne Instance: ", this);
         },
         beforeDestroy() {
             console.log("demoOne:  demoOne beforeDestroy");
@@ -211,10 +215,6 @@
             }
         }
     })
-
-    console.log('DemoVmOne', DemoVmOne);
-    console.log('DemoVmOne', DemoVmThree);
-    console.log('DemoVmOne', DemoVmFour);
 
 </script>
 </body>
