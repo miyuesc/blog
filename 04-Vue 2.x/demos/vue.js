@@ -11806,6 +11806,7 @@
         if (config.performance && mark) {
           mark('compile');
         }
+        debugger
         var _a = compileToFunctions(template, {
           outputSourceRange: true,
           shouldDecodeNewlines: shouldDecodeNewlines,
@@ -11813,6 +11814,7 @@
           delimiters: options.delimiters,
           comments: options.comments
         }, this), render = _a.render, staticRenderFns = _a.staticRenderFns;
+        console.log(render.toString())
         options.render = render;
         options.staticRenderFns = staticRenderFns;
         /* istanbul ignore if */
