@@ -113,19 +113,34 @@ export default defineStore('editor', {
 众所周知，vue 3 最大的亮点之一就是 **组合式API（Composition API）**，所以我们先以组件配合 setup 使用。
 
 ```typescript
-import { defineComponent, ref } from 'vue'
+import { defineComponent, ref, computed } from 'vue'
+import { storeToRefs } from 'pinia'
 import { EditorSettings } from 'types/editor/settings'
 import editorStore from '@/store/editor'
 
 export default defineComponent({
   setup(props) {
     const editor = editorStore()
+    
+    // 直接获取 state 状态
+    const { editorSettings } = storeToRefs(editor)
+    
+    // 使用 computed
+    const editorSettings = computed(() => editor.editorSettings)
 
-    // getter
+    // getters
     const prefix = editor.getProcessEngine
     
-    // 更新，调用 actions
+    // 更新方式 1：调用 actions
     editorStore.updateConfiguration({})
+    
+    // 更新方式 2：直接改变 state 的值
+    editorStore.editorSettings = {}
+    
+    // 更新方式 3：调用 $patch
+    editorStore.$patch((state) => {
+      state.editorSettings = {}
+    })
 
     return {
       editorStore
@@ -133,6 +148,144 @@ export default defineComponent({
   }
 })
 ```
+
+这里对以上几种处理方式进行说明：
+
+**获取值：**
+
+1. 可以通过 **解构** 获取 state 定义的数据，但是 **解构会失去响应式**，所以需要用 **storeToRefs** 重新对其进行响应式处理
+2. 通过 **computed** 计算属性，好处是 **可以对 state 中的状态数据进行组合**
+3. 通过定义的 getters 方法来获取值，这种方式获取的结果本身就是 **响应式的**，可以直接使用
+
+**更新值：**
+
+1. 首先是可以 **直接改变 state 的状态值**，缺点是多次使用容易有重复代码，且不好维护；也会影响代码的可读性
+2. 通过定义的 **actions** 更新，也算是推荐方法之一；在后续迭代和扩展中，只需要维护好 store 中的代码即可
+3. $patch: 这个方式 **可以接收一个对象或者函数**，但是 **推荐使用箭头函数（函数参数为状态数据 state）**；因为如果是对象，则需要根据新数据和当前状态 **重建整个 state**，增加了很多的性能损耗；而使用箭头函数，其实就与 **actions** 中的方式类似，可以 **按代码逻辑修改指定的状态数据**
+
+### 4. 组件使用（没有 setup）
+
+而在传统的 optionsAPI 模式的组件中（也没有配置 setup），Pinia 也提供了与 Vuex 一致的 API：**mapState，mapGetters，mapActions**，另外还增加了 **mapStores** 用来访问所有已注册的 store 数据，新增了 **mapWritableState** 用来 **定义可更新状态**；也因为 pinia 没有 mutations，所以也取消了 **mapMutations** 的支持。
+
+> mapGetters 也只是为了方便迁移 Vuex 的组件代码，后面依然建议 **使用 mapState 替换 mapGetters**
+
+```html
+<template>
+	<div>
+    <p>{{ settings }}</p>
+    <p>{{ processEngine }}</p>
+    <button @click="updateConfiguration({})">调用 action</button>
+    <button @click="update">调用 mapWritableState</button>
+  </div>
+</template>
+<script>
+  import { defineComponent, ref, storeToRefs } from 'vue'
+  import { mapState, mapActions, mapWritableState } from 'pinia'
+  import editorStore from '@/store/editor'
+  
+  export default defineComponent({
+    computed: {
+      ...mapState(editorStore, {
+        settings: 'editorSettings',
+        processEngine: (state) => `This process engine is ${state.editorSettings.processEngine}`
+      }),
+      ...mapWritableState(editorStore, ['editorSettings'])
+    },
+    methods: {
+      ...mapActions(editorStore, ['updateConfiguration'])，
+      update() {
+        this.editorSettings.processEngine = "xxx"
+      }
+    }
+  })
+</script>
+```
+
+> mapStores 用来访问 **所有已注册 store 状态**。假设我们除了上文定义的 editor，还定义了一个 id 为 modeler 的 store，则可以这么使用：
+>
+> ```javascript
+> import editor from '@/store/editor'
+> import modeler from '@/store/modeler'
+> export default defineComponent({
+>   computed: {
+>     ...mapStores(editor, modeler)
+>   },
+>   methods: {
+>     async updateAll() {
+>       if (this.editorStore.processEngine === 'camunda') {
+>         await this.modelerStore.update()
+>       }
+>     }
+>   }
+> })
+> ```
+>
+> 其中引用的所有 store，都可以通过 **id + 'Store'** 的形式在 Vue 实例中访问到。
+
+### 5. 互相引用
+
+因为 Pinia 本身是支持各个 store 模块互相引用的，所以在定义的时候可以直接引用其他 store 的数据进行操作。
+
+例如我们这里根据 editor store 创建一个 modeler store
+
+```javascript
+import { defineStore } from 'pinia'
+import editor from '@/store/editor'
+
+export default defineStore('editor', {
+  state: () => ({
+    element: null,
+    modeler: null
+  }),
+  actions: {
+    updateElement(element) {
+      const editorStore = editor()
+      if (!editorStore.getProcessEngine) {
+        editorStore.updateConfiguration({ processEngine: 'camunda' })
+      }
+      this.element = element
+    }
+  }
+})
+```
+
+### 6. 脱离 store 模块和组件使用
+
+因为 Pinia 的每个 store 模块都是依赖 vue 应用和 pinia 根实例的，在组件内部使用时因为 Vue 应用和 pinia 根实例肯定都已经是 **注册完成处于活动状态中的**，所以可以直接通过调用对应的 store 状态模块函数即可。
+
+但是在脱离 store 模块与组件，直接在外部的纯函数中使用时，则需要注意 store 状态模块函数的调用时机。
+
+以官方的示例来看：
+
+```javascript
+import { createRouter } from 'vue-router'
+const router = createRouter({
+  // ...
+})
+
+// ❌ 根据导入的顺序，这将失败
+const store = useStore()
+
+router.beforeEach((to, from, next) => {
+  // 我们想在这里使用 store 
+  if (store.isLoggedIn) next()
+  else next('/login')
+})
+
+router.beforeEach((to) => {
+  // ✅ 这将起作用，因为路由器在之后开始导航
+   // 路由已安装，pinia 也将安装
+  const store = useStore()
+
+  if (to.meta.requiresAuth && !store.isLoggedIn) return '/login'
+})
+```
+
+直接在js模块的执行中 **直接调用是可能会报错的**，因为此时可能在 import router 的时候 **还没有调用 createApp 和 createPinia 创建对应的应用实例和 pinia 根实例**，所以无法使用。
+
+而在路由导航的拦截器中使用时，因为 **路由拦截触发时，应用和 pinia 根实例肯定已经全部实例化完毕**，才可以正常使用。
+
+所以 **如果是在外部的 hooks 函数或者 utils 工具函数等纯函数模块中使用 store 数据时，最好是定义一个函数方法导出，在组件或者 store 模块中调用该方法，保证此时能正确执行**
 
 ## 最后
 
