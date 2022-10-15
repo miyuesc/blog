@@ -269,6 +269,12 @@ export default {
 
 
 
+为了方便理解和直观体验，这里提供了一点试验代码：
+
+[代码片段](https://code.juejin.cn/pen/7153117789836804096)
+
+
+
 ### 往期精彩
 
 [Bpmn.js 进阶指南](https://juejin.cn/column/6964382482007490590)
