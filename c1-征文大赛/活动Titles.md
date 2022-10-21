@@ -46,3 +46,7 @@ theme: hydrogen
 [基于 Vue 2 与 高德地图 2.0 的“线面编辑器”](https://juejin.cn/post/7142746736690200612)
 ```
 
+```
+> 🚀作者也为Bpmn.js写了一些实例项目和types声明，有兴趣的同学可以查看这两个地址：[bpmn-process-designer](https://github.com/miyuesc/bpmn-process-designer)、[vite-vue-bpmn-process](https://github.com/moon-studio/vite-vue-bpmn-process)
+```
+
