@@ -2,58 +2,31 @@
 
 > 一个前端菜鸟的学习记录博客
 
-## 文章目录
-
-### 一、JavaScript
-
-1. [《JavaScript高级程序设计》读书笔记(一)](./javascript/docs/《JavaScript高级程序设计》读书笔记(一).md)
-2. [《JavaScript高级程序设计》读书笔记(二)](./javascript/docs/《JavaScript高级程序设计》读书笔记(二).md)
-3. [《JavaScript高级程序设计》读书笔记(三)](./javascript/docs/《JavaScript高级程序设计》读书笔记(三).md)
-4. [《JavaScript高级程序设计》读书笔记(四) BOM&DOM](./javascript/docs/《JavaScript高级程序设计》读书笔记(四).md)
-5. [《JavaScript高级程序设计》读书笔记(五) 客户端存储](./javascript/docs/《JavaScript高级程序设计》读书笔记(五).md)
-6. [Async/Await 处理异步](./javascript/docs/Async与Await处理异步.md)
-7. [JavaScript高频面试题与基础问题](./javascript/docs/JavaScript基础知识点.md)
-8. [33个JavaScript概念](./javascript/docs/33-js-concepts.md)
-9. [ECMAScript 6 常用特性](./javascript/docs/ES6常用特性.md)
-10. [ECMAScript 7 常用特性](./javascript/docs/ES7常用特性.md)
-11. [ECMAScript 8 常用特性](./javascript/docs/ES6常用特性.md)
 
 
+### 课程推荐
 
-### 二、设计模式
+[muwoo - Vue 3 技术揭秘](https://s.juejin.cn/ds/BD3t149/)
 
-1. [设计模式（一）—— 七大原则](./javascript/docs/设计模式(一).md)
-2. [设计模式（二）—— 创建型模式](./javascript/docs/设计模式(二).md)
+[修言 - JavaScript 函数式编程实践指南](https://s.juejin.cn/ds/BD3TrYF/)
 
+[修言 - JavaScript 设计模式核⼼原理与应⽤实践](https://s.juejin.cn/ds/BDTNQxK/)
 
+[大漠w3cplus - 现代Web布局](https://s.juejin.cn/ds/BDTeaQL/)
 
-### 三、CSS & HTML
+[神说要有光 - 前端调试通关秘籍](https://s.juejin.cn/ds/BD3wRjf/)
 
-1. [CSS 基础](./css/docs/CSS.md)
+[神说要有光 - TypeScript 类型体操通关秘籍](https://s.juejin.cn/ds/BDTAysq/)
 
+[神说要有光 - Babel 插件通关秘籍](https://s.juejin.cn/ds/BDTN18r/)
 
+[月影 - 从前端到全栈](https://s.juejin.cn/ds/BD3TXgQ/)
 
-### 四、Vue 2.x
+[Tecvan范文杰 - Webpack 5 核心原理与应用实践](https://s.juejin.cn/ds/BDTLD2q/)
 
-#### 1. Vue 基础与实现原理
+[林不渡 - TypeScript 全面进阶指南](https://s.juejin.cn/ds/BDTNB2t/)
 
-1. [MVVM与Vue](./vue/docs/mvvm与vue.md)
-2. [Vue 2.x 源码阅读](./vue/docs/vue源码阅读.md)
-
-
-
-#### 2. Vue 应用
-
-1. [在Vue 2.x 项目中使用高德地图](./vue-components/docs/Vue项目使用高德地图.md)
-
-
-
-### 五、Bpmn.js
-
-1. [Bpmn-js 中文文档 (一)](./bpmn/docs/Bpmn.js%20document.md)
-2. [Bpmn-js 中文文档 (二)](./bpmn/docs/Bpmn.js%20document（二）.md)
-3. [Bpmn-js 自定义解析文件](./bpmn/docs/自定义解析文件.md)
-4. [Bpmn-js 节点可用配置属性](./bpmn/docs/节点属性配置.md)
+[神三元 - 深入浅出 Vite](https://s.juejin.cn/ds/BDTugY3/)
 
 
 
@@ -61,7 +34,7 @@
 
 如果您觉得这些文章对您有帮助，想和我一起学习，欢迎您关注我的微信订阅号。
 
-订阅号名称：前端小白MiyueFE
+订阅号名称：MiyueFE 的前端圈
 
 ![公众号二维码](https://images.weserv.nl/?url=https://i0.hdslb.com/bfs/article/fdef0d8f1731ed03b4123d22b7d82acacb6ca10c.jpg)
 
