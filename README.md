@@ -26,6 +26,8 @@
 
 [神三元 - 深入浅出 Vite](https://s.juejin.cn/ds/BDTugY3/)
 
+[死月 - 趣学 Node.js](https://s.juejin.cn/ds/BXos2X3/)
+
 
 
 ## > 我的专栏
