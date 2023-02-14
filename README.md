@@ -2,9 +2,7 @@
 
 > 一个前端菜鸟的学习记录博客
 
-
-
-### 课程推荐
+## > 课程推荐
 
 [muwoo - Vue 3 技术揭秘](https://s.juejin.cn/ds/BD3t149/)
 
@@ -30,9 +28,36 @@
 
 
 
-### 学习交流
+## > 我的专栏
 
-如果您觉得这些文章对您有帮助，想和我一起学习，欢迎您关注我的微信订阅号。
+[Vue 2 源码阅读理解](https://juejin.cn/column/7136858810605371399)
+
+[Bpmn.js 中文进阶指南](https://juejin.cn/column/6964382482007490590)
+
+
+
+## > 工具项目/网站
+
+[CSS3 剪贴路径(Clip-path)在线生成器](https://techbrood.com/tool?p=css-clip-path)
+
+[techbrood 工具集合](https://techbrood.com/tool#)
+
+
+
+## > 文档收集
+
+1. [CUGGZ - 语雀](https://www.yuque.com/cuggz)
+   - [前端面试题汇总](https://www.yuque.com/cuggz/interview)
+   - [前端知识进阶](https://www.yuque.com/cuggz/feplus)
+   - [LeetCode题解](https://www.yuque.com/cuggz/leetcode)
+2. [ggbdpq - 语雀](https://www.yuque.com/ggbdpq)
+   - [前端小册](https://www.yuque.com/ggbdpq/handbook)
+
+## > 学习交流
+
+如果您觉得这些文章对您有帮助，想和我一起学习，欢迎您关注我的微信订阅号或者添加我的个人微信。
+
+微信号：Miyuesc
 
 订阅号名称：MiyueFE 的前端圈
 
