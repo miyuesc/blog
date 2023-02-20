@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+  <script src="./vue.js"></script>
+</head>
+<body>
+  <div id="app" class="demo-vm-1">
+    <p>{{arr[0]}}</p>
+    <p>{{arr[2]}}</p>
+    <p>{{arr[3].c}}</p>
+  </div>
+</body>
+
+<script>
+  new Vue({
+    el: "#app",
+    data() {
+      return {
+        arr: [1, 2, { a: 3 },{ c: 5}]
+      }
+    },
+    mounted() {
+      console.log("demo Instance: ", this.$data);
+
+      setTimeout(() => {
+        console.log('update')
+        this.arr[0] = { o: 1 }
+        this.arr[2] = { a: 1 }
+      },2000)
+    },
+  })
+</script>
+</html>
