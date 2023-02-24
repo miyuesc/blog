@@ -49,21 +49,6 @@ effect(
 
 ## 源码实现
 
-整个 `scheduler` 的源码在 `core/packages/runtime-core/src/scheduler.ts` 中，主要包含 `queueJob、queuePostFlushCb、flushPreFlushCbs、flushPostFlushCbs` 几个核心方法，以及我们最常用的 `nexttick`。其中核心方法就是 `queueJob` 与 `queueFlush` 了，当然还有一个延迟执行的处理函数 `queuePostFlushCb`。
-
-在 `scheduler` 模块中，主要是通过 **模块内变量（闭包）** 定义了几个变量：
-
-- `isFlushing`：是否有任务正在执行
-- `isFlushPending`：队列中是否还有任务正在等待执行
-- `queue`：任务队列
-- `flushIndex`：当前任务的索引
-- `pendingPostFlushCbs`：延迟执行（`post`）的任务队列
-- `activePostFlushCbs`：正在执行的回调函数数组
-- `postFlushIndex`：当前延迟任务的索引
-- `currentFlushPromise` 和 `resolvedPromise`：用来插入微任务队列的 `Promise`
-
-
-
 在 [Vue2与Vue3响应式原理与依赖收集详解](https://juejin.cn/post/7202454684657107005) 中我们提到了 `reactive` 方法会改变对象的 `get/set` 相关方法，在 `get` 之类的数据获取过程中会进行执行 `track` 方法进行依赖收集，而 `render、watch、computed` 等都基于 **`effect`** 副作用来实现，组件实例首次初始化时就会执行一次对应的副作用函数进行依赖收集，然后更新数据才会进行视图更新。
 
 而 `effect` 的核心就是 `ReactiveEffect` 构造函数，以上提到的每个过程/函数都会创建一个对应的 `ReactiveEffect` 实例，而这个构造函数除了会接收一个 `scheduler` 配置用来管理该副作用实例的执行时机，
@@ -106,11 +91,38 @@ class {
 };
 ```
 
-这部分代码的内容其实除了省略掉的 **管理副作用函数依赖的数据对象** 之外，就是为这个实例定义一个 `run` 副作用执行方法和 `stop` 清空依赖与
+这部分代码的内容其实除了省略掉的 **管理副作用函数依赖的数据对象** 之外，就是为这个实例定义一个 `run` 副作用执行方法和 `stop` 清空依赖或者延迟执行，并且将 `scheduler` 配置挂载到实例上。
 
 
 
+整个 `scheduler` 的源码在 `core/packages/runtime-core/src/scheduler.ts` 中，主要包含 `queueJob、queuePostFlushCb、flushPreFlushCbs、flushPostFlushCbs` 几个核心方法，以及我们最常用的 `nexttick`。其中核心方法就是 `queueJob` 与 `queueFlush` 了，当然还有一个延迟执行的处理函数 `queuePostFlushCb`。
 
+在 `scheduler` 模块中，主要是通过 **模块内变量（闭包）** 定义了几个变量：
+
+- `isFlushing`：是否有任务正在执行
+- `isFlushPending`：队列中是否还有任务正在等待执行
+- `queue`：任务队列
+- `flushIndex`：当前任务的索引
+- `pendingPostFlushCbs`：延迟执行（`post`）的任务队列
+- `activePostFlushCbs`：正在执行的回调函数数组
+- `postFlushIndex`：当前延迟任务的索引
+- `currentFlushPromise` 和 `resolvedPromise`：用来插入微任务队列的 `Promise`
+
+
+
+而 `ReactiveEffect` 在 Vue 中的实例化就只有 `watch、render、computed` 三类 API 的执行过程中，整个 `scheduler` 也就只有上面的三中情况：
+
+- `pre` 渲染前执行（预执行），对应 `() => queueJob`
+- `post` 渲染后执行（延迟执行），对应 `() => queuePostFlushCbs`
+- `sync` 同步执行，对应 `() => effect.run()` 
+
+> 当然 `computed` 的调度与这几类都不同，后面看 `computed` 的时候再说吧~
+
+### 1.  `pre` 渲染前执行
+
+不管是 Vue 2 还是 Vue 3，大部分情况下数据改变后派发更新，都会在渲染前执行所有相关的副作用（Watcher）函数，所以 Vue 3 的 `watchEffect` 默认的 `flush` 配置也是 `pre`。
+
+所以这里以 `watchEffect` 的默认配置为例，在 `scheduler` 部分的处理如下：
 
 
 
