@@ -56,7 +56,7 @@ effect(
 省略掉其他与依赖相关的内容，单独查看这个构造函数与执行调度相关的代码，省略后如下：
 
 ```js
-class {
+class ReactiveEffect {
   constructor(fn, scheduler = null) {
     this.fn = fn;
     this.scheduler = scheduler;
@@ -124,17 +124,167 @@ class {
 
 所以这里以 `watchEffect` 的默认配置为例，在 `scheduler` 部分的处理如下：
 
+```js
+function watchEffect(effect2, options) {
+  return doWatch(effect2, null, options);
+}
+
+function doWatch(source, cb, { immediate, deep, flush } = EMPTY_OBJ) {
+  ...
+  const job = () => effect.run();
+  job.allowRecurse = false;
+  job.pre = true;
+  // pre 的情况，也就是 flush = pre
+  if (instance) job.id = instance.uid;
+  let scheduler = () => queueJob(job);
+  const effect = new ReactiveEffect(getter, scheduler)
+  
+  effect.run() // 主要是收集依赖和设置初始值
+  // 返回取消的方法
+  return () => {
+    effect.stop()
+    if (instance && instance.scope) {
+      remove(instance.scope.effects!, effect)
+    }
+  }
+}
+```
+
+上面的代码省略掉了很大一部分参数处理相关的内容，与 `scheduler` 相关的核心部分就是 `let scheduler = () => queueJob(() => effect.run())`，然后通过 `ReactiveEffect` 将 `scheduler` 与 `effect` 关联起来；这里结合到之前的派发更新时的 `triggerEffect`，当有 `scheduler` 配置时就执行 `effect.scheduler()`，所以这里执行的其实是 `queueJob(() => effect.run())`。
+
+```js
+export function queueJob(job: SchedulerJob) {
+  if (
+    !queue.length ||
+    !queue.includes(
+      job,
+      isFlushing && job.allowRecurse ? flushIndex + 1 : flushIndex
+    )
+  ) {
+    if (job.id == null) {
+      queue.push(job)
+    } else {
+      queue.splice(findInsertionIndex(job.id), 0, job)
+    }
+    queueFlush()
+  }
+}
+function queueFlush() {
+  if (!isFlushing && !isFlushPending) {
+    isFlushPending = true
+    currentFlushPromise = resolvedPromise.then(flushJobs)
+  }
+}
+```
+
+`queueJob` 函数的核心就是将上面的 `job` 任务插入到 `queue` 任务队列中，然后通过 `queueFlush` 触发刷新队列的操作，最终当所有 `pre` 周期的任务都插入进去之后，会通过 `resolvedPromise.then(flushJobs)` 将所有 `job` 队列插入到当前的微任务队列中执行。
+
+### 2. `sync` 同步执行
+
+当设置为 `sync` 同步执行时，此时的 `scheduler` 就是一个箭头函数 `() => effect.run()`。即在 `triggerEffect` 时就会直接执行 `effect.run()`，而无需等待这次更新的宏任务执行结束后以微任务队列进行执行。
+
+### 3. `post` 渲染后执行
+
+当设置为 `post` 延迟执行时，此时的 `scheduler` 配置也是一个箭头函数用来插入到某个任务队列中，但是与 `pre` 不同的是，这种情况下使用的是 `() => queuePostRenderEffect(job, instance && instance.suspense)`。
+
+```js
+function queueEffectWithSuspense(fn, suspense) {
+  if (suspense && suspense.pendingBranch) {
+    if (isArray(fn)) {
+      suspense.effects.push(...fn);
+    } else {
+      suspense.effects.push(fn);
+    }
+  } else {
+    queuePostFlushCb(fn);
+  }
+}
+```
+
+当我们排除掉异步依赖（即 `suspense` 的情况），最终是通过 `queuePostFlushCb` 将 `() => effect.run()` 这个任务插入到 `postQueue` 队列中。
+
+```js
+function queuePostFlushCb(cb) {
+  if (!isArray(cb)) {
+    if (!activePostFlushCbs || !activePostFlushCbs.includes(cb, cb.allowRecurse ? postFlushIndex + 1 : postFlushIndex)) {
+      pendingPostFlushCbs.push(cb);
+    }
+  } else {
+    pendingPostFlushCbs.push(...cb);
+  }
+  queueFlush();
+}
+```
+
+与 `queueJob` 一样，最终都会调用 `queueFlush` 来刷新和处理任务队列。
+
+## 核心方法 `flushJobs`
+
+```js
+function flushJobs(seen) {
+  isFlushPending = false;
+  isFlushing = true;
+  queue.sort(comparator);
+  try {
+    for (flushIndex = 0; flushIndex < queue.length; flushIndex++) {
+      const job = queue[flushIndex];
+      if (job && job.active !== false) {
+        callWithErrorHandling(job, null, 14);
+      }
+    }
+  } finally {
+    flushIndex = 0;
+    queue.length = 0;
+    flushPostFlushCbs(seen);
+    isFlushing = false;
+    currentFlushPromise = null;
+    if (queue.length || pendingPostFlushCbs.length) {
+      flushJobs(seen);
+    }
+  }
+}
+function flushPostFlushCbs(seen) {
+  if (pendingPostFlushCbs.length) {
+    const deduped = [...new Set(pendingPostFlushCbs)];
+    pendingPostFlushCbs.length = 0;
+    if (activePostFlushCbs) {
+      activePostFlushCbs.push(...deduped);
+      return;
+    }
+    activePostFlushCbs = deduped;
+    activePostFlushCbs.sort((a, b) => getId(a) - getId(b));
+    for (postFlushIndex = 0; postFlushIndex < activePostFlushCbs.length; postFlushIndex++) {
+      activePostFlushCbs[postFlushIndex]();
+    }
+    activePostFlushCbs = null;
+    postFlushIndex = 0;
+  }
+}
+```
+
+`flushJobs` 方法作为核心方法，主要进行以下工作：
+
+1. 修改状态位，表示当前正在执行 `flushJobs`
+2. 重新排列任务队列，这里主要是 **根据组件实例** 的顺序来确定执行顺序，父级默认优先于子级组件
+3. 遍历任务队列，取出 `job`，并且判断这个任务还处于激活状态，则通过 `callWithErrorHandling` 执行该任务
+4. 遍历结束后，重置状态和任务队列，调用 `flushPostFlushCbs` 执行 `post` 中的任务
+5. 销毁 `promise`，判断任务列表是否又有新增任务
+
+而 `flushPostFlushCbs` 则是对 `pendingPostFlushCbs` 数组进行去重和重新排序，然后遍历新数组并执行每个任务。
 
 
 
+## 小节
 
+> 因为笔者也是刚开始学习Vue3和相关源码，在副作用这部分的了解可能不是很清楚，导致文章的逻辑不是很清晰，内容也可能不是很准确，希望大家能多多包涵并指出我的错误。
 
+总的来说，`effect` 通过一个配置项 `scheduler` 来实现了每个副作用函数的执行时刻，虽然按照源码的逻辑来看，Vue 内部默认只允许用户通过配置项 `flush` 的三个参数来确定每个 `effect` 的大致执行顺序，但是这种设计方式却是我们在实际项目中值得借鉴的。
 
+我们可以通过 `flush` 的三个可用配置，来管理每个副作用函数的大致执行的优先级：
 
-
-
-
-
+- `sync`：同步在数据更新过程中执行，默认情况下应该是三者中最先执行的
+- `pre`：渲染前执行，一般来说会等待到所有的数据更新结束之后，在 `dom` 更新前按照组件实例和定义的顺序来执行每个副作用函数
+- `post`：渲染后执行，一般是最后才会执行的，此时数据和 `dom` 都已经更新完毕
 
 
 
