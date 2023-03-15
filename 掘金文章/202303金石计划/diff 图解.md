@@ -57,9 +57,15 @@
 
 ### addNodes
 
-顾名思义，添加新的 VNode 节点，
+顾名思义，添加新的 VNode 节点。
 
+该函数接收 6 个参数：`parentElm` 当前节点数组父元素、`refElm` 指定位置的元素、`vnodes` 新的虚拟节点数组、`startIdx` 新节点数组的插入元素开始位置、`endIdx` 新节点数组的插入元素结束索引、`insertedVnodeQueue` 需要插入的虚拟节点队列。
 
+函数内部会 **从 `startIdx` 开始遍历 `vnodes` 数组直到 `endIdx` 位置**，然后调用 `createElm` 依次在 `refElm` 之前创建和插入 `vnodes[idx]` 对应的元素。
+
+当然，在这个 `vnodes[idx]` 中有可能会有 `Component` 组件，此时还会调用 `createComponent` 来创建对应的组件实例。
+
+> 因为整个 `VNode` 和 dom 都是一个 **树结构**，所以在 **同层级的比较之后，还需要处理当前层级下更深层次的 VNode 和 dom 处理**。
 
 ### removeVnodes
 
