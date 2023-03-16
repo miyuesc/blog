@@ -32,7 +32,23 @@
 
 如果在组件更新时，需要对比全部 VNode 节点的话，新旧两组节点都需要进行 **深度遍历** 和比较，会产生很大的性能开销；所以，Vue 中默认 **同层级节点比较**，即 **如果新旧 VNode 树的层级不同的话，多余层级的内容会直接新建或者舍弃**，只在同层级进行 diff 操作。
 
-一般来说，diff 操作一般发生在 `v-for` 循环或者有 `v-if/v-else` 、`component` 这类 **动态生成** 的节点对象上（静态节点一般不会改变，对比起来很快），并且这个过程是为了更新 dom，所以在源码中，这个过程对应的方法名是 `updateChildren`，位于 `src/core/vdom/patch.ts` 中。
+一般来说，diff 操作一般发生在 `v-for` 循环或者有 `v-if/v-else` 、`component` 这类 **动态生成** 的节点对象上（静态节点一般不会改变，对比起来很快），并且这个过程是为了更新 dom，所以在源码中，这个过程对应的方法名是 `updateChildren`，位于 `src/core/vdom/patch.ts` 中。如下图：
+
+![image-20230316094319181](./docs-images/diff%20%E5%9B%BE%E8%A7%A3/image-20230316094319181.png)
+
+> 这里回顾一下 Vue 组件实例的创建与更新过程：
+>
+> 1. 首先是 `beforeCreate` 到 `created` 阶段，主要进行数据和状态以及一些基础事件、方法的处理
+>
+> 2. 然后，会调用 `$mount(vm.$options.el)` 方法进入 `Vnode` 与 dom 的创建和挂载阶段，也就是 `beforeMount` 到 `mounted` 之间（组件更新时与这里类似）
+>
+> 3. 原型上的 `$mount` 会在 `platforms/web/runtime-with-compiler.ts` 中进行一次重写，原始实现在 `platforms/web/runtime/index.ts` 中；在原始实现方法中，其实就是调用 `mountComponent` 方法执行 `render`；而在 `web` 下的 `runtime-with-compiler` 中则是增加了 **模板字符串编译** 模块，会对 `options` 中的的 `template` 进行一次解析和编译，转换成一个函数绑定到 `options.render` 中
+>
+> 4. `mountComponent` 函数内部就是 **定义了渲染方法 `updateComponent = () => (vm._update(vm._render())`，实例化一个具有 `before` 配置的 `watcher` 实例（即 `renderWatcher`），通过定义 `watch` 观察对象为 刚刚定义的 `updateComponent ` 方法来执行 首次组件渲染与触发依赖收集**，其中的 `before` 配置仅仅配置了触发 `beforeMount/beforeUpdate` 钩子函数的方法；这也是为什么在 `beforeMount` 阶段取不到真实 dom 节点与 `beforeUpdate` 阶段获取的是旧 dom 节点的原因
+>
+> 5. `_update` 方法的定义与 `mountComponent` 在同一文件下，其核心就是 **读取组件实例中的 `$el`（旧 dom 节点）与 `_vnode`（旧 VNode）与 `_render()` 函数生成的 `vnode` 进行 `patch` 操作**
+>
+> 6. `patch` 函数首先对比 **是否具有旧节点**，没有的话肯定是新建的组件，直接进行创建和渲染；如果具有旧节点的话，则通过 `patchVnode` 进行新旧节点的对比，**并且如果新旧节点一致并且都具有 `children` 子节点，则进入 `diff` 的核心逻辑 —— `updateChildren` 子节点对比更新**，这个方法也是我们常说的 `diff` 算法
 
 ## 前置内容
 
