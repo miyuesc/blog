@@ -177,4 +177,222 @@ let newEndVnode = newCh[newEndIdx]
 while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx)
 ```
 
-这里的停止条件是 **只要遍历结束新旧节点数组任意一个，则立即停止遍历**。
+这里的停止条件是 **只要新旧节点数组任意一个遍历结束，则立即停止遍历**。
+
+此时节点状态如下：
+
+![image-20230316200208534](./docs-images/diff%20%E5%9B%BE%E8%A7%A3/image-20230316200208534.png)
+
+### 2. 确认 vnode 存在才进行对比
+
+为了保证新旧节点数组在对比时不会进行无效对比，会首先排除掉两个数组 **起始部分内、值为 `Undefined` 的数据**。
+
+```js
+if (isUndef(oldStartVnode)) {
+  oldStartVnode = oldCh[++oldStartIdx]
+} else if (isUndef(oldEndVnode)) {
+  oldEndVnode = oldCh[--oldEndIdx]
+```
+
+![image-20230316204314495](./docs-images/diff%20%E5%9B%BE%E8%A7%A3/image-20230316204314495.png)
+
+当然我们的例子中没有这种情况，可以忽略。
+
+### 3. 旧头等于新头
+
+此时相当于新旧节点数组的两个 **起始索引** 指向的节点是 **基本一致的**，那么此时会调用 `patchVnode` 对两个 vnode 进行深层比较和 dom 更新，并且将 **两个起始索引向后移动**。即：
+
+```js
+if (sameVnode(oldStartVnode, newStartVnode)) {
+  patchVnode(
+    oldStartVnode,
+    newStartVnode,
+    insertedVnodeQueue,
+    newCh,
+    newStartIdx
+  )
+  oldStartVnode = oldCh[++oldStartIdx]
+  newStartVnode = newCh[++newStartIdx]
+}
+```
+
+这时的节点和索引变化如图所示：
+
+![image-20230316204350420](./docs-images/diff%20%E5%9B%BE%E8%A7%A3/image-20230316204350420.png)
+
+### 4. 旧尾等于新尾
+
+与头结点相等类似，这种情况代表 **新旧节点数组的最后一个节点基本一致**，此时一样调用 `patchVnode` 比较两个尾结点和更新 dom，然后将 **两个末尾索引向前移动**。
+
+```js
+if (sameVnode(oldEndVnode, newEndVnode)) {
+  patchVnode(
+    oldEndVnode,
+    newEndVnode,
+    insertedVnodeQueue,
+    newCh,
+    newEndIdx
+  )
+  oldEndVnode = oldCh[--oldEndIdx]
+  newEndVnode = newCh[--newEndIdx]
+}
+```
+
+这时的节点和索引变化如图所示：
+
+![image-20230316204720081](./docs-images/diff%20%E5%9B%BE%E8%A7%A3/image-20230316204720081.png)
+
+### 5. 旧头等于新尾
+
+这里表示的是 **旧节点数组 当前起始索引 指向的 vnode 与 新节点数组 当前末尾索引 指向的 vnode 基本一致**，一样调用 `patchVnode` 对两个节点进行处理。
+
+但是与上面两种有区别的地方在于：这种情况下会造成 **节点的移动**，所以此时还会在 **`patchVnode` 结束之后** 通过 `nodeOps.insertBefore` 将 **旧的头节点** 重新插入到 **当前 旧的尾结点之后**。
+
+然后，会将 **旧节点的起始索引后移、新节点的末尾索引前移**。
+
+> 看到这里大家可能会有一个疑问，为什么这里移动的是 **旧的节点数组**，这里因为 vnode 节点中有一个属性 `elm`，会指向该 vnode 对应的实际 dom 节点，所以这里移动旧节点数组其实就是 **侧面去移动实际的 dom 节点顺序**；并且注意这里是 **当前的尾结点，在索引改变之后，这里不一定就是原旧节点数组的最末尾**。
+
+即：
+
+```js
+if (sameVnode(oldStartVnode, newEndVnode)) {
+  patchVnode(
+    oldStartVnode,
+    newEndVnode,
+    insertedVnodeQueue,
+    newCh,
+    newEndIdx
+  )
+  canMove && nodeOps.insertBefore(parentElm, oldStartVnode.elm, nodeOps.nextSibling(oldEndVnode.elm))
+  oldStartVnode = oldCh[++oldStartIdx]
+  newEndVnode = newCh[--newEndIdx]
+}
+```
+
+此时状态如下：
+
+![image-20230316210301883](./docs-images/diff%20%E5%9B%BE%E8%A7%A3/image-20230316210301883.png)
+
+### 6. 旧尾等于新头
+
+这里与上面的 旧头等于新尾 类似，一样要涉及到节点对比和移动，只是调整的索引不同。此时 **旧节点的 末尾索引 前移、新节点的 起始索引 后移**，当然了，这里的 dom 移动对应的 vnode 操作是 **将旧节点数组的末尾索引对应的 vnode 插入到旧节点数组 起始索引对应的 vnode 之前**。
+
+```js
+if (sameVnode(oldEndVnode, newStartVnode)) {
+  patchVnode(
+    oldEndVnode,
+    newStartVnode,
+    insertedVnodeQueue,
+    newCh,
+    newStartIdx
+  )
+  canMove && nodeOps.insertBefore(parentElm, oldEndVnode.elm, oldStartVnode.elm)
+  oldEndVnode = oldCh[--oldEndIdx]
+  newStartVnode = newCh[++newStartIdx]
+}
+```
+
+此时状态如下：
+
+![image-20230316210858484](./docs-images/diff%20%E5%9B%BE%E8%A7%A3/image-20230316210858484.png)
+
+### 7. 四者均不相等
+
+在以上情况都处理之后，就来到了四个节点互相都不相等的情况，这种情况也是 **最复杂的情况**。
+
+当经过了上面几种处理之后，此时的 **索引与对应的 vnode** 状态如下：
+
+![image-20230316211057275](./docs-images/diff%20%E5%9B%BE%E8%A7%A3/image-20230316211057275.png)
+
+可以看到四个索引对应的 vnode 分别是：vnode 3、vnode 5、 vnode 4、vnode 8，这几个肯定是不一样的。
+
+此时也就意味着 **双端对比结束**。
+
+后面的节点对比则是 **将旧节点数组剩余的 vnode （`oldStartIdx` 到 `oldEndIdx` 之间的节点）进行一次遍历，生成由 `vnode.key` 作为键，`idx` 索引作为值的对象 `oldKeyToIdx`**，然后 **遍历新节点数组的剩余 vnode（`newStartIdx` 到 `newEndIdx` 之间的节点），根据新的节点的 `key` 在 `oldKeyToIdx` 进行查找**。此时的每个新节点的查找结果只有两种情况：
+
+1. **找到了对应的索引**，那么会通过 `sameVNode` 对两个节点进行对比：
+   - 相同节点，调用 `patchVnode` 进行深层对比和 dom 更新，将 `oldKeyToIdx` 中对应的索引 `idxInOld` 对应的节点插入到 `oldStartIdx` 对应的 vnode 之前；并且，这里会将 **旧节点数组中 `idxInOld` 对应的元素设置为 `undefined`**
+   - 不同节点，则调用 `createElm` 重新创建一个新的 dom 节点并将 **新的 vnode 插入到对应的位置**
+2. 没有找到对应的索引，则直接 `createElm` 创建新的 dom 节点并将新的 vnode 插入到对应位置
+
+> 注：这里 **只有找到了旧节点并且新旧节点一样才会将旧节点数组中 `idxInOld` 中的元素置为 `undefined`**。
+
+最后，会将 **新节点数组的 起始索引 向后移动**。
+
+```js
+if (isUndef(oldKeyToIdx)) {
+    oldKeyToIdx = createKeyToOldIdx(oldCh, oldStartIdx, oldEndIdx)
+  }
+  idxInOld = isDef(newStartVnode.key)
+    ? oldKeyToIdx[newStartVnode.key]
+    : findIdxInOld(newStartVnode, oldCh, oldStartIdx, oldEndIdx)
+  if (isUndef(idxInOld)) {
+    // New element
+    createElm(
+      newStartVnode,
+      insertedVnodeQueue,
+      parentElm,
+      oldStartVnode.elm,
+      false,
+      newCh,
+      newStartIdx
+    )
+  } else {
+    vnodeToMove = oldCh[idxInOld]
+    if (sameVnode(vnodeToMove, newStartVnode)) {
+      patchVnode(
+        vnodeToMove,
+        newStartVnode,
+        insertedVnodeQueue,
+        newCh,
+        newStartIdx
+      )
+      oldCh[idxInOld] = undefined
+      canMove &&
+        nodeOps.insertBefore(
+          parentElm,
+          vnodeToMove.elm,
+          oldStartVnode.elm
+        )
+    } else {
+      // same key but different element. treat as new element
+      createElm(
+        newStartVnode,
+        insertedVnodeQueue,
+        parentElm,
+        oldStartVnode.elm,
+        false,
+        newCh,
+        newStartIdx
+      )
+    }
+  }
+  newStartVnode = newCh[++newStartIdx]
+}
+```
+
+大致逻辑如下图：
+
+![image-20230316213015252](./docs-images/diff%20%E5%9B%BE%E8%A7%A3/image-20230316213015252.png)
+
+## 剩余未比较元素处理
+
+经过上面的处理之后，根据判断条件也不难看出，**遍历结束之后 新旧节点数组都刚好没有剩余元素** 是很难出现的，**当且仅当遍历过程中每次新头尾节点总能和旧头尾节点中总能有两个新旧节点相同时才会发生**，只要有一个节点发生改变或者顺序发生大幅调整，最后 **都会有一个节点数组起始索引和末尾索引无法闭合**。
+
+那么此时就需要对剩余元素进行处理：
+
+- 旧节点数组遍历结束、新节点数组仍有剩余，则遍历新节点数组剩余数据，分别创建节点并插入到旧末尾索引对应节点之前
+- 新节点数组遍历结束、旧节点数组仍有剩余，则遍历旧节点数组剩余数据，分别从节点数组和 dom 树中移除
+
+即：
+
+![image-20230316214140749](./docs-images/diff%20%E5%9B%BE%E8%A7%A3/image-20230316214140749.png)
+
+## 小节
+
+Vue 2 的 diff 算法相对于简单 diff 算法来说，通过 **双端对比与生成索引 map 两种方式** 减少了简单算法中的多次循环操作，新旧数组均只需要进行一次遍历即可将所有节点进行对比。
+
+其中双端对比会分别进行四次对比和移动，性能不算最优解，所以 Vue 3 中引入了 **最长递增子序列** 的方式来 **替代双端对比**，而其余部分则依然通过转为索引map 的形式利用空间扩展来减少时间复杂度，从而更高的提升计算性能。
+
+当然本文的图中没有给出 vnode 对应的 elm 真实 dom 节点，两者的移动关系可能会给大家带来误解，建议配合 《Vue.js 设计与实现》一起阅读。
+
