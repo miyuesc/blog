@@ -41,7 +41,7 @@ createApp(App).mount('#app')
 
 可见，**`createApp` 是一个接收 Vue 组件并返回一个具有 `mount` 方法的对象**。
 
-## 进入 createApp
+### 进入 createApp
 
 通过 Ctrl 加左键，可以很快的进入到 Vue 中 `createApp` 对应的类型声明文件中，此时我们可以留意一下这个声明文件对应的目录是 `@vue/runtime-dom/dist/runtime-dom.d.ts`，由目录也可以看出这个声明文件是自动生成的，所以如果要查看源码的话，还是得去官方仓库查看原始代码。
 
@@ -84,7 +84,7 @@ export const createApp = ((...args) => {
 
 进入 `ensureRenderer` 方法，发现他也只是调用了 `createRenderer`。
 
-## createRenderer 创建渲染器
+### createRenderer 创建渲染器
 
 顾名思义，这个方法就是创建一个用来渲染的 `renderer` 渲染器实例。
 
@@ -111,7 +111,7 @@ function ensureRenderer() {
 
 而这里的 `createRenderer` 方法位于 `packages\runtime-core\src\renderer.ts` 中，通过 `baseCreateRenderer` 来创建渲染器。
 
-## baseCreateRenderer
+### baseCreateRenderer
 
 整个 `baseCreateRenderer` 方法的实现部分差不多有两千行，除了创建渲染器的逻辑之外，还 **定义了一系列与更新和渲染相关的方法，其中就包括我们的 `diff` 算法，也就是 `patch` 函数**。不过目前我们的主要目的是研究 Vue 项目的初始化，这里先省略 `patch` 相关的部分。
 
@@ -161,3 +161,154 @@ function baseCreateRenderer(
 ```
 
 当然，由于我们此时 **不是服务端渲染**，所以 `createHydrationFns` 参数没有值，`hydrate` 是 `undefined`；而 `render` 作为渲染方法，主要负责更新和卸载。
+
+`render` 函数接收三个参数：`vnode` 虚拟节点树、`container` 组件实例，`isSvg` 是否是 svg 标签节点。内部逻辑也很简单，如果 `vnode` 是空，说明更新后的内容是清空挂载元素，所以直接执行卸载操作；如果存在的话，则通过 `patch` 方法进行新旧 `vnode` 树的对比和更新，然后执行相应的副作用函数队列，最后把传入的 `vnode` 更新到实例的 `_vnode` 属性上作为下次对比的旧节点数据。
+
+言归正传，让我们进入 `createAppAPI` 来一探究竟吧~
+
+### createAppAPI
+
+由上文可以知道，`createAppAPI` 肯定是返回的一个函数，并且这个返回的函数是一个用来创建 Vue 单页应用根实例的方法。
+
+那么先上源码：
+
+```typescript
+let uid = 0
+
+export function createAppAPI<HostElement>(
+  render: RootRenderFunction<HostElement>,
+  hydrate?: RootHydrateFunction
+): CreateAppFunction<HostElement> {
+  return function createApp(rootComponent, rootProps = null) {
+    if (!isFunction(rootComponent)) {
+      rootComponent = extend({}, rootComponent)
+    }
+
+    if (rootProps != null && !isObject(rootProps)) {
+      __DEV__ && warn(`root props passed to app.mount() must be an object.`)
+      rootProps = null
+    }
+
+    const context = createAppContext()
+    const installedPlugins = new Set()
+
+    let isMounted = false
+
+    const app: App = (context.app = {
+      _uid: uid++,
+      _component: rootComponent as ConcreteComponent,
+      _props: rootProps,
+      _container: null,
+      _context: context,
+      _instance: null,
+
+      version,
+
+      get config() {
+        return context.config
+      },
+
+      set config(v) {},
+
+      use(plugin: Plugin, ...options: any[]) {
+        if (installedPlugins.has(plugin)) {
+          __DEV__ && warn(`Plugin has already been applied to target app.`)
+        } else if (plugin && isFunction(plugin.install)) {
+          installedPlugins.add(plugin)
+          plugin.install(app, ...options)
+        } else if (isFunction(plugin)) {
+          installedPlugins.add(plugin)
+          plugin(app, ...options)
+        }
+        return app
+      },
+
+      mixin(mixin: ComponentOptions) {
+        if (__FEATURE_OPTIONS_API__) {
+          if (!context.mixins.includes(mixin)) {
+            context.mixins.push(mixin)
+          }
+        }
+        return app
+      },
+
+      component(name: string, component?: Component): any {
+        if (!component) {
+          return context.components[name]
+        }
+        context.components[name] = component
+        return app
+      },
+
+      directive(name: string, directive?: Directive) {
+        if (!directive) {
+          return context.directives[name] as any
+        }
+        context.directives[name] = directive
+        return app
+      },
+
+      mount(rootContainer: HostElement, isHydrate?: boolean, isSVG?: boolean): any {
+        if (!isMounted) {
+          const vnode = createVNode(rootComponent as ConcreteComponent, rootProps)
+          vnode.appContext = context
+
+          if (isHydrate && hydrate) {
+            hydrate(vnode as VNode<Node, Element>, rootContainer as any)
+          } else {
+            render(vnode, rootContainer, isSVG)
+          }
+          isMounted = true
+          app._container = rootContainer
+          ;(rootContainer as any).__vue_app__ = app
+
+          return getExposeProxy(vnode.component!) || vnode.component!.proxy
+        }
+      },
+
+      unmount() {
+        if (isMounted) {
+          render(null, app._container)
+          delete app._container.__vue_app__
+        }
+      },
+
+      provide(key, value) {
+        context.provides[key as string | symbol] = value
+        return app
+      }
+    })
+
+    return app
+  }
+}
+```
+
+省略掉部分开发环境的错误提示逻辑之后，只剩下一百行左右的代码。
+
+> 这里建议结合该文件上面的 `AppContext` 与 `App` 两个类型定义。
+
+`createAppContext` 方法返回一个 `AppContext` 类型的对象，该对象包含了 `app`、`components`、`provides` 等多个属性，并且还有一个兼容 Vue 2 的 `mixins` 数组。
+
+其实这个对象的格式与 Vue 2 构造函数最初生成的 app 实例属性基本一致了。
+
+然后，则是声明一个 `Set` 变量 `installedPlugins`，用来 **确保重复安装插件时不会多次安装**。
+
+最后，就是定义并返回 **根实例对象 `app`**。
+
+> 不过 `app` 与 `context` 两个对象之间存在互相引用，方便在开发过程中 **调用公共方法和模板解析等**。
+>
+> 并且也提供了 `component(), directive(), use()` 等方法，下文会在对比部分进行解释
+
+**与上文的 `进入 createApp` 相对应的是，这里的 `app` 实例默认已经定义了一个 `mount` 方法**。但是这里的 `mount` 方法比较简陋，**只是在 `isMounted` 为 `false`，也就是还未首次挂载的情况下，通过传入的 `render` 或者 `hydrate` 方法进行渲染**，修改挂载状态，最后会创建一个根组件的 `exposed` 暴露对象的 `proxy` 代理。
+
+## 与 Vue 2 的对比
+
+### 相似
+
+在使用 Vue 2 时，我们的所有 **公共资源** 一般都是直接通过 `Vue.proptotype.xxx = xxx` 来将其添加到 Vue 的原型链上，所以后面的 **所有 Vue 实例都可以直接通过 `this.xxx` 对其进行访问**，例如 `axios` 的使用。
+
+而在 Vue 3 中，挂载公共资源的方法变成了使用 `app.config.globalProperties.xxx = xxx`，在组件开发中也可以通过 `this.xxx` 进行访问。
+
+> 这里的 `this.xxx` 指的是使用 `options API` 方式进行开发的组件，如果是使用的 `setup` 模式，
+
