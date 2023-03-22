@@ -304,6 +304,8 @@ export function createAppAPI<HostElement>(
 
 ## 与 Vue 2 的对比
 
+Vue 3 与 Vue 2 在响应式的实现上已经做了很多改变，也在之前的文章中简单介绍过，所以这里单纯讨论一下应用的最初创建和公共资源处理。
+
 ### 相似
 
 在使用 Vue 2 时，我们的所有 **公共资源** 一般都是直接通过 `Vue.proptotype.xxx = xxx` 来将其添加到 Vue 的原型链上，所以后面的 **所有 Vue 实例都可以直接通过 `this.xxx` 对其进行访问**，例如 `axios` 的使用。
@@ -312,12 +314,19 @@ export function createAppAPI<HostElement>(
 
 > 这里的 `this.xxx` 指的是使用 `options API` 方式进行开发的组件，如果是使用的 `setup` 模式，则需要通过 `getCurrentInstance` 方法读取当前组件实例来使用，但是这个 API 在最近的版本中已经被废弃，所以大家也可以先思考一下在该方法被废弃之后组合式API开发的组件如何在 `setup` 函数中使用自定义属性。
 
-在 Vue 2 中，提供了基础的 `use, directive, component` 等方法用来注册 **全局资源**，只是与 `Vue.prototype` 方式存在细微区别：**通过这些方式注册的全局资源不会再往原型上添加新的属性**。
+在 Vue 2 中，提供了基础的 `use, directive, component` 等方法用来注册 **全局资源**，只是与 `Vue.prototype` 方式存在细微区别：**通过这些方式注册的应用公共资源不会再往原型上添加新的属性**。
 
-Vue 2 的这几个方法，都是在 `initGlobalAPI` 方法中去定义的，而 Vue 3 中则是变成在 `createAppAPI` 阶段直接往对象上面添加这些方法，并且它们的 **作用都是一样的，用来注册全局内容或者获取已注册内容**
+Vue 2 的这几个方法，都是在 `initGlobalAPI` 方法中去定义的，而 Vue 3 中则是变成在 `createAppAPI` 阶段直接往对象上面添加这些方法，并且它们的 **作用都是一样的，用来注册公共内容或者获取已注册内容**。
 
 ### 区别
 
 Vue 3 与 Vue 2 的相同 API 设计，估计也是为了不让开发者有太大的割裂感（我猜的~），但是 Vue 2 和 Vue 3 看起来在内部的设计上已经发生了很大的改变，从以前的原型链方式改成了直接定义对象。
 
-以 `component` 方法为例，在 Vue 2 中，该方法是 **Vue 构造函数的一个静态方法**
+以 `component` 方法为例，在 Vue 2 中，该方法是 **Vue 构造函数的一个静态方法**，注册全局组件时会将新组件 **注册发哦 Vue 构造函数的静态属性 `options` 下，以 `options.component[component.name]: component`** 的形式存在。
+
+而在 Vue 3 中，则是通过 `app.component` 来注册，会将新注册的组件保存到 `app` 关联的 `context` 中，保存为 `context.components[name]：component`。
+
+上文提到 `createApp` 会返回一个新的 `app` 对象，用来作为应用实例；每次调用 `createApp` 创建的应用都是独立的，互不影响。而 Vue 2 的注册形式则是直接修改 `Vue` 构造函数原型链，以后创建的应用都会具有相同的公共内容。
+
+由此看来，Vue 3 中使用 `app.use` 等方法注册的 **是单个应用级的公共内容**，而 Vue 2 则是注册的 **整个工程层面的公共内容**，会应用所有的应用实例。
+
