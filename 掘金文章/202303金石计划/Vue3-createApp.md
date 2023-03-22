@@ -310,5 +310,14 @@ export function createAppAPI<HostElement>(
 
 而在 Vue 3 中，挂载公共资源的方法变成了使用 `app.config.globalProperties.xxx = xxx`，在组件开发中也可以通过 `this.xxx` 进行访问。
 
-> 这里的 `this.xxx` 指的是使用 `options API` 方式进行开发的组件，如果是使用的 `setup` 模式，
+> 这里的 `this.xxx` 指的是使用 `options API` 方式进行开发的组件，如果是使用的 `setup` 模式，则需要通过 `getCurrentInstance` 方法读取当前组件实例来使用，但是这个 API 在最近的版本中已经被废弃，所以大家也可以先思考一下在该方法被废弃之后组合式API开发的组件如何在 `setup` 函数中使用自定义属性。
 
+在 Vue 2 中，提供了基础的 `use, directive, component` 等方法用来注册 **全局资源**，只是与 `Vue.prototype` 方式存在细微区别：**通过这些方式注册的全局资源不会再往原型上添加新的属性**。
+
+Vue 2 的这几个方法，都是在 `initGlobalAPI` 方法中去定义的，而 Vue 3 中则是变成在 `createAppAPI` 阶段直接往对象上面添加这些方法，并且它们的 **作用都是一样的，用来注册全局内容或者获取已注册内容**
+
+### 区别
+
+Vue 3 与 Vue 2 的相同 API 设计，估计也是为了不让开发者有太大的割裂感（我猜的~），但是 Vue 2 和 Vue 3 看起来在内部的设计上已经发生了很大的改变，从以前的原型链方式改成了直接定义对象。
+
+以 `component` 方法为例，在 Vue 2 中，该方法是 **Vue 构造函数的一个静态方法**
