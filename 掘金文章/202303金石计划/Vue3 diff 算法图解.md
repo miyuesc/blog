@@ -32,7 +32,7 @@
 
 而 `render` 函数内部则是根据是否有新的 `VNode` 对象来确认是 **挂载/更新** 还是 **卸载 dom 节点** —— 如果有新的 `VNode` 对象，则调用 `patch` 进行 `VNode` 的解析与渲染；否则调用 `unmount` 进行卸载。
 
-## patch 函数 - VNode 节点的类型处理
+## patch 函数 - VNode 节点的分类处理
 
 在 Vue 项目的开发过程中，我们都知道 **组件与 HTML 元素都是通过标签在模板中使用的**，并且除了元素与组件之外，可能还有注释节点等内容。所以在解析的时候也需要 **根据不同的节点类型进行分类处理**。
 
@@ -50,9 +50,161 @@
 
 ![image-20230327170534619](./docs-images/Vue3%20diff%20%E7%AE%97%E6%B3%95%E5%9B%BE%E8%A7%A3/image-20230327170534619.png)
 
+## processFunctions 节点处理
 
+在 `patch` 过程中根据不同的 `VNode.type` 进行处理之后，分别会调用不同的函数来进行虚拟节点的实际处理与 dom 更新。其中有类似文本与注释这样的简单节点，也有具有多个子元素或者动态组件等这样的复杂标签，那么从易到难，先从简单的标签说起。
 
+### processText 与 processCommentNode
 
+```js
+const processText = (oldVnode, newVnode, container, anchor) => {
+  if(!oldVnode) {
+    hostInsert(newVnode.el = hostCreateText(newVnode.children), container, anchor)
+  } else {
+    const el = (newVnode.el = newVnode.el!)
+    if (newVnode.children !== oldVnode.children) {
+      hostSetText(el, newVnode.children)
+    }
+  }
+}
+const processCommentNode = (oldVnode, newVnode, container, anchor) => {
+  if(!oldVnode) {
+    hostInsert(newVnode.el = hostCreateComment(newVnode.children), container, anchor)
+  } else {
+    newVnode.el = oldVnode.el
+  }
+}
+```
 
+纯文本节点很好理解，不存在旧内容时就在父级节点（`container`）中插入节点的文本内容，存在旧节点则首先比较值是否相等，不等就更新。
 
+而注释节点与纯文本不同的是，在更新的时候会直接更新 `el` 属性。
 
+### mountStaticNode 挂载静态节点
+
+如果是 **开发环境**，内容更新时还会用 `patchStaticNode` 来进行更新，但是 **生产环境下只会在原节点被销毁之后才会进行挂载**，也就是在 Vue 3 中提到的 **静态提升**，用来进行性能优化。
+
+非开发环境下，只有以下逻辑：
+
+```js
+case Static:
+  if (oldVnode == null) {
+    mountStaticNode(newVnode, container, anchor, isSVG)
+  }
+
+// ...
+
+const mountStaticNode = (n2, container, anchor, isSVG) => {
+  [n2.el, n2.anchor] = hostInsertStaticContent!(
+    n2.children,
+    container,
+    anchor,
+    isSVG,
+    n2.el,
+    n2.anchor
+  )
+}
+```
+
+即直接将这个节点的内容插入到父级元素的指定位置下。
+
+> 根据官方给出的 demo，大部分 `template` 中的内容都会编译为 `StaticNode`，例如：
+>
+> ![image-20230327205649220](./docs-images/Vue3%20diff%20%E7%AE%97%E6%B3%95%E5%9B%BE%E8%A7%A3/image-20230327205649220.png)
+
+### processFragment 多节点处理
+
+在 Vue 2 中，每个单文件组件下只能有一个根节点，而 Vue 3 中做了改进，我们可以在单个组件的模板中直接添加多个根节点标签（jsx 写法依然只能有一个根节点，因为需要符合 jsx 规范）。
+
+在我们通过 `create-vite` 脚手架创建的项目中，`App.vue` 就是一个多根节点组件，此时就会进入到该函数逻辑中。
+
+![image-20230327231249151](./docs-images/Vue3%20diff%20%E7%AE%97%E6%B3%95%E5%9B%BE%E8%A7%A3/image-20230327231249151.png)
+
+#### 1. 首次渲染
+
+**多根节点在首次渲染时逻辑较为简单**，大致如下：
+
+```js
+const processFragment = (n1, n2, container, anchor, parentComponent, parentSuspense, isSVG,
+  slotScopeIds, optimized) => {
+  const fragmentStartAnchor = (n2.el = n1 ? n1.el : hostCreateText(''));
+  const fragmentEndAnchor = (n2.anchor = n1 ? n1.anchor : hostCreateText(''));
+  let {
+      patchFlag,
+      dynamicChildren,
+      slotScopeIds: fragmentSlotScopeIds
+  } = n2;
+  if (fragmentSlotScopeIds) {
+      slotScopeIds = slotScopeIds ?
+          slotScopeIds.concat(fragmentSlotScopeIds) :
+          fragmentSlotScopeIds;
+  }
+  if (n1 == null) {
+      hostInsert(fragmentStartAnchor, container, anchor);
+      hostInsert(fragmentEndAnchor, container, anchor);
+      mountChildren(n2.children, container, fragmentEndAnchor, parentComponent, parentSuspense,
+          isSVG, slotScopeIds, optimized);
+  }
+}
+```
+
+首次渲染与更新都有共同逻辑，即 **设置多根节点组件的开始与终止锚点，然后将组件的每个根节点按顺序向中间插入**。
+
+因为 `App.vue` 中的内容方便解析，我们新增一个多根组件 `FragmentOne`，内容如下：
+
+```html
+<template>
+  <div class="fragment-1">
+    <h1>{{ name }} Page</h1>
+  </div>
+  <div class="fragment-2">
+    <h1>Fragment Page</h1>
+  </div>
+  <div class="fragment-3">
+    <h1>Fragment Page</h1>
+  </div>
+</template>
+
+<script lang="ts" setup>
+import {ref} from 'vue'
+const name = ref<string | undefined>('FragmentOne')
+</script>
+```
+
+当这个组件被解析到时，它会被编译成以下内容：
+
+![image-20230327232159199](./docs-images/Vue3%20diff%20%E7%AE%97%E6%B3%95%E5%9B%BE%E8%A7%A3/image-20230327232159199-1679930521427-1.png)
+
+其中 `children` 数组中就是每一个根节点，然后在处理锚点时，因为是首次渲染，两个锚点会直接设置为两个空文本节点：
+
+![image-20230327232404236](./docs-images/Vue3%20diff%20%E7%AE%97%E6%B3%95%E5%9B%BE%E8%A7%A3/image-20230327232404236.png)
+
+最后，会通过 `mountChildren` 方法遍历 `children` 数组，依次执行 `patch()` 处理每一个子元素。
+
+#### 2. 派发更新
+
+多根组件的更新相比首次挂载要 **复杂很多**，会根据 **所有根节点的稳定性** 来分开处理。
+
+> 这里的稳定性指的是每个节点是否有 `key`，顺序是否不变等；当是稳定节点时，`patchFlag` 的值等于 64
+
+大致代码如下：
+
+```js
+if (patchFlag > 0 && patchFlag & 64 && dynamicChildren && n1.dynamicChildren) {
+    patchBlockChildren(n1.dynamicChildren, dynamicChildren, container, parentComponent, parentSuspense, isSVG, slotScopeIds);
+    if (parentComponent && parentComponent.type.__hmrId) {
+        traverseStaticChildren(n1, n2);
+    } else if (n2.key != null || (parentComponent && n2 === parentComponent.subTree)) {
+        traverseStaticChildren(n1, n2, true);
+    }
+} else {
+    patchChildren(n1, n2, container, fragmentEndAnchor, parentComponent, parentSuspense, isSVG, slotScopeIds, optimized);
+}
+```
+
+这里有两种情况：
+
+1. 是稳定节点但是具有动态节点（`v-for`循环等），通过 `patchBlockChildren` 单独处理动态节点；然后通过 `traverseStaticChildren` 进行所有子节点的 `el` 属性处理
+2. 不是稳定节点，则通过 `patchChildren` 来对比和更新每个子节点
+
+> `patchChildren` 最终就会进入 Vue 3 的核心 `diff` 过程 —— `patchKeyedChildren`。
