@@ -1,4 +1,4 @@
-# Vue 3 diff 算法图解
+# Vue 3 渲染过程与 diff 图解
 
 ## 前言
 
@@ -50,7 +50,7 @@
 
 ![image-20230327170534619](./docs-images/Vue3%20diff%20%E7%AE%97%E6%B3%95%E5%9B%BE%E8%A7%A3/image-20230327170534619.png)
 
-## processFunctions 节点处理
+## processFunctions 节点实际处理过程
 
 在 `patch` 过程中根据不同的 `VNode.type` 进行处理之后，分别会调用不同的函数来进行虚拟节点的实际处理与 dom 更新。其中有类似文本与注释这样的简单节点，也有具有多个子元素或者动态组件等这样的复杂标签，那么从易到难，先从简单的标签说起。
 
@@ -185,7 +185,7 @@ const name = ref<string | undefined>('FragmentOne')
 
 多根组件的更新相比首次挂载要 **复杂很多**，会根据 **所有根节点的稳定性** 来分开处理。
 
-> 这里的稳定性指的是每个节点是否有 `key`，顺序是否不变等；当是稳定节点时，`patchFlag` 的值等于 64
+> 这里的稳定性指的是每个节点是否有 `key`，顺序是否不变等，一般情况下是 **非直接 `v-for` 创建的多根节点，顺序与个数都不会改变，但是每个节点内部可能会发生改变**，例如 `create-vite` 创建的项目中的 `App.vue`；当是稳定节点时，`patchFlag` 的值等于 64
 
 大致代码如下：
 
@@ -208,3 +208,59 @@ if (patchFlag > 0 && patchFlag & 64 && dynamicChildren && n1.dynamicChildren) {
 2. 不是稳定节点，则通过 `patchChildren` 来对比和更新每个子节点
 
 > `patchChildren` 最终就会进入 Vue 3 的核心 `diff` 过程 —— `patchKeyedChildren`。
+
+![image-20230328160349044](./docs-images/Vue3%20diff%20%E7%AE%97%E6%B3%95%E5%9B%BE%E8%A7%A3/image-20230328160349044.png)
+
+### Teleport.process & Suspense.process
+
+在处理 **普通dom元素 `Element` 与Vue组件 `Component`** 的渲染之前，我们先来了解一下 Vue 3 新增的 `teleport` 传送组件和 `suspense` 异步组件吧。
+
+在上面的 `patch` 函数中，`Teleport` 和 `Suspense` 在 `createVNode` 阶段，会生成 **相对特殊的 `VNode` 对象**，在 `process` 过程中，直接调用 `Vnode` 的 `process()` 方法。
+
+> 这两个方法都接收一个 `internals` 属性，包含 `renderer.ts` 中定义的一系列挂载与更新的方法
+>
+> ```js
+> const internals = {
+>   p: patch,
+>   um: unmount,
+>   m: move,
+>   r: remove,
+>   mt: mountComponent,
+>   mc: mountChildren,
+>   pc: patchChildren,
+>   pbc: patchBlockChildren,
+>   n: getNextHostNode,
+>   o: options
+> }
+> ```
+>
+> 
+
+#### 1. Teleport
+
+作为新增组件，它的作用是 **将组件内部的内容挂载到指定元素下**，所以它在挂载和更新时需要单独处理。
+
+而内部的逻辑与 `fragment` 有点儿类似：
+
+1. **首次渲染**
+
+与 `fragment` 一样需要先设置锚点，然后根据 `to` 属性查找指定挂载元素 `target`。
+
+如果 `target` 存在则将锚点插入进去，然后根据 `disabled` 配置来确认挂载对象，通过 `mountChildren` 将内容插入进目标元素中。
+
+2. **派发更新**
+
+在更新时，一样会读取 `disabled` 和 `to` 两个属性的配置，但是首先会与 `fragment` 一样根据内部的动态节点等进行子节点内容先进行更新。
+
+然后判断 `disabled` 和 `to` 是否有变化，如果有变化则会通过 `moveTeleport` 对组件内部的内容进行移动。
+
+最后通过 `updateCssVars` 更新 `data-v` 属性，处理 `css` 变量和作用域等。
+
+
+
+#### 2. Suspense
+
+Vue 3 文档中提示的是这是一项 **实验性功能**，用来批量管理异步组件树（感觉有点儿类似于 `Promise.all()`）。
+
+所以它的场景会有两种：加载中与加载结束。当加载结束后，会卸载 `pending` 状态的内容然后加载异步组件的结果。
+
