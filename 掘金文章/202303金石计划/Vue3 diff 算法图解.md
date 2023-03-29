@@ -217,24 +217,23 @@ if (patchFlag > 0 && patchFlag & 64 && dynamicChildren && n1.dynamicChildren) {
 
 在上面的 `patch` 函数中，`Teleport` 和 `Suspense` 在 `createVNode` 阶段，会生成 **相对特殊的 `VNode` 对象**，在 `process` 过程中，直接调用 `Vnode` 的 `process()` 方法。
 
-> 这两个方法都接收一个 `internals` 属性，包含 `renderer.ts` 中定义的一系列挂载与更新的方法
+> 这两个方法都接收一个 `internals` 参数，包含 `renderer.ts` 中定义的一系列挂载与更新的方法
 >
 > ```js
 > const internals = {
->   p: patch,
->   um: unmount,
->   m: move,
->   r: remove,
->   mt: mountComponent,
->   mc: mountChildren,
->   pc: patchChildren,
->   pbc: patchBlockChildren,
->   n: getNextHostNode,
->   o: options
+>     p: patch,
+>     um: unmount,
+>     m: move,
+>     r: remove,
+>     mt: mountComponent,
+>     mc: mountChildren,
+>     pc: patchChildren,
+>     pbc: patchBlockChildren,
+>     n: getNextHostNode,
+>     o: options
 > }
 > ```
 >
-> 
 
 #### 1. Teleport
 
@@ -262,5 +261,13 @@ if (patchFlag > 0 && patchFlag & 64 && dynamicChildren && n1.dynamicChildren) {
 
 Vue 3 文档中提示的是这是一项 **实验性功能**，用来批量管理异步组件树（感觉有点儿类似于 `Promise.all()`）。
 
-所以它的场景会有两种：加载中与加载结束。当加载结束后，会卸载 `pending` 状态的内容然后加载异步组件的结果。
+所以它的场景会有两种：加载中与加载结束。`Suspense` 提供两个插槽：`default` 和 `fallback`，其中 `fallback` 用来显示加载中状态，当加载结束后，会卸载 `pending` 状态的 `fallback` 内容然后加载异步组件的结果（也就是 `default` 插槽内的内容）。并且只有当 `default` 插槽内的 **根节点发生改变时**，才会重新触发加载中状态。
+
+所以它的处理过程就是 **首次解析时会重新创建 `default` 与 `fallback` 两个插槽中的节点信息，然后根据 `default` 插槽中的内容加载状态，来确定当前是否需要更新，并且会抛出相应的事件**。
+
+> 这个看起来有点儿复杂，以后再详细的解析吧~
+
+
+
+
 
