@@ -255,7 +255,11 @@ if (patchFlag > 0 && patchFlag & 64 && dynamicChildren && n1.dynamicChildren) {
 
 最后通过 `updateCssVars` 更新 `data-v` 属性，处理 `css` 变量和作用域等。
 
+大致过程如下：
 
+![image-20230329164519592](./docs-images/Vue3%20diff%20%E7%AE%97%E6%B3%95%E5%9B%BE%E8%A7%A3/image-20230329164519592.png)
+
+> 图中对 `patchChildren` 进行了省略，与上面 `processFragment` 的方法是一样的。
 
 #### 2. Suspense
 
