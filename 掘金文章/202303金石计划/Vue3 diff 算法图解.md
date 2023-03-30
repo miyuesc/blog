@@ -271,7 +271,31 @@ Vue 3 文档中提示的是这是一项 **实验性功能**，用来批量管理
 
 > 这个看起来有点儿复杂，以后再详细的解析吧~
 
+### processComponent 组件处理
 
+对 `Component` 自定义 Vue 组件的处理，同样会区分 `n1 == null` 的情况来确认是挂载还是更新；Vue 中内置的 `KeepAlive、Translation`  等组件也一样会在这里进行处理。
 
+如果是 `KeepAlive` 组件中包装的组件，会设置标志位 `shapeFlag` 为 `ShapeFlags.COMPONENT_KEPT_ALIVE（1 << 9 = 512）`，因为 `KeepAlive` 中的组件会被缓存，如果再次切换的话，需要恢复缓存状态，所以在组件重新 **挂载** 时会执行另外的逻辑 `parent.ctx.activate()`；非 `KeepAlive` 包裹的组件则直接调用 `mountComponent` 执行组件挂载。
 
+而组件 **更新** 时，则只需要直接调用 `updateComponent` 更新组件内容。
+
+在 `mountComponent` 过程中，会对该组件生成的 `VNode` 进行调整，通过 `createComponentInstance` 方法创建一个 **组件实例** 更新到 `VNode` 对象的 `component` 属性上，最后通过 `setupRenderEffect` 设置一个 `renderEffect`（即将组件的渲染作为副作用函数），进行组件模板中的数据依赖收集，并执行一次副作用函数实现组件的首次渲染（数据更新时就会触发这个 `renderEffect` 再次执行，更新 dom，组件实例一样有一个  `isMounted` 属性用来区分是首次渲染还是更新）。
+
+例如我们上面的例子，有一个多根组件 `FragmentOne`，在引入到 `App.vue` 中进行解析的时候，会对 `FragmentOne` 创建一个 `VNode` 对象，如下图：
+
+![image-20230330141119632](./docs-images/Vue3%20diff%20%E7%AE%97%E6%B3%95%E5%9B%BE%E8%A7%A3/image-20230330141119632.png)
+
+> 这个组件因为是直接使用的，所以会直接调用 `mountComponent` 方法。
+
+此时会调用 `createComponentInstance` 为 `VNode` 对象创建一个组件实例：
+
+![image-20230330141457207](./docs-images/Vue3%20diff%20%E7%AE%97%E6%B3%95%E5%9B%BE%E8%A7%A3/image-20230330141457207.png)
+
+然后通过 `setupRenderEffect` 创建渲染函数副作用。在这个副作用函数中，它对应的执行函数就是组件的解析与更新函数：`componentUpdateFn`。在 **非SSR** 项目中，会通过 `renderComponentRoot(instance)` 对组件内容进行解析，得到一个组件内容对应的标准格式子元素 `VNode` 对象—— `subTree`，最后会通过 `patch` 对 `subTree` 进行解析和更新。
+
+> 当然首次挂载的过程中还会对一些属性进行处理，保证后续进行更新时能正常对比。
+
+而在更新阶段，**首先会通过 `shouldUpdateComponent` 比较新旧节点的信息（例如 `props` 参数、`slots` 插槽内容等是否改变）来确定是否需要对该组件进行全量更新**，如果都没改变则直接继承原来的 dom 节点和 `VNode` 对象。
+
+![image-20230330163221643](./docs-images/Vue3%20diff%20%E7%AE%97%E6%B3%95%E5%9B%BE%E8%A7%A3/image-20230330163221643.png)
 
