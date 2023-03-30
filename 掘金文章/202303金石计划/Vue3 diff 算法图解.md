@@ -299,3 +299,16 @@ Vue 3 文档中提示的是这是一项 **实验性功能**，用来批量管理
 
 ![image-20230330163221643](./docs-images/Vue3%20diff%20%E7%AE%97%E6%B3%95%E5%9B%BE%E8%A7%A3/image-20230330163221643.png)
 
+### processElement HTML元素处理
+
+在解析模板生成 `VNode` 的过程中，没有指定节点类型是默认都会设置 `shapeFlag` 为 `ShapeFlags.ELEMENT` （512），也就是原生的 HTML 节点类型；大部分时候，我们所说的 diff 算法核心部分也发生在这个过程中。
+
+与 `processComponent` 类似，`Element` 元素的处理主要也只区分 `oldVnode` （也就是方法中的 `n1`）是否为 `null`，如果是，则代表是首次渲染；如果不是，则代表是对这个节点进行更新。
+
+根据这两种情况，源码中分别定义了两个方法：`mountElement` 挂载节点、`patchElement` 更新节点。
+
+`mountElement` 的过程比较复杂，包含了根节点（这个元素节点）创建、内容（文本还是包含子节点）处理、样式和类名绑定、自定义指令、生命周期监听等。
+
+而 `patchElement` 的过程也同样复杂，除了与 `mount` 阶段一样需要处理样式类名绑定、自定义指令等内容之外，还要比较新旧节点内容进行 `patch` 相关更新函数的处理。
+
+![image-20230330180756383](./docs-images/Vue3%20diff%20%E7%AE%97%E6%B3%95%E5%9B%BE%E8%A7%A3/image-20230330180756383.png)
