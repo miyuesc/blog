@@ -50,7 +50,7 @@
 
 ![image-20230327170534619](./docs-images/Vue3%20diff%20%E7%AE%97%E6%B3%95%E5%9B%BE%E8%A7%A3/image-20230327170534619.png)
 
-## processFunctions 节点实际处理过程
+## processFunctions - 节点实际处理过程
 
 在 `patch` 过程中根据不同的 `VNode.type` 进行处理之后，分别会调用不同的函数来进行虚拟节点的实际处理与 dom 更新。其中有类似文本与注释这样的简单节点，也有具有多个子元素或者动态组件等这样的复杂标签，那么从易到难，先从简单的标签说起。
 
@@ -80,7 +80,7 @@ const processCommentNode = (oldVnode, newVnode, container, anchor) => {
 
 而注释节点与纯文本不同的是，在更新的时候会直接更新 `el` 属性。
 
-### mountStaticNode 挂载静态节点
+### mountStaticNode - 挂载静态节点
 
 如果是 **开发环境**，内容更新时还会用 `patchStaticNode` 来进行更新，但是 **生产环境下只会在原节点被销毁之后才会进行挂载**，也就是在 Vue 3 中提到的 **静态提升**，用来进行性能优化。
 
@@ -112,7 +112,7 @@ const mountStaticNode = (n2, container, anchor, isSVG) => {
 >
 > ![image-20230327205649220](./docs-images/Vue3%20diff%20%E7%AE%97%E6%B3%95%E5%9B%BE%E8%A7%A3/image-20230327205649220.png)
 
-### processFragment 多节点处理
+### processFragment - 多根节点处理
 
 在 Vue 2 中，每个单文件组件下只能有一个根节点，而 Vue 3 中做了改进，我们可以在单个组件的模板中直接添加多个根节点标签（jsx 写法依然只能有一个根节点，因为需要符合 jsx 规范）。
 
@@ -312,3 +312,70 @@ Vue 3 文档中提示的是这是一项 **实验性功能**，用来批量管理
 而 `patchElement` 的过程也同样复杂，除了与 `mount` 阶段一样需要处理样式类名绑定、自定义指令等内容之外，还要比较新旧节点内容进行 `patch` 相关更新函数的处理。
 
 ![image-20230330180756383](./docs-images/Vue3%20diff%20%E7%AE%97%E6%B3%95%E5%9B%BE%E8%A7%A3/image-20230330180756383.png)
+
+## patchChildren - 两种子节点 Diff 方式
+
+在上面的不同类型的 `VNode` 节点的处理过程中，自定义组件 `Component`、传送组件 `Teleport`、多根节点 `Fragment` 和 原始 HTML 节点 `Element` 在 `patch` 更新过程中，**在处理子节点时** 都有可能会调用 `patchChildren` 来处理子节点的更新。
+
+> 子节点更新的处理方式有两种：`patchBlockChildren` 和 `patchChildren`，其中 `patchBlockChildren` 一般是在 **动态节点 `dynamicChildren`** 确定时调用，内部会直接 **按照新的节点的动态子节点 `dynamicChildren` 数组的长度，遍历子节点数组并通过 `patch` 方法对比旧的子节点数组同位置元素**。
+>
+> 而 `patchChildren` 则是在节点不存在 `dynamicChildren` 时对所有子节点数组进行全量的对比更新。
+
+> *关于 `block` 和 `PatchFlags` 的相关内容，也可以查看 《Vue.js 设计与实现》一书的第十七章第一节：编译优化 - 动态节点收集与补丁标志*。
+
+在 `patchChildren` 过程中，会判断节点的 `patchFlag` 标志位，来确定 **子节点数组是否配置了 `key` 属性**。如果 **存在 key**，则会通过 `patchKeyedChildren` 对 **新旧所有子节点进行 `diff` 处理，详细对比可复用节点并调用 `patch` 进行节点的最小量更新**；而对于 **不存在 key** 的子节点数组，则调用 `patchUnkeyedChildren` 方法 **按照新旧子节点数组中的最小长度，遍历最小长度下 新旧节点同位置的元素调用 `patch` 方法进行对比，遍历结束后在处理剩余节点元素（新的挂载旧的移除）**。
+
+### patchUnkeyedChildren - 无 key 子节点处理
+
+上面说了 `patchUnkeyedChildren` 会按照新旧子节点数组的 **最小长度** 进行遍历，所以首先会获取他们的长度进行对比得到较小的那个 `length`：
+
+```js
+c1 = c1 || EMPTY_ARR
+c2 = c2 || EMPTY_ARR
+const oldLength = c1.length
+const newLength = c2.length
+const commonLength = Math.min(oldLength, newLength)
+```
+
+然后通过这个最小长度 `commonLength` 来进行遍历，处理 **新旧数组的同位置的子节点**：
+
+```js
+let i
+for (i = 0; i < commonLength; i++) {
+  const nextChild = (c2[i] = optimized
+    ? cloneIfMounted(c2[i] as VNode)
+    : normalizeVNode(c2[i]))
+  patch(c1[i], nextChild, container, ... )
+}
+```
+
+最后在处理剩余元素，移除旧的添加新的：
+
+```js
+if (oldLength > newLength) {
+  // remove old
+  unmountChildren(c1, ... , commonLength)
+} else {
+  // mount new
+  mountChildren(c2, ..., commonLength)
+}
+
+const unmountChildren = (children, ... , start = 0) => {
+  for (let i = start; i < children.length; i++) {
+    unmount(children[i], ...)
+  }
+}
+const mountChildren = (children, container, ... , start = 0) => {
+  for (let i = start; i < children.length; i++) {
+    const child = (children[i] = optimized
+      ? cloneIfMounted(children[i] as VNode)
+      : normalizeVNode(children[i]))
+    patch(null,child,container, ...)
+  }
+}
+```
+
+> 因为不存在 `key`，所以深入对比新旧节点的变化更加消耗性能，不如直接 **当做位置没有发生改变，直接更新同位置节点**。
+
+### patchKeyedChildren - 核心 diff 过程
+
