@@ -377,5 +377,258 @@ const mountChildren = (children, container, ... , start = 0) => {
 
 > 因为不存在 `key`，所以深入对比新旧节点的变化更加消耗性能，不如直接 **当做位置没有发生改变，直接更新同位置节点**。
 
-### patchKeyedChildren - 核心 diff 过程
+### patchKeyedChildren - 核心 Diff 过程
+
+当节点 **具有 `key` 属性时**，节点更新时就会进行我们常说的 diff 过程，核心也就是为了 **dom 节点复用**，把相同 `key` 属性的节点视为同一节点，根据属性的实际变化来更新具体的 dom 属性，以达到最少操作的目的。
+
+在 Vue 2 中，对于这种情况采用的是 **双端对比算法** 来完成 **新旧节点数组的全量对比**，**但是这种方法不是最快的**。
+
+Vue 3 在此基础上，借鉴了 `ivi` 和 `inferno` 两个框架所用到的 **快速 Diff 算法**，并在此基础上进行了扩展，得到了如今源码中使用的 `diff` 算法。
+
+因为源码比较长，我将过程简化后以两个字符串数组进行比较：
+
+```js
+const list = document.querySelector('#process');
+
+const isSameVNodeType = (n1, n2) => (n1 === n2);
+const unmount = (node) => {
+  console.log('unmount', node);
+};
+const patch = (n1, n2) => {
+  console.log('patch', n1, n2);
+};
+const move = (node, anchor) => {
+  console.log('move', node, 'anchor', anchor);
+};
+
+// https://en.wikipedia.org/wiki/Longest_increasing_subsequence
+function getSequence(arr) {
+  const p = arr.slice();
+  const result = [0];
+  let i;let j;let u;let v;let c;
+  const len = arr.length;
+  for (i = 0;i < len;i++) {
+    const arrI = arr[i];
+    if (arrI !== 0) {
+      j = result[result.length - 1];
+      if (arr[j] < arrI) {
+        p[i] = j;
+        result.push(i);
+        continue;
+      }
+      u = 0;
+      v = result.length - 1;
+      while (u < v) {
+        c = (u + v) >> 1;
+        if (arr[result[c]] < arrI) {
+          u = c + 1;
+        } else {
+          v = c;
+        }
+      }
+      if (arrI < arr[result[u]]) {
+        if (u > 0) {
+          p[i] = result[u - 1];
+        }
+        result[u] = i;
+      }
+    }
+  }
+  u = result.length;
+  v = result[u - 1];
+  while (u-- > 0) {
+    result[u] = v;
+    v = p[v];
+  }
+  return result;
+}
+
+
+// 正式开始
+// 定义新旧节点数据
+const c1 = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+const c2 = ['a', 'b', 'e', 'd', 'h', 'f', 'g'];
+
+// 设置初始数据
+let i = 0;
+const l2 = c2.length;
+let e1 = c1.length - 1; // prev ending index
+let e2 = l2 - 1; // next ending index
+
+// 1. sync from start
+while (i <= e1 && i <= e2) {
+  const n1 = c1[i];
+  const n2 = c2[i];
+  if (isSameVNodeType(n1, n2)) {
+    patch(n1, n2);
+  } else {
+    break;
+  }
+  i++;
+}
+
+// 2. sync from end
+while (i <= e1 && i <= e2) {
+  const n1 = c1[e1];
+  const n2 = c2[e2];
+  if (isSameVNodeType(n1, n2)) {
+    patch(n1, n2);
+  } else {
+    break;
+  }
+  e1--;
+  e2--;
+}
+
+// 3. common sequence + mount
+if (i > e1) {
+  if (i <= e2) {
+    const nextPos = e2 + 1;
+    while (i <= e2) {
+      patch(null, c2[i]);
+      i++;
+    }
+  }
+}
+
+// 4. common sequence + unmount
+else if (i > e2) {
+  while (i <= e1) {
+    unmount(c1[i]);
+    i++;
+  }
+}
+
+// 5. unknown sequence
+else {
+  const s1 = i; // prev starting index
+  const s2 = i; // next starting index
+
+  // 5.1 build key:index map for newChildren
+  const keyToNewIndexMap = new Map();
+  for (i = s2;i <= e2;i++) {
+    const nextChild = c2[i];
+    if (nextChild != null) {
+      keyToNewIndexMap.set(nextChild, i);
+    }
+  }
+
+  // 5.2 loop through old children left to be patched and try to patch
+  // matching nodes & remove nodes that are no longer present
+  let j;
+  let patched = 0;
+  const toBePatched = e2 - s2 + 1;
+  let moved = false;
+  let maxNewIndexSoFar = 0;
+  const newIndexToOldIndexMap = new Array(toBePatched);
+
+  for (i = 0;i < toBePatched;i++) {
+    newIndexToOldIndexMap[i] = 0;
+  }
+
+  for (i = s1;i <= e1;i++) {
+    const prevChild = c1[i];
+    if (patched >= toBePatched) {
+      // all new children have been patched so this can only be a removal
+      unmount(prevChild);
+      continue;
+    }
+
+    let newIndex;
+    if (prevChild != null) {
+      newIndex = keyToNewIndexMap.get(prevChild);
+    } else {
+      // key-less node, try to locate a key-less node of the same type
+      for (j = s2;j <= e2;j++) {
+        if (
+          newIndexToOldIndexMap[j - s2] === 0 &&
+            isSameVNodeType(prevChild, c2[j])
+        ) {
+          newIndex = j;
+          break;
+        }
+      }
+    }
+
+    if (newIndex === undefined) {
+      unmount(prevChild);
+    } else {
+      newIndexToOldIndexMap[newIndex - s2] = i + 1;
+      if (newIndex >= maxNewIndexSoFar) {
+        maxNewIndexSoFar = newIndex;
+      } else {
+        moved = true;
+      }
+      patch(prevChild, c2[newIndex]);
+      patched++;
+    }
+  }
+
+  // 5.3 move and mount
+  const increasingNewIndexSequence = moved ? getSequence(newIndexToOldIndexMap) : [];
+  j = increasingNewIndexSequence.length - 1;
+  for (i = toBePatched - 1;i >= 0;i--) {
+    const nextIndex = s2 + i;
+    const nextChild = c2[nextIndex];
+    const anchor = nextIndex + 1 < l2 ? c2[nextIndex + 1] : null;
+    if (newIndexToOldIndexMap[i] === 0) {
+      // mount new
+      patch(null, nextChild);
+    } else if (moved) {
+      if (j < 0 || i !== increasingNewIndexSequence[j]) {
+        // move(nextChild, container, anchor, MoveType.REORDER)
+        move(nextChild, anchor);
+      } else {
+        j--;
+      }
+    }
+  }
+}
+```
+
+> 这段代码可以直接在控制台运行
+
+假设我们有这样的节点变化：
+
+```
+旧节点：['a', 'b', 'c', 'd', 'e', 'f', 'g']
+
+新节点：['a', 'b', 'e', 'd', 'h', 'f', 'g']
+```
+
+经过的 diff 过程如下：
+
+![image-20230331161318471](./docs-images/Vue3%20diff%20%E7%AE%97%E6%B3%95%E5%9B%BE%E8%A7%A3/image-20230331161318471.png)
+
+其中可以分为以下几个大的步骤：
+
+1. **从头开始、同位置比较**，直到 **遇到 `key` 不一样的节点**（也就是第三位 `c` 和 `e`，此时 `i` = 2）
+2. **从尾开始、倒序同位置比较**，直到 **遇到 `key` 不一样的节点或者第一步的停止位 `i`**（也就是遇到倒数第三位 `e` 和 `h`，此时 `e1` 和 `e2` 都等于 4）
+3. 经过前两步之后，剩下的节点虽然有相同节点，但是顺序已经改变，所以需要重新处理。这里与 Vue 2 中的 **双端均不相同** 的情况有些类似的过程，都会将一个节点数组转为 `map` 形式然后遍历另一个数组进行匹配和更新。但是这里也一样有一些不同，我们在后面分析时进行详细说明。
+
+> 这里可以发现 **实际执行过程并没有完全匹配代码中的 5 种情况**，这是因为 **三和四这两种情况都是发生在前两步结束后已经有一个节点数组已经全部遍历完毕**。
+
+### 快速 Diff 算法
+
+在分析 diff 算法之前，先了解一下这个 **快速 diff 算法** 的“快速”主要是体现在哪个方面。
+
+根据《Vue.js 设计与实现》的说明：**快速 Diff 算法包含预处理步骤，这其实是借鉴了纯文本 Diff 算法的思路。在纯文本 Diff 算法中，存在对两段文本进行预处理的过程**。
+
+在这个过程中，会 **分别查找头部完全一致的内容与尾部完全一致的内容，将其排除后再比较剩余内容**。
+
+例如：
+
+![image-20230331165142312](./docs-images/Vue3%20diff%20%E7%AE%97%E6%B3%95%E5%9B%BE%E8%A7%A3/image-20230331165142312.png)
+
+两段文本中只需要更新的仅仅只有中间部分，需要将 `vue` 改为 `react`。
+
+*接下来，我们以这个例子进行整个 diff 过程的解析~*
+
+### 1. 从头查找最长相同 key 节点
+
+我们假设现在有这样的内容：
+
+![image-20230331170334019](./docs-images/Vue3%20diff%20%E7%AE%97%E6%B3%95%E5%9B%BE%E8%A7%A3/image-20230331170334019.png)
+
+它在第一步结束后，更新到了第四个节点
 
