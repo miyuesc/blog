@@ -848,21 +848,54 @@ for (i = s1;i <= e1;i++) {
 
 #### 5.3 新建节点与位置移动
 
-在这一步的开始，会判断 `5.2` 结束后的 `moved` 标识，判断是否需要进行移动判定；如果需要的话，会通过 `getSequence` 查找位置更新的最长递增子串。
+在这一步的开始，会判断 `5.2` 结束后的 `moved` 标识，判断是否需要进行移动判定；如果需要的话，会通过 `getSequence` 查找位置更新的最长递增子串的 **元素下标**。
 
 ```js
 const increasingNewIndexSequence = moved ? getSequence(newIndexToOldIndexMap) : [];
+j = increasingNewIndexSequence.length - 1;
 ```
 
 > 这里的 `newIndexToOldIndex` 记录了新节点剩余数组中，每个节点的在旧节点剩余数组中的位置下标，如果不存在记录则为 0。
 
 此时数据如下：
 
-![image-20230403132504919](./docs-images/Vue3%20diff%20%E7%AE%97%E6%B3%95%E5%9B%BE%E8%A7%A3/image-20230403132504919.png)
+![image-20230403132629995](./docs-images/Vue3%20diff%20%E7%AE%97%E6%B3%95%E5%9B%BE%E8%A7%A3/image-20230403132629995.png)
 
+> 这里的最长递增子串下标数组就是 `[1, 4, 9]`，对应的也就是 `newChildren[4], newChildren[6], newChildren[11]`，剩下的元素会根据这三个元素的位置进行插入。
 
+然后，对比新旧节点的索引进行移动或者新增：
 
+```js
+if (newIndexToOldIndexMap[i] === 0) {
+  patch(null, nextChild);
+} else if (moved) {
+  if (j < 0 || i !== increasingNewIndexSequence[j]) {
+    move(nextChild, anchor);
+  } else {
+    j--;
+  }
+}
+```
 
+整个过程大致为：
 
+1. 获取子节点在新 `VNode` 中的位置 `nextIndex` 和子节点 `VNode` 对象 `nextChild`。
 
+2. 获取子节点的后一个兄弟节点或父节点作为锚点 `anchor`。
+
+3. 如果新旧 `VNode` 中该子节点对应的旧节点的索引为 0，则表示该子节点在旧 `VNode` 中不存在，需要新建该节点并挂载到容器中。
+
+4. 如果该子节点需要移动，则根据增序列和当前遍历的位置 i 的关系来判断是否需要移动，如果需要移动，则调用 `move` 函数来移动该节点到正确的位置。
+
+![image-20230403142758157](./docs-images/Vue3%20diff%20%E7%AE%97%E6%B3%95%E5%9B%BE%E8%A7%A3/image-20230403142758157.png)
+
+## 小结
+
+到这里，Vue 3 的整个 **渲染和更新** 阶段的分析就基本上结束了。
+
+整个过程可能与我们没有了解源码之前的理解有很大出入，比如笔者以前就以为 **最长递增子串** 是在更新阶段都会进行的算法，或者在 5.3 阶段的实际过程与 Vue 2 中的逻辑是类似的。
+
+但是实际分析之后才会发现整个过程与我的以前的理解大相径庭。
+
+在 Vue 3 中，对模板的编译和渲染做了大量的优化，在 **编译阶段** 通过 **动态节点收集和静态节点提升**，为 **渲染阶段** 的性能提升打下了坚实的基础，并且配合 **快速 Diff 算法** 与 **最长递增子串**，相比 Vue 2 在 **`patchChildren` 子节点更新** 做出了巨大提升。
 
