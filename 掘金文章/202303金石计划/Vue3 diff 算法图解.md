@@ -693,6 +693,8 @@ else {
 
 在这一步开始之前，我们先了解一下什么是 **最长递增子序列算法**。
 
+#### 5.0 最长递增子序列
+
 > "**在一个给定的数值序列中，找到一个子序列，使得这个子序列元素的数值依次递增，并且这个子序列的长度尽可能地大。最长递增子序列中的元素在原序列中不一定是连续的**"。
 >
 > —— 维基百科
@@ -708,4 +710,159 @@ else {
 ```
 0, 2, 6, 9, 11, 15
 ```
+
+值得注意的是，生成的递增子序列数组中的元素，在原数组中对应的元素下标不一定是连续的。
+
+![image-20230403093717347](./docs-images/Vue3%20diff%20%E7%AE%97%E6%B3%95%E5%9B%BE%E8%A7%A3/image-20230403093717347.png)
+
+**在 Vue 3 中，这个算法被提取成了一个工具方法 `getSequence`，位于 `renderer.ts` 文件的最底部**。并且，Vue 3 中最这个方法进行了改造，最终生成的子序列 **是以可生成 `最长` 子串数组的可用元素的 `最大索引`**。
+
+如果使用 Vue 3 中的 `getSequence` 方法来处理上面的这个原始序列，会得到这样的结果：
+
+```
+0, 4, 6, 9, 13, 15
+```
+
+区别如下：
+
+![image-20230403101532141](./docs-images/Vue3%20diff%20%E7%AE%97%E6%B3%95%E5%9B%BE%E8%A7%A3/image-20230403101532141.png)
+
+`getSequence` 方法的大致过程如下：
+
+1. 复制一份 `arr` 数组，用于记录每个元素在递增子序列中的前驱元素。
+2. 初始化 `result` 数组为 `[0]`，用于记录递增子序列的索引。
+3. 遍历 `arr` 数组，如果当前元素不为 0，则在递增子序列 `result` 中查找比当前元素小的最大元素的索引 `j`。
+4. 如果 `arr[j] < arr[i]`，则将 `p[i]` 赋值为 `j`，并将 `i` 添加到递增子序列 `result` 中。
+5. 否则，使用二分查找在递增子序列 `result` 中查找比当前元素小的最大元素的索引 `u`。
+6. 如果 `arr[i]` 小于 `result[u]`，则将 `p[i]` 赋值为 `result[u-1]`。
+7. 将 `i` 添加到递增子序列 `result` 中。
+8. 通过 `p` 数组回溯递增子序列，生成最终的递增新索引序列。
+
+#### 5.1 新节点剩余元素构建 Map
+
+这一步就很简单了，直接循环 `newChildren` 的 `i` 到 `e2` 之间的剩余元素，组成一个 `key => index` 的 `Map`。
+
+```js
+const s1 = (s2 = i);
+
+const keyToNewIndexMap = new Map();
+for (i = s2;i <= e2;i++) {
+  const nextChild = c2[i];
+  if (nextChild != null) {
+    keyToNewIndexMap.set(nextChild, i);
+  }
+}
+```
+
+#### 5.2 与旧节点的对比复用
+
+在 `newChildren` 的对应关系 `keyToNewIndexMap` 创建好之后，就会遍历 `oldChildren` 对比 `key` 相同的 `VNode` 实例进行复用和更新。
+
+而对于比较结束后依旧剩余的旧节点则直接进行 `unmount` 卸载（因为剩余的旧节点 `key` 都不能复用，所以直接视为废弃节点）。
+
+简化代码如下：
+
+```typescript
+let j;
+let patched = 0; // 已更新节点数
+const toBePatched = e2 - s2 + 1; // newChildren 剩余节点数（需要更新）
+let moved = false; // 节点位置是否移动标识
+let maxNewIndexSoFar = 0; // 当前元素在新节点数组最大索引
+const newIndexToOldIndexMap = new Array(toBePatched); // 新旧节点索引对应关系
+
+for (i = 0;i < toBePatched;i++) {
+  newIndexToOldIndexMap[i] = 0;
+}
+
+// 遍历旧节点数组
+for (i = s1;i <= e1;i++) {
+  const prevChild = c1[i]; // 当前旧节点元素
+  if (patched >= toBePatched) {
+    // 如果以更新节点数大于等于需要更新节点数，
+    // 说明新节点以全部更新，剩余旧节点直接移除，并跳出当次循环
+    unmount(prevChild);
+    continue;
+  }
+
+  // 判断当前节点是否有key，存在则在 map 中查找，
+  // 不存在则遍历新节点剩余数组的相同节点并更新索引
+  let newIndex;
+  // 这里是判断 prevChild.key != null
+  if (prevChild != null) {
+    newIndex = keyToNewIndexMap.get(prevChild);
+  } else {
+    // key-less node, try to locate a key-less node of the same type
+    for (j = s2;j <= e2;j++) {
+      if (
+        newIndexToOldIndexMap[j - s2] === 0 &&
+          isSameVNodeType(prevChild, c2[j])
+      ) {
+        newIndex = j;
+        break;
+      }
+    }
+  }
+
+  if (newIndex === undefined) {
+    // 依然没有找到同key或者同 VNodeType的新节点，则卸载旧节点
+    unmount(prevChild);
+  } else {
+    // 找到了对应新节点，对比索引位置设置 moved 标识，执行 patch 更新
+    newIndexToOldIndexMap[newIndex - s2] = i + 1;
+    if (newIndex >= maxNewIndexSoFar) {
+      // 如果新节点的索引大于等于 maxNewIndexSoFar，
+      // 则将 maxNewIndexSoFar 更新为新节点的索引
+      maxNewIndexSoFar = newIndex;
+    } else {
+      // 说明向前移动了
+      moved = true;
+    }
+    patch(prevChild, c2[newIndex]);
+    patched++; // 已更新 +1
+  }
+}
+```
+
+为了能更加体现整个过程中变化，我们将上面的例子进行一下扩充：
+
+```
+旧节点： ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n'];
+新节点： ['a', 'b', 'e', 'd', 'h', 'g', 'f', 'o', 'p', 'r', 'k', 'j', 'l', 'm', 'n'];
+```
+
+其中包含了前两步的 **头部相同节点，尾部相同节点**，中间部分也包含了卸载、移动、更新三种情况，并且数据量已经比较大，可以看出整体过程。
+
+在第一步新节点数组索引 `Map` 对象构建结束之后，我们会的得到一个 `size` 为 10 的 `keyToNewIndexMap`，并且此时的 **需要更新节点数标识 `toBePatched` 为 10**（因为都有 `key` 属性，所以此时 `toBePatched = keyToNewIndexMap.size()`）。
+
+然后会遍历旧节点数组查找 `key` 相同的节点的下标 `newIndex`（如果找不到还会在 `newChildren` 新节点的剩余数组中查找 **未被使用过 `newIndexToOldIndexMap[j - s2] === 0` 且同类型判断 `isSameVNodeType` 为 `true` 的节点**，并将它的 `index` 下标作为 `newIndex`）。
+
+这个过程结束后，如果 `newIndex` 依然是 `undefined`，则证明这个节点无法被复用，直接卸载；如果存在的话，则调用 `patch` 对比更新新旧节点元素。
+
+大致过程如下：
+
+![image-20230403131816154](./docs-images/Vue3%20diff%20%E7%AE%97%E6%B3%95%E5%9B%BE%E8%A7%A3/image-20230403131816154.png)
+
+![image-20230403125139210](./docs-images/Vue3%20diff%20%E7%AE%97%E6%B3%95%E5%9B%BE%E8%A7%A3/image-20230403125139210.png)
+
+> 此时新节点剩余数组中仍然还有剩余元素没有被挂载，而且节点顺序不对，就需要进行最后一步：新建节点与位置移动
+
+#### 5.3 新建节点与位置移动
+
+在这一步的开始，会判断 `5.2` 结束后的 `moved` 标识，判断是否需要进行移动判定；如果需要的话，会通过 `getSequence` 查找位置更新的最长递增子串。
+
+```js
+const increasingNewIndexSequence = moved ? getSequence(newIndexToOldIndexMap) : [];
+```
+
+> 这里的 `newIndexToOldIndex` 记录了新节点剩余数组中，每个节点的在旧节点剩余数组中的位置下标，如果不存在记录则为 0。
+
+此时数据如下：
+
+![image-20230403132504919](./docs-images/Vue3%20diff%20%E7%AE%97%E6%B3%95%E5%9B%BE%E8%A7%A3/image-20230403132504919.png)
+
+
+
+
+
+
 
