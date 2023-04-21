@@ -4,6 +4,8 @@
 
 ## > 课程推荐
 
+> 可以联系我兑换五折券购买，更加便宜～
+
 [muwoo - Vue 3 技术揭秘](https://s.juejin.cn/ds/BD3t149/)
 
 [修言 - JavaScript 函数式编程实践指南](https://s.juejin.cn/ds/BD3TrYF/)
