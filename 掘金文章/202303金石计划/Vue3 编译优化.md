@@ -222,11 +222,90 @@ function setupBlock(vnode: VNode) {
 
 ### createBlock
 
-当然，除了 `createElementBlock` 之外，还有一个 `createBlock`，用来创建
+当然，除了 `createElementBlock` 之外，还有一个 `createBlock`，用来创建 **任意类型的 Block**。
+
+```typescript
+export function createBlock(
+  type: VNodeTypes | ClassComponent,
+  props?: Record<string, any> | null,
+  children?: any,
+  patchFlag?: number,
+  dynamicProps?: string[]
+): VNode {
+  return setupBlock(
+    createVNode(type, props, children, patchFlag, dynamicProps, true)
+  )
+}
+```
+
+与 `createElementBlock` 不同的是，它不接受 `shapeFlag` 参数，直接根据 `type` 的类型创建一个 Block。
+
+### Block 树
+
+接着 createElementBlock 那里，最终根节点生成的 Block 是一个包含 4 个 Vnode 的块。
+
+而第四个节点则是一个 **包含了 5 个子节点 VNode 的数组**，结合代码就是与 `v-for` 循环关联的 `p` 标签。也就是这里：
+
+![image-20230421175757421](./docs-images/Vue3%20%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96/image-20230421175757421.png)
+
+在这里 Vue 重新开启一个新的 `ElementBlock` 块，子节点则是由关联的变量 `arr` 遍历产生的新的 `Block Vnode`。
+
+最终就会生成一个由 Block 组成的树形结构：
+
+```
+ElementBlock(Fragment)
+	- ElementVNode(h1)
+	- ElementVNode(input)
+	- ElementVNode(h2)
+	- ElementBlock(Fragment)
+		- ElementBlock(p)
+		- ElementBlock(p)
+		- ElementBlock(p)
+		- ElementBlock(p)
+		- ElementBlock(p)
+```
+
+## 3. 静态节点提升
+
+所谓 “静态提升”，就是将所有的静态节点进行拆分解析，提取到最外层进行初始化创建 VNode。
+
+例如：
+
+![image-20230421180756089](./docs-images/Vue3%20%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96/image-20230421180756089.png)
+
+其中 `static node 2` 所在的 div 节点，整体都被作为了一个完整的 静态节点被提升为 `_hoisted_2`。
+
+但是与 `static node 3` 关联的 `div` 节点则没有被提升。
+
+也说明 **会被提升为静态节点的内容，自身及子节点均不能包含与变量相关的内容**。
+
+这样以闭包的形式在函数内部一直保留了对静态节点 Vnode 实例的引用，在进行 更新操作时就不需要再次创建 Vnode，并且具有 `patchFlag = -1` 的属性，diff 阶段也会直接跳过这类节点，提升整体性能。
+
+> 这里的 `_hoisted_2` 被作为一个整体，最终还会被进行 **预字符串化** 处理，即转换为 `innerHTML` 的字符串形式。
+
+## 4. 节点内联事件缓存
+
+我们都知道 `v-model:xxx` 其实是 `v-bind:xxx` 与 `v-on:update:xxx` 两者结合后产生的语法糖，其中 `v-bind` 代表的是绑定的 `props` 属性，`v-on` 则代表节点关联的 **事件**。
+
+在上面的例子中，我们添加了一个 `input` 标签，绑定了 `msg` 变量。
+
+那么它就会被解析成具有 `onUpdate:modelValue` 事件绑定的节点：
+
+![image-20230421182045279](./docs-images/Vue3%20%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96/image-20230421182045279.png)
+
+但是它的事件与我们原来想的可能不太一样：
+
+> 即使不使用 `v-model`，完整的写成 `v-bind + v-on` 的形式，那么事件也应该是 `$event => msg.value = $event`，而不会有 `cache` 的存在。
+
+而这个 `cache`，就是 **内联事件缓存对象（数组）**。
+
+![image-20230421182642565](./docs-images/Vue3%20%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96/image-20230421182642565.png)
 
 
 
+`cache` 数组来自组件实例，在组件实例首次创建解析之后，就会将 **组件模板内所有内联事件** 保存到 `cache` 数组中。
 
+当组件更新创建新的 VNode 对象时，依然使用的是之前缓存的事件对象地址，省去了重新创建事件函数的过程，也避免了重新创建事件导致触发组件更新的情况。
 
 
 
