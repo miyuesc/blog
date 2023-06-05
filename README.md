@@ -4,37 +4,38 @@
 
 ## > 课程推荐
 
-> 可以联系我兑换五折券购买，更加便宜～
+> 可以联系我兑换五折券购买～
 >
 > 掘金：MiyueFE（https://juejin.cn/user/747323639208391）
 >
 > 微信：MiyueFE（Miyuesc）
 
-muwoo - Vue 3 技术揭秘(https://s.juejin.cn/ds/BD3t149/)
+- muwoo - Vue 3 技术揭秘（https://s.juejin.cn/ds/BD3t149/）
 
-修言 - JavaScript 函数式编程实践指南(https://s.juejin.cn/ds/BD3TrYF/)
+- 修言 - JavaScript 函数式编程实践指南（https://s.juejin.cn/ds/BD3TrYF/）
 
-修言 - JavaScript 设计模式核⼼原理与应⽤实践(https://s.juejin.cn/ds/BDTNQxK/)
+- 修言 - JavaScript 设计模式核⼼原理与应⽤实践（https://s.juejin.cn/ds/BDTNQxK/）
 
-大漠w3cplus - 现代Web布局(https://s.juejin.cn/ds/BDTeaQL/)
+- 大漠w3cplus - 现代Web布局（https://s.juejin.cn/ds/BDTeaQL/）
 
-大漠w3cplus - 防御式 CSS 精讲https://s.juejin.cn/ds/UJ8GEa6/
+- 大漠w3cplus - 防御式 CSS 精讲（https://s.juejin.cn/ds/UJ8GEa6/）
+- 神说要有光 - Nest 通关秘籍（https://s.juejin.cn/ds/UVPyxUV/）
+- 神说要有光 - 前端调试通关秘籍（https://s.juejin.cn/ds/BD3wRjf/）
 
-神说要有光 - 前端调试通关秘籍(https://s.juejin.cn/ds/BD3wRjf/)
+- 神说要有光 - TypeScript 类型体操通关秘籍（https://s.juejin.cn/ds/BDTAysq/）
 
-神说要有光 - TypeScript 类型体操通关秘籍(https://s.juejin.cn/ds/BDTAysq/)
+- 神说要有光 - Babel 插件通关秘籍（https://s.juejin.cn/ds/BDTN18r/）
 
-神说要有光 - Babel 插件通关秘籍(https://s.juejin.cn/ds/BDTN18r/)
+- 月影 - 从前端到全栈（https://s.juejin.cn/ds/BD3TXgQ/）
 
-月影 - 从前端到全栈(https://s.juejin.cn/ds/BD3TXgQ/)
+- Tecvan范文杰 - Webpack 5 核心原理与应用实践（https://s.juejin.cn/ds/BDTLD2q/）
 
-Tecvan范文杰 - Webpack 5 核心原理与应用实践(https://s.juejin.cn/ds/BDTLD2q/)
+- 林不渡 - TypeScript 全面进阶指南（https://s.juejin.cn/ds/BDTNB2t/）
 
-林不渡 - TypeScript 全面进阶指南(https://s.juejin.cn/ds/BDTNB2t/)
+- 神三元 - 深入浅出 Vite（https://s.juejin.cn/ds/BDTugY3/）
+- 神三元 - 基于 Vite 的 SSG 框架开发实战（视频课）（https://s.juejin.cn/ds/UV5RLGr/）
+- 死月 - 趣学 Node.js（https://s.juejin.cn/ds/BXos2X3/）
 
-神三元 - 深入浅出 Vite(https://s.juejin.cn/ds/BDTugY3/)
-
-死月 - 趣学 Node.js(https://s.juejin.cn/ds/BXos2X3/)
 
 
 
