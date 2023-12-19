@@ -11,13 +11,7 @@
 [Bpmn.js 中文进阶指南](https://juejin.cn/column/6964382482007490590)
 
 
-## > 课程推荐
-
-> 可以联系我兑换五折券购买～
->
-> 掘金：MiyueFE（https://juejin.cn/user/747323639208391）
->
-> 微信：MiyueFE（Miyuesc）
+## > 掘金课程推荐
 
 - Chokcoco -  CSS 技术揭秘与实战通关（https://s.juejin.cn/ds/UoG39yd/）
 - muwoo - Vue 3 技术揭秘（https://s.juejin.cn/ds/BD3t149/）
@@ -44,9 +38,11 @@
    - [前端面试题汇总](https://www.yuque.com/cuggz/interview)
    - [前端知识进阶](https://www.yuque.com/cuggz/feplus)
    - [LeetCode题解](https://www.yuque.com/cuggz/leetcode)
-2. [ggbdpq - 语雀](https://www.yuque.com/ggbdpq)
-   - [前端小册](https://www.yuque.com/ggbdpq/handbook)
-3. [ubugeeei/chibivue: minimal Vue 3](https://ubugeeei.github.io/chibivue/en/00-introduction/010-about.html)
+2. [ubugeeei/chibivue: minimal Vue 3](https://ubugeeei.github.io/chibivue/en/00-introduction/010-about.html)
+3. [xiaozuo/前端面试宝典](https://xz-fe-interview.gitbook.io/fe-interview/)
+4. [roadmap/frontend](https://roadmap.sh/frontend)
+5. [大厂面试每日一题](https://q.shanyue.tech/)
+6. [Front-End-Lib](https://willbchang.notion.site/willbchang/Front-End-Lib-641a7f4ffdc643239155757324fdce02)
 
 
 ## > 工具项目/网站
@@ -54,6 +50,8 @@
 [CSS3 剪贴路径(Clip-path)在线生成器](https://techbrood.com/tool?p=css-clip-path)
 
 [techbrood 工具集合](https://techbrood.com/tool#)
+
+[开发者工具大全](https://devtool.tech/)
 
 
 ## > 学习交流
