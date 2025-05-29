@@ -51,8 +51,8 @@ AI 赋能软件开发的浪潮已然势不可挡，AI IDE 作为这场变革的�
 
 ## 参考资料
 
-1.  [Trae - AI 原生 IDE](https://www.trae.com.cn/home)
-2.  [Trae，确定是中国首款 AI IDE？ - V2EX](https://www.v2ex.com/t/1115452)
-3.  [中国首款 AI IDE：Trae 国内版发布 - OSCHINA - 中文开源技术交流社区](https://www.oschina.net/news/336617)
-4.  [字节跳动发布 AI 中文 IDE“Trae”：内置 GPT-4o，可帮助自动化开发|字节跳动|自动化|AI_新浪科技_新浪网](https://finance.sina.com.cn/tech/digi/2025-01-21/doc-inefrhrw0270255.shtml)
-5.  [ai开发 - Trae IDE 和 Cursor 进行详细对比 - 架构师技术栈 - SegmentFault 思否](https://segmentfault.com/a/1190000046453131)
+1.  Trae - AI 原生 IDE : https://www.trae.com.cn/home
+2.  Trae，确定是中国首款 AI IDE？ - V2EX : https://www.v2ex.com/t/1115452
+3.  中国首款 AI IDE：Trae 国内版发布 - OSCHINA - 中文开源技术交流社区 : https://www.oschina.net/news/336617
+4.  字节跳动发布 AI 中文 IDE“Trae”：内置 GPT-4o，可帮助自动化开发|字节跳动|自动化|AI_新浪科技_新浪网 : https://finance.sina.com.cn/tech/digi/2025-01-21/doc-inefrhrw0270255.shtml
+5.  ai开发 - Trae IDE 和 Cursor 进行详细对比 - 架构师技术栈 - SegmentFault 思否 : https://segmentfault.com/a/1190000046453131
