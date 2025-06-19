@@ -4,22 +4,6 @@
 >
 > 别被"AST"、"代码转换"这些高大上的词汇吓到，其实Babel插件开发就像是给代码做"整容手术"，让老旧的代码变得年轻时尚，让复杂的语法变得简单易懂。
 
-## 目录
-
-1. [什么是Babel插件？](#什么是babel插件)
-2. [为什么需要Babel插件？](#为什么需要babel插件)
-3. [AST抽象语法树详解](#ast抽象语法树详解)
-4. [Babel的工作原理](#babel的工作原理)
-5. [插件开发基础](#插件开发基础)
-6. [Visitor模式深度解析](#visitor模式深度解析)
-7. [手写第一个Babel插件](#手写第一个babel插件)
-8. [常用API和工具函数](#常用api和工具函数)
-9. [高级插件开发技巧](#高级插件开发技巧)
-10. [实战案例：代码优化插件](#实战案例代码优化插件)
-11. [调试与测试](#调试与测试)
-12. [生态系统与最佳实践](#生态系统与最佳实践)
-13. [总结](#总结)
-
 ## 什么是Babel插件？
 
 简单来说，Babel插件就是一个**代码转换器**。它能够：
@@ -232,7 +216,7 @@ console.log(result.code); // 转换后的代码
         语法分析         Visitor遍历              Source Map
 ```
 
-## 插件开发基础
+## Babel插件是什么
 
 ### 插件的基本结构
 
@@ -1226,97 +1210,6 @@ function optimizedPlugin({ types: t }) {
     }
   };
 }
-```
-
-### 3. 发布插件
-
-#### package.json配置
-
-```json
-{
-  "name": "babel-plugin-my-transform",
-  "version": "1.0.0",
-  "description": "A Babel plugin that transforms...",
-  "main": "lib/index.js",
-  "keywords": [
-    "babel-plugin",
-    "transform",
-    "javascript"
-  ],
-  "peerDependencies": {
-    "@babel/core": "^7.0.0"
-  },
-  "devDependencies": {
-    "@babel/core": "^7.0.0",
-    "@babel/types": "^7.0.0",
-    "jest": "^26.0.0"
-  },
-  "scripts": {
-    "test": "jest",
-    "build": "babel src -d lib",
-    "prepublishOnly": "npm run build"
-  }
-}
-```
-
-#### README模板
-
-```markdown
-# babel-plugin-my-transform
-
-> A Babel plugin that transforms...
-
-## Installation
-
-```bash
-npm install --save-dev babel-plugin-my-transform
-```
-
-## Usage
-
-### Via .babelrc
-
-```json
-{
-  "plugins": ["my-transform"]
-}
-```
-
-### Via CLI
-
-```bash
-babel --plugins my-transform script.js
-```
-
-### Via Node API
-
-```javascript
-require("@babel/core").transform("code", {
-  plugins: ["my-transform"]
-});
-```
-
-## Options
-
-### `option1`
-
-`boolean`, defaults to `true`.
-
-Description of option1...
-
-## Examples
-
-### Input
-
-```javascript
-// input code
-```
-
-### Output
-
-```javascript
-// output code
-```
 ```
 
 ## 总结
